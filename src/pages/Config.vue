@@ -2,9 +2,13 @@
   <div class="w-full border" style="height:50px"></div>
   <div class="flex flex-row w-full" style="height:calc(100vh - 50px)">
     <div class="column w-1/6 h-full shadow-md">
-      <div>
-        <q-checkbox label="顯示格線" v-model="grid" />
-      </div>
+      <q-expansion-item
+        group
+        icon="aspect_ratio"
+        label="版面調整"
+      >
+        
+      </q-expansion-item>
       <q-expansion-item
         group
         icon="dashboard"
@@ -13,7 +17,6 @@
       >
         <div class="px-2">
           <q-select outlined label="選擇圖形" :options="shapeOptions" :model-value="shape" @update:model-value="selectShape"></q-select>
-
         </div>
       </q-expansion-item>
       <q-expansion-item
@@ -28,8 +31,15 @@
         <q-btn class="flex-grow" unelevated color="primary" label="確認" @click="predraw" />
       </div>
     </div>
-    <div>
-      <div class="w-full" style="height:calc(100vh - 60px)" ref="container" id="canvas_container"></div>
+    <div class="px-4 w-5/6">
+      <div class="row gap-x-2 q-py-sm">  
+        <q-checkbox label="顯示格線" v-model="grid" />
+        <q-space />
+
+        <q-btn size="md" class="q-px-sm" icon="zoom_in" @click="zoomIn" outline />
+        <q-btn size="md" class="q-px-sm" icon="zoom_out" @click="zoomOut" outline />
+      </div>
+      <div class="w-full" ref="container" id="canvas_container"></div>
     </div>
   </div>
 </template>
@@ -45,6 +55,9 @@
   const stage = ref(null)
 
   const current = ref(null)
+
+  const drop = ref(null)
+  const undo = ref(null)
 
   const previewLayer = ref(null)
   const iconLayer = ref(null)
@@ -62,6 +75,24 @@
     shape.value = option.value
   }
 
+  const scale = 0.25;
+
+  function zoomIn() {
+    const lastScale = stage.value.scaleX(),
+      originY = stage.value.y(),
+      originX = stage.value.x(),
+      width = stage.value.width(),
+      height = stage.value.height();
+    
+    stage.value.scale({x:scale+lastScale, y:scale+lastScale }) 
+  }
+
+  function zoomOut() {
+    const lastScaleX = stage.value.scaleX();
+    const lastScaleY = stage.value.scaleY();
+    stage.value.scale({x:lastScaleX - scale, y:lastScaleY - scale})
+  }
+
   function position(evt) {
     console.log(evt)
   }
@@ -75,9 +106,11 @@
   function enter(evt) {
     let {top, left} = container.value.getBoundingClientRect();
     let {x, y} = evt;
+    let currentScaleX = stage.value.scaleX();
+    let currentScaleY = stage.value.scaleY();
     let previewShape = new Konva[shape.value]({
-      x:x - left - 50,
-      y:y - top - 25,
+      x:(x - left - 50)*currentScaleX,
+      y:(y - top - 25)*currentScaleY,
       width:100,
       height:50,
       fill:'red',
@@ -113,7 +146,6 @@
     drawShape.on("dblclick",(event) => {
       if (mode.value == "v") {
         current.value = event.target;
-
       } 
     })
     drawShape.on("mouseover", (event) => { 
@@ -130,7 +162,6 @@
      // showTooltip.value = true;
     })
     drawShape.on("mouseleave", (event) => {
-      // showTooltip.value = false
       if (mode.value == "v") {
         event.target.stroke();
         event.target.strokeWidth(0); 
@@ -184,7 +215,7 @@
     let _stage = new Konva.Stage({
       container:"canvas_container",
       width:1080,
-      height:713
+      height:680
     })
     // preview圖層
     previewLayer.value = new Konva.Layer({
@@ -214,7 +245,7 @@
 
   watch(grid, (grid, oldgrid) => {
     if (grid) {
-      const xSize = stage.value.size(), ySize = stage.value.size();
+      const xSize = stage.value.width(), ySize = stage.value.height();
       const xSteps = Math.round(xSize/20), ySteps = Math.round(ySize/20);
       for (let i=0;i<=xSteps;i++) {
         gridLayer.value.add(
