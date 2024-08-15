@@ -7,16 +7,20 @@
         icon="aspect_ratio"
         label="版面調整"
       >
-        
+        <q-input/>
       </q-expansion-item>
       <q-expansion-item
         group
         icon="dashboard"
-        :default-opened="true"
         label="編輯機台"
+        :model-value="true"
       >
         <div class="px-2">
           <q-select outlined label="選擇圖形" :options="shapeOptions" :model-value="shape" @update:model-value="selectShape"></q-select>
+        </div>
+        <div v-if="shape=='Rect'" class="px-2">
+          <q-input v-model="shapeProperty.width" label="寬度" />
+          <q-input v-model="shapeProperty.height" label="高度" />
         </div>
       </q-expansion-item>
       <q-expansion-item
@@ -24,7 +28,6 @@
         icon="space_dashboard"
         label="編輯底圖"
       >
-        <div class="px-2">test</div>
       </q-expansion-item>
       <q-space/>
       <div class="p-1 flex flex-row">
@@ -40,28 +43,28 @@
         <q-btn size="md" class="q-px-sm" icon="zoom_out" @click="zoomOut" outline />
       </div>
       <div class="w-full" ref="container" id="canvas_container"></div>
+      <div class="absolute bottom-40 border"></div>
     </div>
   </div>
 </template>
 
 <script setup lang='ts'>
-  import {ref, onMounted, onBeforeUnmount, watch} from 'vue'
+  import {ref, reactive, onMounted, onBeforeUnmount, watch, computed} from 'vue'
   import Konva from 'konva'
-  import $ from 'jquery'
 
-  const grid = ref(false)
+  const grid = ref(true)
   const mode = ref<"v"|"i"|"n">("v")
   const container = ref(null)
-  const stage = ref(null)
+  let stage = reactive({})
 
-  const current = ref(null)
+  let current = reactive({})
 
   const drop = ref(null)
   const undo = ref(null)
 
-  const previewLayer = ref(null)
-  const iconLayer = ref(null)
-  const gridLayer = ref(null)
+  let previewLayer = reactive({})
+  let iconLayer = reactive({})
+  let gridLayer = reactive({})
   
   const shape = ref("Rect")
 
@@ -76,179 +79,400 @@
   }
 
   const scale = 0.25;
+  const GUIDELINE_OFFSET = 5;
+  
+  const shapeProperty = reactive(computed(() => {
+    let options = {};
+    switch (shape.value) {
+      case "Rect":{
+        options = {
+          width:100,
+          height:50,
+          fill:"red",
+          opacity:1
+        }
+        break;
+      }
+      case "Circle":{
+        options = {
+          radius:40,
+          fill:"blue",
+          opacity:0.5
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return options
+  }))
+  // utils
+  function getGuidelineStops(skipItem) {
+    const vertical = [0, stage.width()/2, stage.width()];
+    const horizontal = [0, stage.height()/2, stage.height()];
+    stage.find(".object").forEach((guideItem) => {
+      if (guideItem === skipItem)
+        return
+        
+      const item = guideItem.getClientRect();
+      console.log(item)
+      vertical.push([item.x, item.x + item.width/2, item.x + item.width ]);
+      horizontal.push([item.y,  item.y + item.width/2, item.y + item.width]);
+    })
+
+    return {
+      vertical:vertical.flat(),
+      horizontal:horizontal.flat()
+    }
+  }
+
+  function getObjectSnappingEdges(node) {
+    const item = node.getClientRect();
+    const absPos = node.absolutePosition();
+
+    return {
+      vertical:[
+        {
+          guide:Math.round(item.x),
+          offset:Math.round(absPos.x - item.x),
+          snap:'start'
+        },
+        {
+          guide:Math.round(item.x + item.width/2),
+          offset:Math.round(absPos.x - item.x - item.width/2),
+          snap:"center"
+        },
+        {
+          guide:Math.round(item.x + item.width),
+          offset:Math.round(absPos.x - item.x - item.width),
+          snap:'end'
+        },
+      ] ,
+      horizontal:[
+        {
+          guide:Math.round(item.y),
+          offset:Math.round(absPos.y - item.y),
+          snap:"start",
+        },
+        {
+          guide:Math.round(item.y + item.height/2),
+          offset:Math.round(absPos.y - item.y - item.height/2),
+          snap:"center"
+        },
+        {
+          guide:Math.round(item.y + item.height),
+          offset:Math.round(absPos.y - item.y - item.height),
+          snap:"end"
+        }
+      ]
+    } 
+  }
+
+  function getGuidelines(guideStops, itemBounds) {
+    const resultV = []
+    const resultH = []
+
+    guideStops.vertical.forEach((lineGuide) => {
+      itemBounds.vertical.forEach((bound) => {
+        const diff = Math.abs(lineGuide - bound.guide);
+
+        if (diff < GUIDELINE_OFFSET) {
+          resultV.push({
+            lineGuide,
+            diff,
+            snap:bound.snap,
+            offset:bound.offset
+          })
+        }
+      })
+    })
+
+    guideStops.horizontal.forEach((lineGuide) => {
+      itemBounds.horizontal.forEach((bound) => {
+        const diff = Math.abs(lineGuide - bound.guide)
+
+        if (diff < GUIDELINE_OFFSET) {
+          resultH.push({
+            lineGuide,
+            diff,
+            snap:bound.snap,
+            offset:bound.offset
+          })
+        }
+      })
+    })
+
+    const guides = [];
+
+    const minV = resultV.sort((a,b) => a.diff - b.diff)[0];
+    const minH = resultH.sort((a,b) => a.diff - b.diff)[0];
+
+    if (minV) {
+      guides.push({
+        lineGuide:minV.lineGuide,
+        offset:minV.offset,
+        orientation:"V",
+        snap:minV.snap
+      })
+    }
+
+    if (minH) {
+      guides.push({
+        lineGuide:minH.lineGuide,
+        offset:minH.offset,
+        orientation:"H",
+        snap:minH.snap
+      })
+    }
+
+    return guides
+  }  
+
+  function drawGuideline(guides) {
+    guides.forEach((guideline) => {
+      if (guideline.orientation === "H") {
+        const line = new Konva.Line({
+          points:[-6000, 0, 6000, 0],
+          stroke:'rgb(0, 161, 255)',
+          strokeWidth:1,
+          name:"guide-line",
+          dash:[4, 6]
+        })
+        iconLayer.add(line);
+        line.absolutePosition({
+          x:0,
+          y:guideline.lineGuide
+        })
+      }
+
+      if (guideline.orientation === "V") {
+        const line = new Konva.Line({
+          points:[0, -6000, 0, 6000],
+          stroke:"rgb(0,161,255)",
+          strokeWidth:1,
+          name:"guide-line",
+          dash:[4,6]
+        })
+        iconLayer.add(line);
+        line.absolutePosition({
+          x:guideline.lineGuide,
+          y:0
+        })
+      }
+    })
+  }
 
   function zoomIn() {
-    const lastScale = stage.value.scaleX(),
-      originY = stage.value.y(),
-      originX = stage.value.x(),
-      width = stage.value.width(),
-      height = stage.value.height();
+    const lastScale = stage.scaleX(),
+      originY = stage.y(),
+      originX = stage.x(),
+      width = stage.width(),
+      height = stage.height();
     
-    stage.value.scale({x:scale+lastScale, y:scale+lastScale }) 
+    stage.scale({x:scale+lastScale, y:scale+lastScale }) 
   }
 
   function zoomOut() {
-    const lastScaleX = stage.value.scaleX();
-    const lastScaleY = stage.value.scaleY();
-    stage.value.scale({x:lastScaleX - scale, y:lastScaleY - scale})
+    const lastScaleX = stage.scaleX();
+    const lastScaleY = stage.scaleY();
+    stage.scale({x:lastScaleX - scale, y:lastScaleY - scale})
   }
 
-  function position(evt) {
-    console.log(evt)
-  }
-
+  // debug
   function mouse(evt) {
     let {top, left} = container.value.getBoundingClientRect();
     const {x,y} = evt
     console.log(x - left,y - top);
   }
-
+  
+  // interaction with canvas
   function enter(evt) {
     let {top, left} = container.value.getBoundingClientRect();
-    let {x, y} = evt;
-    let currentScaleX = stage.value.scaleX();
-    let currentScaleY = stage.value.scaleY();
+    let {x, y} = evt.evt;
+    let currentScaleX = stage.scaleX();
+    let currentScaleY = stage.scaleY();
     let previewShape = new Konva[shape.value]({
-      x:(x - left - 50)*currentScaleX,
-      y:(y - top - 25)*currentScaleY,
-      width:100,
-      height:50,
-      fill:'red',
-      opacity:0.3
+      x:-left + (x - 50)*currentScaleX,
+      y:-top + (y - 25)*currentScaleY,
+      ...shapeProperty,
     });
-    previewLayer.value.add(previewShape)
-    previewLayer.value.draw();
+    if (previewLayer.children.length < 1) {
+      current = previewShape;
+      previewLayer.add(previewShape);
+      previewLayer.draw();
+      previewShape.startDrag();
+    }
   }
 
   function move(evt) {
-    let children = previewLayer.value.children[0];
-    current.value = children;
-    current.value.startDrag();
+    let children = previewLayer.children[0];
+    if (previewLayer.children.length > 1) previewLayer.children.pop()
+    current = children;
+    if (current)
+      current?.startDrag();
   }
 
   function stopmove() {
-    if(current.value)
-     current.value.stopDrag();
-    previewLayer.value.removeChildren();
+    current = {}
+    previewLayer.removeChildren();
+  }
+
+  const dragStart = (evt) => {
+    iconLayer.find(".guide-line").forEach((l) => l.destroy());
+    const lineGuideStops = getGuidelineStops(evt.target);
+    const itemBounds = getObjectSnappingEdges(evt.target);
+    const guides = getGuidelines(lineGuideStops, itemBounds);
+
+    if (!guides.length) return;
+
+    drawGuideline(guides);
+
+    const absPos = evt.target.absolutePosition();
+
+    guides.forEach((line) => {
+      switch (line.orientation) {
+        case "V":{
+          absPos.x = line.lineGuide + line.offset;
+          break;
+        }
+        case "H":{
+          absPos.y = line.lineGuide + line.offset;
+          break;
+        }
+      }
+    });
+    evt.target.absolutePosition(absPos);
+  }
+
+  const dragEnd = (evt) => {
+    iconLayer.find(".guide-line").forEach(l => l.destroy());
+  }
+
+  // TODO 新增元素的監聽事件
+  // 選取
+  const elementMousedownEvent = (evt) => {
+    evt.target.startDrag();
+    iconLayer.on("dragmove", dragStart)
+  }
+
+  const elementMouseupEvent = (evt) => {
+    evt.target.stopDrag();
+    iconLayer.on("dragend", dragEnd)    
+  }
+  // hover
+  const elementMouseoverEvent = (evt) => {
+    if (model.value == "v") {
+      evt.target.stroke("black");
+      evt.target.strokeWidth(2);
+    }
+  }
+  // mouseleave 
+  const elementMouseleaveEvent = (evt) => {
+    evt.target.stroke();
+    evt.target.strokeWidth(0);
   }
 
   function click(evt) {
-    current.value.startDrag(); 
+    current.startDrag(); 
     let {top, left, width, height} = container.value.getBoundingClientRect();
-    let {x, y} = evt; 
+    let {x, y} = evt.evt; 
+    const scaleX = stage.scaleX();
+    const scaleY = stage.scaleY();
     let drawShape = new Konva[shape.value]({
-      x:x - left - 50,
-      y:y - top - 25,
+      x: - left + (x  - 50)*scaleX,
+      y: - top + (y - 25)*scaleY,
       width:100,
       height:50,
-      fill:"red"
+      fill:"red",
+      opacity:1,
+      name:"object"
     });
-    drawShape.on("dblclick",(event) => {
-      if (mode.value == "v") {
-        current.value = event.target;
-      } 
-    })
+    drawShape.on("mousedown",elementMousedownEvent);
+    drawShape.on("mouseup", elementMouseupEvent);
     drawShape.on("mouseover", (event) => { 
       // TODO 判斷tooltip產生的位置, tooltip anchor起始點為center middle, canvas的正中心
       const 
         cX = event.target.attrs.x + event.target.attrs.width/2, 
         cY = event.target.attrs.y + event.target.attrs.height/2;
       if (mode.value == "v") {
-        current.value = event.target;
+        current = event.target;
         event.target.stroke("black");
         event.target.strokeWidth(2);
       }
-     // tooltipOffset.value = [cX - width/2 - left, cY - height/2 - top];
-     // showTooltip.value = true;
-    })
+    });
     drawShape.on("mouseleave", (event) => {
       if (mode.value == "v") {
         event.target.stroke();
         event.target.strokeWidth(0); 
       }
-    })
-    iconLayer.value.add(drawShape);
-    iconLayer.value.draw()
+    });
+    iconLayer.add(drawShape);
+    iconLayer.draw();
   }
 
   function cancelDraw(evt) {
     if (evt.key == "Escape" || evt.type == "mouseleave") {
       mode.value = "v";
       stopmove();
-      container.value.removeEventListener("mouseenter", enter);
-      container.value.removeEventListener("mousemove", move);
-      container.value.removeEventListener("click", click);
+      stage.off("mouseenter", enter);
+      stage.off("mousemove", move);
+      stage.off("mousedown", click);
+      
     } 
   }
 
   function predraw() {
     mode.value = "i";
-    previewLayer.value.removeChildren(); 
-    let {top, left} = container.value.getBoundingClientRect();
-    container.value.addEventListener("mouseenter", enter);
-    container.value.addEventListener('mousemove', move);
-    container.value.addEventListener("click", click);
-    container.value.addEventListener("mouseleave", cancelDraw);
-    container.value.addEventListener("keydown", cancelDraw);
-   // (evt) => {
-   //   stopmove();
-   //   container.value.removeEventListener("mouseenter", enter)
-   //   container.value.removeEventListener("mousemove", move)
-   //   container.value.removeEventListener("click", click)
-   // }
-   // )
-    
-   // stage.value.on("mouseenter", (evt) => console.log(evt))
-   // stage.value.on("mouseenter", enter)
-   // stage.value.on("mousemove", move)
-   // stage.value.on("click", click)
-   // stage.value.on("mouseleave", ()=>console.log("test"))
-   // stage.value.on("mouseout", () => {
-   //   stopmove(); 
-   //   stage.value.off("mouseenter", enter)
-   //   stage.value.off("mousemove", move)
-   //   stage.value.off("click", click)
-   // })
+    previewLayer.removeChildren(); 
+    let {top, left, width, height} = container.value.getBoundingClientRect();
+    stage.on("mouseenter", enter);
+    stage.on("mousemove", move);
+    stage.on("mousedown", click);
+    stage.on("keydown", cancelDraw);
+
   }
 
+  // init canvas 
   function initKonva() {
     let _stage = new Konva.Stage({
       container:"canvas_container",
       width:1080,
       height:680
     })
-    // preview圖層
-    previewLayer.value = new Konva.Layer({
-      x:0,
-      y:0,
-      draggable:false
-    });
+
     // icon圖層
-    iconLayer.value = new Konva.Layer({
+    iconLayer = new Konva.Layer({
       x:0,
       y:0,
       draggable:false,
+    }); 
+    // preview圖層
+    previewLayer = new Konva.Layer({
+      x:0,
+      y:0,
+      draggable:true
     });
     // 格線圖層
-    gridLayer.value = new Konva.Layer({
+    gridLayer = new Konva.Layer({
       x:0,
       y:0,
       draggable:false
     })
 
-    _stage.add(previewLayer.value)    
-    _stage.add(iconLayer.value)
-    _stage.add(gridLayer.value)
-    
+    _stage.add(iconLayer)
+    _stage.add(previewLayer)    
+    _stage.add(gridLayer)
+   
     return _stage
   }
 
-  watch(grid, (grid, oldgrid) => {
-    if (grid) {
-      const xSize = stage.value.width(), ySize = stage.value.height();
+  onMounted(() => {
+    stage = initKonva();
+    window.addEventListener("keydown", cancelDraw);
+      const xSize = stage.width(), ySize = stage.height();
       const xSteps = Math.round(xSize/20), ySteps = Math.round(ySize/20);
       for (let i=0;i<=xSteps;i++) {
-        gridLayer.value.add(
+        gridLayer.add(
           new Konva.Line({
             x:0 + i*20,
             y:0,
@@ -260,7 +484,7 @@
       }
 
       for (let i=0;i<=ySteps;i++) {
-        gridLayer.value.add(
+        gridLayer.add(
           new Konva.Line({
             x:0,
             y:20*i,
@@ -270,20 +494,10 @@
           })
         )
       }
-      gridLayer.value.batchDraw();
-    } else {
-      gridLayer.value.clear();
-      gridLayer.value.destroyChildren();
-      gridLayer.value.clipWidth(null);
-    }
+      gridLayer.batchDraw();
+    
   })
-
-  onMounted(() => {
-    stage.value = initKonva()
-    window.addEventListener("keydown", cancelDraw);
-  })
-
   onBeforeUnmount(() => {
-    window.removeEventListener("keydown", cancelDraw);
+   // window.removeEventListener("keydown", cancelDraw);
   })
 </script>
