@@ -6,44 +6,114 @@
         group
         icon="aspect_ratio"
         label="版面調整"
+        @show="show"
+        @hide="hide"
+        :default-opened="true"
       >
-        <q-input/>
+        <div class="flex flex-col gap-y-2 p-2">
+          <div class="flex flex-row gap-x-2">
+            <q-select
+              class="w-[calc(66%_-_8px)]"
+              outlined
+              label="廠區"
+              option-label="label"
+              option-value="value"
+              v-model="sLocation"
+              :options="location"
+              emit-value
+              map-options
+            />
+            <q-select
+              outlined
+              class="w-1/3"
+              label="樓層"
+              option-label="label"
+              option-value="value"
+              v-model="sFloor"
+              :options="floor"
+              emit-value
+              map-options
+            />
+          </div>
+          <q-input
+            outlined
+            label="版面寬度"
+            type="number"
+            v-model.number="width"
+            debounce="600"
+            max="2400"
+            :rules="[val => val <= 2400 || '最大寬度為2400']"
+          />
+          <q-input
+            outlined
+            label="版面高度"
+            type="number"
+            v-model.number="height"
+            debounce="600"
+            max="2400"
+            :rules="[val => val <= 2400 || '最大高度為2400']"
+          />
+          <q-select
+            outlined
+            label="預覽視窗"
+            option-label="label"
+            option-value="value"
+            v-model="position"
+            :options="positionOptions"
+            emit-value
+            map-options
+          />
+        </div>
       </q-expansion-item>
+      <q-separator class="q-ml-sm q-mr-md" />
       <q-expansion-item
         group
         icon="dashboard"
         label="編輯機台"
-        :model-value="true"
       >
-        <div class="px-2">
-          <q-select outlined label="選擇圖形" :options="shapeOptions" :model-value="shape" @update:model-value="selectShape"></q-select>
+        <div class="flex flex-col p-2 gap-y-2">
+          <q-select
+            outlined
+            v-model="shape"
+            label="選擇圖形"
+            :options="shapeOptions"
+            option-label="label"
+            option-value="value"
+            emit-value
+            map-options
+          ></q-select>
+          <div v-if="shape=='Rect'">
+            <q-input v-model="shapeProperty.width" label="寬度" />
+            <q-input v-model="shapeProperty.height" label="高度" />
+          </div>
+          <div class="flex flex-row gap-x-2">
+            <q-btn class="w-full" unelevated color="secondary" label="刪除" />
+            <q-btn class="w-full" unelevated color="primary" label="確認" @click="predraw" />
+          </div>     
         </div>
-        <div v-if="shape=='Rect'" class="px-2">
-          <q-input v-model="shapeProperty.width" label="寬度" />
-          <q-input v-model="shapeProperty.height" label="高度" />
-        </div>
+        
       </q-expansion-item>
+      <q-separator class="q-ml-sm q-mr-md" />
       <q-expansion-item
         group
         icon="space_dashboard"
         label="編輯底圖"
       >
       </q-expansion-item>
-      <q-space/>
-      <div class="p-1 flex flex-row">
-        <q-btn class="flex-grow" unelevated color="primary" label="確認" @click="predraw" />
-      </div>
     </div>
-    <div class="px-4 w-5/6">
-      <div class="row gap-x-2 q-py-sm">  
+    <div class="px-4 pb-4 w-5/6 relative">
+      <div class="row gap-x-2 q-py-sm items-center">
+        <span>{{sLocation}} / {{sFloor}}</span>
         <q-checkbox label="顯示格線" v-model="grid" />
         <q-space />
-
         <q-btn size="md" class="q-px-sm" icon="zoom_in" @click="zoomIn" outline />
         <q-btn size="md" class="q-px-sm" icon="zoom_out" @click="zoomOut" outline />
       </div>
-      <div class="w-full" ref="container" id="canvas_container"></div>
-      <div class="absolute bottom-40 border"></div>
+
+      <q-scroll-area style="height:calc(100vh - 122px);box-shadow:inset 1px 0 0 #000,inset 0 1px 0 #000,inset -1px 0 0 #000,inset 0 -1px 0 #000">
+        <div class="w-full" ref="container" id="canvas_container"></div>
+      </q-scroll-area>
+      <div v-show="showPreview" :class="[position, 'absolute']" id="preview_container"></div>
     </div>
   </div>
 </template>
@@ -51,32 +121,73 @@
 <script setup lang='ts'>
   import {ref, reactive, onMounted, onBeforeUnmount, watch, computed} from 'vue'
   import Konva from 'konva'
+  import $ from "jquery"
+  const showPreview = ref(true);
+  const positionOptions = [
+    {label:"右上", value:"top-16 right-6"},
+    {label:"左上", value:"top-16 left-6"},
+    {label:"右下", value:"bottom-6 right-6"},
+    {label:"左下", value:"bottom-6 left-6"}
+  ];
 
-  const grid = ref(true)
-  const mode = ref<"v"|"i"|"n">("v")
-  const container = ref(null)
-  let stage = reactive({})
+  const position = ref("top-16 right-6")
 
-  let current = reactive({})
+  const width = ref(1000);
+  const height = ref(800);
+  const location = ["科技", "創新", "力行"].map(l => ({label:l, value:l}));
+  const sLocation = ref("科技")
+  const floor = reactive(computed(() => {
+    let _floor = [];
+    switch (sLocation.value) {
+      case "科技":
+        _floor = ["1F", "2F", "3F", "7F"];
+        break;
+      case "創新":
+        _floor = ["2F", "3F", "4F"];
+        break;
+      case "力行":
+        _floor = ["3F"];
+        break;
+      default:
+        _floor = ["1F", "2F", "3F", "7F"]; 
+        break;
+    }
+    return _floor.map(l => ({label:l , value:l}))
+  }));
 
-  const drop = ref(null)
-  const undo = ref(null)
+  const sFloor = ref("1F");
 
-  let previewLayer = reactive({})
-  let iconLayer = reactive({})
-  let gridLayer = reactive({})
+  watch(floor, (nValue, oValue) => {
+    sFloor.value = nValue[0].value;
+  })
+
+  watch([width, height], () => {
+    updateStageSize();
+  })
+
+  const grid = ref(true);
+  const mode = ref<"v"|"i"|"n">("v");
+  const container = ref(null);
+
+  let previewStage = reactive({});
+
+  let stage = reactive({});
+
+  let current = reactive({});
+
+  const drop = ref(null);
+  const undo = ref(null);
+
+  let previewLayer = reactive({});
+  let iconLayer = reactive({});
+  let gridLayer = reactive({});
   
   const shape = ref("Rect")
-
   const shapeOptions = [
     {label:"矩形", value:"Rect"},
     {label:"圓形", value:"Circle"},
     {label:"楔形", value:"Wedge"}
-  ]
-  
-  const selectShape = (option) => {
-    shape.value = option.value
-  }
+  ];  
 
   const scale = 0.25;
   const GUIDELINE_OFFSET = 5;
@@ -106,7 +217,16 @@
     }
     return options
   }))
+
   // utils
+  const show = () => {
+    showPreview.value = true;
+  }
+
+  const hide = () => {
+    showPreview.value = false;
+  }
+
   function getGuidelineStops(skipItem) {
     const vertical = [0, stage.width()/2, stage.width()];
     const horizontal = [0, stage.height()/2, stage.height()];
@@ -115,7 +235,6 @@
         return
         
       const item = guideItem.getClientRect();
-      console.log(item)
       vertical.push([item.x, item.x + item.width/2, item.x + item.width ]);
       horizontal.push([item.y,  item.y + item.width/2, item.y + item.width]);
     })
@@ -262,6 +381,10 @@
     })
   }
 
+  function map() {
+    
+  }
+
   function zoomIn() {
     const lastScale = stage.scaleX(),
       originY = stage.y(),
@@ -292,9 +415,13 @@
     let currentScaleX = stage.scaleX();
     let currentScaleY = stage.scaleY();
     let previewShape = new Konva[shape.value]({
-      x:-left + (x - 50)*currentScaleX,
-      y:-top + (y - 25)*currentScaleY,
-      ...shapeProperty,
+      x:-left + (x - 50),
+      y:-top + (y - 25),
+      width:100,
+      height:50,
+      fill:"red",
+      opacity:0.3,
+      name:"object"
     });
     if (previewLayer.children.length < 1) {
       current = previewShape;
@@ -417,7 +544,6 @@
       stage.off("mouseenter", enter);
       stage.off("mousemove", move);
       stage.off("mousedown", click);
-      
     } 
   }
 
@@ -429,15 +555,14 @@
     stage.on("mousemove", move);
     stage.on("mousedown", click);
     stage.on("keydown", cancelDraw);
-
   }
 
   // init canvas 
   function initKonva() {
-    let _stage = new Konva.Stage({
+    stage = new Konva.Stage({
       container:"canvas_container",
-      width:1080,
-      height:680
+      width:width.value,
+      height:height.value
     })
 
     // icon圖層
@@ -459,45 +584,76 @@
       draggable:false
     })
 
-    _stage.add(iconLayer)
-    _stage.add(previewLayer)    
-    _stage.add(gridLayer)
-   
-    return _stage
+    stage.add(iconLayer)
+    stage.add(previewLayer)    
+    stage.add(gridLayer)
+
+    const xSize = stage.width(), ySize = stage.height();
+    const xSteps = Math.round(xSize/20), ySteps = Math.round(ySize/20);
+    
+    for (let i=1;i<=xSteps;i++) {
+      gridLayer.add(
+        new Konva.Line({
+          x:0 + i*20,
+          y:0,
+          points:[0,0,0,ySize],
+          stroke:"rgba(0,0,0,0.2)",
+          strokeWidth:1
+        })
+      )
+    }
+    
+    for (let i=1;i<=ySteps;i++) {
+      gridLayer.add(
+        new Konva.Line({
+          x:0,
+          y:20*i,
+          points:[0,0,xSize,0],
+          stroke:"rgb(0,0,0,0.2)",
+          stokeWidth:1
+        })
+      )
+    }
+    gridLayer.batchDraw(); 
+  }
+
+  const updateStageSize = () => {
+    stage = new Konva.Stage({
+      container:"canvas_container",
+      width:width.value,
+      height:height.value
+    });
+
+    stage.add(iconLayer);
+    stage.add(previewLayer);
+    stage.add(gridLayer);
+  }
+
+  const initPreview = () => {
+    const divide = 8;
+    let width = $(".q-scrollarea").width() / divide;
+    let height = $(".q-scrollarea").height() / divide;
+    let maxWidth = 300;
+    let maxHeight = 300;
+    previewStage = new Konva.Stage({
+      container:"preview_container",
+      width:width,
+      height:height,
+    })
+
+    let layer = new Konva.Layer({x:0,y:0});
+   // layer.add(new Konva.Rect({x:0, y:0, width:maxWidth, height:maxHeight, fill:"red"}))
+    layer.add(new Konva.Rect({x:1, y:1, width:width-1, height:height-2, fill:"white",stroke:"#333", strokeWidth:1}));
+
+    previewStage.add(layer)
   }
 
   onMounted(() => {
-    stage = initKonva();
+    initKonva();
+    initPreview();
     window.addEventListener("keydown", cancelDraw);
-      const xSize = stage.width(), ySize = stage.height();
-      const xSteps = Math.round(xSize/20), ySteps = Math.round(ySize/20);
-      for (let i=0;i<=xSteps;i++) {
-        gridLayer.add(
-          new Konva.Line({
-            x:0 + i*20,
-            y:0,
-            points:[0,0,0,ySize],
-            stroke:"rgba(0,0,0,0.2)",
-            strokeWidth:1
-          })
-        )
-      }
-
-      for (let i=0;i<=ySteps;i++) {
-        gridLayer.add(
-          new Konva.Line({
-            x:0,
-            y:20*i,
-            points:[0,0,xSize,0],
-            stroke:"rgb(0,0,0,0.2)",
-            stokeWidth:1
-          })
-        )
-      }
-      gridLayer.batchDraw();
-    
   })
   onBeforeUnmount(() => {
-   // window.removeEventListener("keydown", cancelDraw);
+    window.removeEventListener("keydown", cancelDraw);
   })
 </script>
