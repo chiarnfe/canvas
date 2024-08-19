@@ -2,6 +2,30 @@
   <div class="w-full border" style="height:50px"></div>
   <div class="flex flex-row w-full" style="height:calc(100vh - 50px)">
     <div class="column w-1/6 h-full shadow-md">
+      <div class="flex flex-row gap-x-2 p-2">
+        <q-select
+          class="w-[calc(66%_-_8px)]"
+          outlined
+          label="廠區"
+          option-label="label"
+          option-value="value"
+          v-model="sLocation"
+          :options="location"
+          emit-value
+          map-options
+        />
+        <q-select
+          outlined
+          class="w-1/3"
+          label="樓層"
+          option-label="label"
+          option-value="value"
+          v-model="sFloor"
+          :options="floor"
+          emit-value
+          map-options
+        />
+      </div>
       <q-expansion-item
         group
         icon="aspect_ratio"
@@ -11,38 +35,15 @@
         :default-opened="true"
       >
         <div class="flex flex-col gap-y-2 p-2">
-          <div class="flex flex-row gap-x-2">
-            <q-select
-              class="w-[calc(66%_-_8px)]"
-              outlined
-              label="廠區"
-              option-label="label"
-              option-value="value"
-              v-model="sLocation"
-              :options="location"
-              emit-value
-              map-options
-            />
-            <q-select
-              outlined
-              class="w-1/3"
-              label="樓層"
-              option-label="label"
-              option-value="value"
-              v-model="sFloor"
-              :options="floor"
-              emit-value
-              map-options
-            />
-          </div>
+
           <q-input
             outlined
             label="版面寬度"
             type="number"
             v-model.number="width"
             debounce="600"
-            max="2400"
-            :rules="[val => val <= 2400 || '最大寬度為2400']"
+            max="4500"
+            :rules="[val => val <= 4500 || '最大寬度為4500']"
           />
           <q-input
             outlined
@@ -50,8 +51,8 @@
             type="number"
             v-model.number="height"
             debounce="600"
-            max="2400"
-            :rules="[val => val <= 2400 || '最大高度為2400']"
+            max="4500"
+            :rules="[val => val <= 4500 || '最大高度為4500']"
           />
           <q-select
             outlined
@@ -83,8 +84,31 @@
             map-options
           ></q-select>
           <div v-if="shape=='Rect'">
-            <q-input v-model="shapeProperty.width" label="寬度" />
-            <q-input v-model="shapeProperty.height" label="高度" />
+
+          </div>
+          <div v-if="shape=='Circle'">
+
+          </div>
+          <div v-if="shape=='Wedge'">
+
+          </div>
+          <div v-if="shape=='Ellipse'">
+
+          </div>
+          <div v-if="shape=='Star'">
+
+          </div>
+          <div v-if="shape=='Ring'">
+
+          </div>
+          <div v-if="shape=='Arc'">
+
+          </div>
+          <div v-if="shape=='RegularPolygon'">
+
+          </div>
+          <div>
+
           </div>
           <div class="flex flex-row gap-x-2">
             <q-btn class="w-full" unelevated color="secondary" label="刪除" />
@@ -99,6 +123,32 @@
         icon="space_dashboard"
         label="編輯底圖"
       >
+        <div class="p-2 flex flex-col gap-y-2">
+          <q-input 
+            outlined
+            v-model="blockColor"
+          >
+            <template class="relative" v-slot:prepend>
+              <label class="text-xs absolute" style="top:0.25rem">底色</label>
+              <q-icon name="retangle" color="warning"  />
+            </template>
+            <template v-slot:append>
+              <q-icon name="colorize" class="cursor-pointer">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-color no-header no-footer v-model="blockColor" />
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+          <q-input
+            outlined
+            v-model="blockName"
+            label="區塊名稱"
+          />
+          <div class="flex flex-row justify-end">
+            <q-btn style="width:60px;" color="primary" icon="add_box" @click="attach"  />
+          </div>
+        </div>
       </q-expansion-item>
     </div>
     <div class="px-4 pb-4 w-5/6 relative">
@@ -124,16 +174,16 @@
   import $ from "jquery"
   const showPreview = ref(true);
   const positionOptions = [
-    {label:"右上", value:"top-16 right-6"},
-    {label:"左上", value:"top-16 left-6"},
-    {label:"右下", value:"bottom-6 right-6"},
-    {label:"左下", value:"bottom-6 left-6"}
+    {label:"右上", value:"top-16 right-7"},
+    {label:"左上", value:"top-16 left-7"},
+    {label:"右下", value:"bottom-7 right-7"},
+    {label:"左下", value:"bottom-7 left-7"}
   ];
 
-  const position = ref("top-16 right-6")
+  const position = ref("top-16 right-7")
 
-  const width = ref(1000);
-  const height = ref(800);
+  const width = ref(1800);
+  const height = ref(1200);
   const location = ["科技", "創新", "力行"].map(l => ({label:l, value:l}));
   const sLocation = ref("科技")
   const floor = reactive(computed(() => {
@@ -161,10 +211,6 @@
     sFloor.value = nValue[0].value;
   })
 
-  watch([width, height], () => {
-    updateStageSize();
-  })
-
   const grid = ref(true);
   const mode = ref<"v"|"i"|"n">("v");
   const container = ref(null);
@@ -178,6 +224,8 @@
   const drop = ref(null);
   const undo = ref(null);
 
+  const mesh = 20;
+
   let previewLayer = reactive({});
   let iconLayer = reactive({});
   let gridLayer = reactive({});
@@ -186,37 +234,66 @@
   const shapeOptions = [
     {label:"矩形", value:"Rect"},
     {label:"圓形", value:"Circle"},
-    {label:"楔形", value:"Wedge"}
+    {label:"楔形", value:"Wedge"},
+    {label:"橢圓形", value:"Ellipse"},
+    {label:"星形", value:"Star"},
+    {label:"環形", value:"Ring"},
+    {label:"弧形", value:"Arc"},
+    {label:"正多邊形", value:"RegularPolygon"}
   ];  
 
   const scale = 0.25;
   const GUIDELINE_OFFSET = 5;
   
-  const shapeProperty = reactive(computed(() => {
-    let options = {};
-    switch (shape.value) {
-      case "Rect":{
-        options = {
-          width:100,
-          height:50,
-          fill:"red",
-          opacity:1
-        }
-        break;
-      }
-      case "Circle":{
-        options = {
-          radius:40,
-          fill:"blue",
-          opacity:0.5
-        }
-        break;
-      }
-      default:
-        break;
-    }
-    return options
-  }))
+  const rectOptions = reactive({
+    width:100,
+    height:50,
+  });
+
+  const circleOptions = reactive({
+    radius:50,
+  });
+
+  const wedgeOptions = reactive({
+    radius:60,
+    angle:60,
+    rotation:-90,
+  });
+
+  const ellipseOptions = reactive({
+    radiusX:80,
+    radiusY:40
+  });
+
+  const starOptions = reactive({
+    numPoints:5,
+    innerRadius:40,
+    outerRadius:70
+  });
+
+  const ringOptions = reactive({
+    innerRadius:40,
+    outerRadius:70,
+  });
+
+  const arcOptions = reactive({
+    innerRadius:40,
+    outerRadius:70,
+    angle:60
+  });
+
+  const regpolyOptions = reactive({
+    sides:5,
+    radius:60,
+  });
+
+  const text = ref("");
+
+  const fillColor = ref("red");
+  
+  const blockColor = ref("#0018dd");
+
+  const blockName = ref("");
 
   // utils
   const show = () => {
@@ -557,6 +634,53 @@
     stage.on("keydown", cancelDraw);
   }
 
+  // direction "V" || "H" 
+  const drawGridLine = (direction, mesh) => {
+    const qBool = direction == "V";
+    const scrollarea = $(".q-scrollarea");
+    const qSize = qBool ? scrollarea.width() : scrollarea.height();
+    
+    const size = qBool ? width.value : height.value;
+    const steps = Math.round(size/mesh);
+
+    for (let i=0;i<=steps;i++) {
+      let stroke = i == 0 ? "rgba(0,0,0,0)" : "rgba(0,0,0,0.2)";
+      if (i == steps && (size > qSize)) {
+        stroke = "rgba(0,0,0,0)";  
+      }
+
+      gridLayer.add(
+        new Konva.Line({
+          x:qBool ? i * mesh : 0,
+          y:qBool ? 0 : i * mesh,
+          points: qBool ? [0,0,0,height.value] : [0,0,width.value,0],
+          stroke,
+          strokeWidth:1,
+          name: qBool ? "v-line" : "h-line"
+        })
+      )
+    }
+    if (qBool) {
+      stage.width(width.value);
+    } else {
+      stage.height(height.value);
+    }
+    gridLayer.batchDraw(); 
+  }
+
+  const initGridLayer = () => {
+    drawGridLine("V",mesh);
+    drawGridLine("H",mesh);
+  }
+
+  const startClick = (evt) => {
+    console.log(evt);
+  }
+
+  const attach = () => {
+    stage.on("click", startClick);
+  }
+  
   // init canvas 
   function initKonva() {
     stage = new Konva.Stage({
@@ -587,46 +711,7 @@
     stage.add(iconLayer)
     stage.add(previewLayer)    
     stage.add(gridLayer)
-
-    const xSize = stage.width(), ySize = stage.height();
-    const xSteps = Math.round(xSize/20), ySteps = Math.round(ySize/20);
-    
-    for (let i=1;i<=xSteps;i++) {
-      gridLayer.add(
-        new Konva.Line({
-          x:0 + i*20,
-          y:0,
-          points:[0,0,0,ySize],
-          stroke:"rgba(0,0,0,0.2)",
-          strokeWidth:1
-        })
-      )
-    }
-    
-    for (let i=1;i<=ySteps;i++) {
-      gridLayer.add(
-        new Konva.Line({
-          x:0,
-          y:20*i,
-          points:[0,0,xSize,0],
-          stroke:"rgb(0,0,0,0.2)",
-          stokeWidth:1
-        })
-      )
-    }
-    gridLayer.batchDraw(); 
-  }
-
-  const updateStageSize = () => {
-    stage = new Konva.Stage({
-      container:"canvas_container",
-      width:width.value,
-      height:height.value
-    });
-
-    stage.add(iconLayer);
-    stage.add(previewLayer);
-    stage.add(gridLayer);
+    initGridLayer();
   }
 
   const initPreview = () => {
@@ -642,12 +727,27 @@
     })
 
     let layer = new Konva.Layer({x:0,y:0});
-   // layer.add(new Konva.Rect({x:0, y:0, width:maxWidth, height:maxHeight, fill:"red"}))
-    layer.add(new Konva.Rect({x:1, y:1, width:width-1, height:height-2, fill:"white",stroke:"#333", strokeWidth:1}));
+    // layer.add(new Konva.Rect({x:0, y:0, width:maxWidth, height:maxHeight, fill:"red"}))
+    layer.add(new Konva.Rect({x:1, y:1, width:width-3, height:height-3, fill:"white",stroke:"#333", strokeWidth:1}));
 
     previewStage.add(layer)
   }
 
+  const updateWidth = (value) => {
+    width.value = Number(value);
+    setTimeout(() => {
+      gridLayer.find(".v-line").forEach(line => line.destroy());
+      drawGridLine("V", mesh);
+    }, 600)
+  }
+
+  const updateHeight = (value) => {
+    height.value = Number(value);
+    setTimeout(() => {
+      gridLayer.find(".h-line").forEach(line => line.destroy())
+      drawGridLine("H", mesh);
+    }, 600)
+  }
   onMounted(() => {
     initKonva();
     initPreview();
