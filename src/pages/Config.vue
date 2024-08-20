@@ -35,7 +35,6 @@
         :default-opened="true"
       >
         <div class="flex flex-col gap-y-2 p-2">
-
           <q-input
             outlined
             label="版面寬度"
@@ -43,7 +42,7 @@
             v-model.number="width"
             debounce="600"
             max="4500"
-            :rules="[val => val <= 4500 || '最大寬度為4500']"
+            :rules="[(val:number) => val <= 4500 || '最大寬度為4500']"
           />
           <q-input
             outlined
@@ -52,7 +51,7 @@
             v-model.number="height"
             debounce="600"
             max="4500"
-            :rules="[val => val <= 4500 || '最大高度為4500']"
+            :rules="[(val:number) => val <= 4500 || '最大高度為4500']"
           />
           <q-select
             outlined
@@ -73,6 +72,16 @@
         label="編輯機台"
       >
         <div class="flex flex-col p-2 gap-y-2">
+          <q-select 
+            outlined
+            v-model="category"
+            label="類別"
+            :options="categoryOptions"
+            option-label="label"
+            option-value="value"
+            emit-value
+            map-options
+          />
           <q-select
             outlined
             v-model="shape"
@@ -83,36 +92,85 @@
             emit-value
             map-options
           ></q-select>
-          <div v-if="shape=='Rect'">
-
+          <div v-if="shape=='Rect'" class="flex flex-row gap-x-2">
+            <q-input outlined class="w-[calc(50%_-_4px)]" v-model.number="rectOptions.width" label="長度" />
+            <q-input outlined class="w-[calc(50%_-_4px)]" v-model.number="rectOptions.height" label="高度" />
           </div>
           <div v-if="shape=='Circle'">
-
+            <q-input outlined v-model.number="circleOptions.radius" label="圓半徑" />
           </div>
-          <div v-if="shape=='Wedge'">
-
-          </div>
+          <!-- <div v-if="shape=='Wedge'">  
+          </div> -->
           <div v-if="shape=='Ellipse'">
-
+            <q-input outlined v-model.number="ellipseOptions.radiusX" label="主軸半徑" />
+            <q-input outlined v-model.number="ellipseOptions.radiusY" label="次軸半徑" />
           </div>
-          <div v-if="shape=='Star'">
-
-          </div>
+          <!-- <div v-if="shape=='Star'">
+          </div> -->
           <div v-if="shape=='Ring'">
-
-          </div>
-          <div v-if="shape=='Arc'">
-
-          </div>
-          <div v-if="shape=='RegularPolygon'">
-
+            <q-input 
+              outlined
+              type="number"
+              v-model.number="ringOptions.outerRadius" 
+              label="外圓半徑"
+              :rules="[(val:number) => val > ringOptions.innerRadius || '外圓半徑要大於內圓半徑']" 
+            />
+            <q-input 
+              outlined
+              class="q-mt-sm"
+              type="number"
+              label="內圓半徑" 
+              v-model.number="ringOptions.innerRadius" 
+              :rules="[(val:number) => val < ringOptions.outerRadius || '內圓半徑要小於外圓半徑']" 
+            />
+           </div>
+          <!-- <div v-if="shape=='Arc'">
+          </div> -->
+          <div v-if="shape=='RegularPolygon'" class="flex flex-row gap-x-2">
+            <q-input
+              outlined
+              class="w-[calc(50%_-_4px)]"
+              label="邊數"
+              type="number"
+              v-model.number="regpolyOptions.sides"
+              :rules="[(val:number) => val >= 3 || '']"
+            />
+            <q-input 
+              outlined
+              class="w-[calc(50%_-_4px)]"
+              label="邊心距"
+              type="number"
+              v-model.number="regpolyOptions.radius"
+            />
           </div>
           <div>
-
+            <q-input
+              outlined
+              label="顏色"
+              v-model="fillColor"
+            >
+              <template v-slot:before>
+                <span class="w-6 h-4" :style="{backgroundColor:fillColor}"></span>
+              </template>
+              <template v-slot:append>
+                <q-icon name="colorize" class="cursor-pointer">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <q-color no-header no-footer v-model="fillColor" />
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+            <q-input
+              outlined
+              label="機台名稱"
+              v-model="text"
+              class="q-mt-sm"
+            />
           </div>
-          <div class="flex flex-row gap-x-2">
-            <q-btn class="w-full" unelevated color="secondary" label="刪除" />
-            <q-btn class="w-full" unelevated color="primary" label="確認" @click="predraw" />
+          <div class="flex flex-row gap-x-2 justify-end">
+            <q-btn v-show="mode=='v'" unelevated color="negative" label="刪除" />
+            <!-- <q-btn class="w-full" unelevated color="secondary" label="" /> -->
+            <q-btn v-show="mode=='i'" unelevated color="primary" label="新增" @click="predraw" />
           </div>     
         </div>
         
@@ -128,9 +186,9 @@
             outlined
             v-model="blockColor"
           >
-            <template class="relative" v-slot:prepend>
+            <template v-slot:prepend>
               <label class="text-xs absolute" style="top:0.25rem">底色</label>
-              <q-icon name="retangle" color="warning"  />
+              <span class="w-6 h-4" :style="{backgroundColor:blockColor}"></span>
             </template>
             <template v-slot:append>
               <q-icon name="colorize" class="cursor-pointer">
@@ -146,14 +204,14 @@
             label="區塊名稱"
           />
           <div class="flex flex-row justify-end">
-            <q-btn style="width:60px;" color="primary" icon="add_box" @click="attach"  />
+            <q-btn v-show="mode=='v'" unelevated style="width:60px" color="negative" label="刪除" />
+            <q-btn v-show="mode=='i'" unelevated style="width:60px;" color="primary" label="新增"/>
           </div>
         </div>
       </q-expansion-item>
     </div>
     <div class="px-4 pb-4 w-5/6 relative">
       <div class="row gap-x-2 q-py-sm items-center">
-        <span>{{sLocation}} / {{sFloor}}</span>
         <q-checkbox label="顯示格線" v-model="grid" />
         <q-space />
         <q-btn size="md" class="q-px-sm" icon="zoom_in" @click="zoomIn" outline />
@@ -171,6 +229,7 @@
 <script setup lang='ts'>
   import {ref, reactive, onMounted, onBeforeUnmount, watch, computed} from 'vue'
   import Konva from 'konva'
+  
   import $ from "jquery"
   const showPreview = ref(true);
   const positionOptions = [
@@ -207,43 +266,61 @@
 
   const sFloor = ref("1F");
 
-  watch(floor, (nValue, oValue) => {
+  watch(floor, (nValue,_) => {
     sFloor.value = nValue[0].value;
   })
 
   const grid = ref(true);
-  const mode = ref<"v"|"i"|"n">("v");
-  const container = ref(null);
+  const mode = ref<"v"|"i">("i");
+  const container = ref<HTMLDivElement|null>(null);
 
-  let previewStage = reactive({});
+  let previewStage = reactive<{}|Konva.Stage>({});
 
-  let stage = reactive({});
+  let stage = reactive<{}|Konva.Stage>({});
 
-  let current = reactive({});
+  let current = reactive<Konva.Shape[]>([]);
 
-  const drop = ref(null);
-  const undo = ref(null);
+  const verticalAlign = reactive<number[]>([]);
+  const horizontalAligin = reactive<number[]>([]);
+  //const drop = ref(null);
+  //const undo = ref(null);
 
   const mesh = 20;
 
-  let previewLayer = reactive({});
-  let iconLayer = reactive({});
-  let gridLayer = reactive({});
+  let previewLayer = reactive(new Konva.Layer({x:0,y:0, draggable:true}));
+  let iconLayer = reactive<Konva.Layer>(new Konva.Layer({x:0,y:0,draggable:false}));
+  let gridLayer = reactive<Konva.Layer>(new Konva.Layer({x:0,y:0,draggable:false}));
   
-  const shape = ref("Rect")
+  const shape = ref<"Rect" | "Circle" | "Ellipse" | "Ring" | "RegularPolygon">("Rect")
   const shapeOptions = [
     {label:"矩形", value:"Rect"},
     {label:"圓形", value:"Circle"},
-    {label:"楔形", value:"Wedge"},
+    //{label:"楔形", value:"Wedge"},
     {label:"橢圓形", value:"Ellipse"},
-    {label:"星形", value:"Star"},
+    //{label:"星形", value:"Star"},
     {label:"環形", value:"Ring"},
-    {label:"弧形", value:"Arc"},
+    //{label:"弧形", value:"Arc"},
     {label:"正多邊形", value:"RegularPolygon"}
-  ];  
+  ];
+
+  const category = ref("CP");
+  const categoryOptions = ["CP", "FT", "氮氣櫃", "溫溼度監控"].map(l => ({label:l, value:l}));
 
   const scale = 0.25;
   const GUIDELINE_OFFSET = 5;
+
+  const nodeOptions = reactive<Konva.ShapeConfig>(computed(() => {
+    let options = {};
+    switch (shape.value) {
+      case "Rect":{
+        options = rectOptions
+        break;
+      }
+      default:
+        break;
+    }
+    return options
+  }))
   
   const rectOptions = reactive({
     width:100,
@@ -253,34 +330,33 @@
   const circleOptions = reactive({
     radius:50,
   });
-
-  const wedgeOptions = reactive({
-    radius:60,
-    angle:60,
-    rotation:-90,
-  });
+  // const wedgeOptions = reactive({
+  //   radius:60,
+  //   angle:60,
+  //   rotation:-90,
+  // });
 
   const ellipseOptions = reactive({
     radiusX:80,
     radiusY:40
   });
 
-  const starOptions = reactive({
-    numPoints:5,
-    innerRadius:40,
-    outerRadius:70
-  });
+  // const starOptions = reactive({
+  //   numPoints:5,
+  //   innerRadius:40,
+  //   outerRadius:70
+  // });
 
   const ringOptions = reactive({
     innerRadius:40,
     outerRadius:70,
   });
 
-  const arcOptions = reactive({
-    innerRadius:40,
-    outerRadius:70,
-    angle:60
-  });
+  // const arcOptions = reactive({
+  //   innerRadius:40,
+  //   outerRadius:70,
+  //   angle:60
+  // });
 
   const regpolyOptions = reactive({
     sides:5,
@@ -289,9 +365,9 @@
 
   const text = ref("");
 
-  const fillColor = ref("red");
+  const fillColor = ref<string | CanvasGradient | undefined>("red");
   
-  const blockColor = ref("#0018dd");
+  const blockColor = ref<string | CanvasGradient | undefined>("#0018dd");
 
   const blockName = ref("");
 
@@ -458,18 +534,9 @@
     })
   }
 
-  function map() {
-    
-  }
-
   function zoomIn() {
-    const lastScale = stage.scaleX(),
-      originY = stage.y(),
-      originX = stage.x(),
-      width = stage.width(),
-      height = stage.height();
-    
-    stage.scale({x:scale+lastScale, y:scale+lastScale }) 
+    const lastScale = stage.scaleX();
+    stage.scale({x:scale+lastScale, y:scale+lastScale });
   }
 
   function zoomOut() {
@@ -486,38 +553,42 @@
   }
   
   // interaction with canvas
-  function enter(evt) {
-    let {top, left} = container.value.getBoundingClientRect();
+  function enter(evt:Konva.KonvaEventObject<MouseEvent>) {
+    let {top, left} = container.value!.getBoundingClientRect();
     let {x, y} = evt.evt;
-    let currentScaleX = stage.scaleX();
-    let currentScaleY = stage.scaleY();
+    let currentScaleX = 0, currentScaleY = 0;
+    
+    if (stage instanceof Konva.Stage) {
+      currentScaleX = stage.scaleX();
+      currentScaleY = stage.scaleY();
+    }
+
     let previewShape = new Konva[shape.value]({
       x:-left + (x - 50),
       y:-top + (y - 25),
-      width:100,
-      height:50,
-      fill:"red",
+      fill:fillColor.value,
       opacity:0.3,
-      name:"object"
+      name:"object",
+      ...nodeOptions.value
     });
+    
     if (previewLayer.children.length < 1) {
-      current = previewShape;
+      current.push(previewShape);
       previewLayer.add(previewShape);
       previewLayer.draw();
       previewShape.startDrag();
     }
   }
 
-  function move(evt) {
+  function move() {
     let children = previewLayer.children[0];
     if (previewLayer.children.length > 1) previewLayer.children.pop()
-    current = children;
+    current.push(children)
     if (current)
-      current?.startDrag();
+      current?.[0].startDrag();
   }
 
   function stopmove() {
-    current = {}
     previewLayer.removeChildren();
   }
 
@@ -554,69 +625,173 @@
 
   // TODO 新增元素的監聽事件
   // 選取
-  const elementMousedownEvent = (evt) => {
+  const elementMousedownEvent = (evt:Konva.KonvaEventObject<MouseEvent>) => {
     evt.target.startDrag();
     iconLayer.on("dragmove", dragStart)
   }
 
-  const elementMouseupEvent = (evt) => {
+  const elementMouseupEvent = (evt:Konva.KonvaEventObject<MouseEvent>) => {
     evt.target.stopDrag();
     iconLayer.on("dragend", dragEnd)    
   }
   // hover
   const elementMouseoverEvent = (evt) => {
-    if (model.value == "v") {
+    console.log(evt)
+    if (mode.value == "i") {
       evt.target.stroke("black");
       evt.target.strokeWidth(2);
     }
   }
   // mouseleave 
   const elementMouseleaveEvent = (evt) => {
+    console.log(evt)
     evt.target.stroke();
     evt.target.strokeWidth(0);
   }
 
-  function click(evt) {
-    current.startDrag(); 
-    let {top, left, width, height} = container.value.getBoundingClientRect();
+  function click(evt:Konva.KonvaEventObject<MouseEvent>) {
+    
+    current?.[0].startDrag();
+    let drawShape:Konva.Shape | undefined = undefined;
+    let {top, left, width, height} = container.value!.getBoundingClientRect();
     let {x, y} = evt.evt; 
-    const scaleX = stage.scaleX();
-    const scaleY = stage.scaleY();
-    let drawShape = new Konva[shape.value]({
-      x: - left + (x  - 50)*scaleX,
-      y: - top + (y - 25)*scaleY,
-      width:100,
-      height:50,
-      fill:"red",
-      opacity:1,
-      name:"object"
-    });
-    drawShape.on("mousedown",elementMousedownEvent);
-    drawShape.on("mouseup", elementMouseupEvent);
-    drawShape.on("mouseover", (event) => { 
-      // TODO 判斷tooltip產生的位置, tooltip anchor起始點為center middle, canvas的正中心
-      const 
-        cX = event.target.attrs.x + event.target.attrs.width/2, 
-        cY = event.target.attrs.y + event.target.attrs.height/2;
-      if (mode.value == "v") {
-        current = event.target;
-        event.target.stroke("black");
-        event.target.strokeWidth(2);
+    let scaleX = 0,scaleY = 0; 
+    if (stage instanceof Konva.Stage) {
+      scaleX = stage.scaleX(); 
+      scaleY = stage.scaleY();
+    }
+    
+    const group = new Konva.Group()
+    switch (shape.value) {
+      case "Rect":{
+        console.log("test")
+        let originX = -left + x - nodeOptions.value.width/2;
+        let originY = -top + y - nodeOptions.value.height/2;
+
+        drawShape = new Konva.Rect({
+          x:originX,
+          y:originY,
+          width:nodeOptions.value.width,
+          height:nodeOptions.value.height,
+          fill:fillColor.value,
+        });
+
+        group.setAttrs({
+          x:originX,
+          y:originY,
+          width:nodeOptions.value.width,
+          height:nodeOptions.value.height,
+        });
+
+        const estTextWidth = new Konva.Text({text:text.value, fontSize:20}).measureSize();
+
+        const txt = new Konva.Text({
+          x:-left+x-estTextWidth.width/2,
+          y:-top+y-estTextWidth.height/2,
+          width:estTextWidth.width,
+          height:estTextWidth.height,
+          text:text.value,
+          fill:'white'
+        });
+
+        group.add(drawShape);
+        group.add(txt);
+        // let _x = -left + (x - nodeOptions.value.width/2);
+        // let _y = -top + (y - nodeOptions.value.width/2);
+
+        // const estimateText = new Konva.Text({text:text.value, fontSize:20}).measureSize();
+        // console.l
+        // const txt = new Konva.Text({
+        //   x:_x + estimateText.width/2,
+        //   y:_y + estimateText.height/2,
+        //   width:estimateText.width,
+        //   height:estimateText.height,
+        //   fontSize:20,
+        //   text:text.value,
+        //   fill:"white"
+        // })
+        // group.setAttrs({
+        //   x:_x,
+        //   y:_y,
+        //   width:nodeOptions.value.width,
+        //   height:nodeOptions.value.height,
+        //   name:"tesst"
+        // })
+
+        // drawShape = new Konva.Rect({
+        //   x:_x,
+        //   y:_y,
+        //   width:nodeOptions.value.width,
+        //   height:nodeOptions.value.height,
+        //   fill:fillColor.value,
+        //   name:category.value,
+        // });
+
+        // group.add(drawShape);
+        // group.add(txt);
+        break;
       }
-    });
-    drawShape.on("mouseleave", (event) => {
-      if (mode.value == "v") {
-        event.target.stroke();
-        event.target.strokeWidth(0); 
+      case "Ellipse":{
+
+        break;
       }
-    });
-    iconLayer.add(drawShape);
-    iconLayer.draw();
+      case "Circle":{
+
+        break;
+      }
+      case "RegularPolygon":{
+
+        break;
+      }
+      case "Ring":{
+        
+        break;
+      }
+    }
+    
+    if (drawShape) {
+      drawShape.on("mousedown", elementMousedownEvent);
+      drawShape.on("mouseup", elementMouseupEvent);
+      iconLayer.add(group);
+      iconLayer.draw();
+
+      console.log(iconLayer)
+    }
+    // let drawShape = new Konva[shape.value]({
+    //   x: - left + (x  - 50)*scaleX,
+    //   y: - top + (y - 25)*scaleY,
+    //   fill:fillColor.value,
+    //   opacity:1,
+    //   name:text.value,
+    //   ...nodeOptions.value
+    // });
+
+    
+    // drawShape.on("mousedown",elementMousedownEvent);
+    // drawShape.on("mouseup", elementMouseupEvent);
+    // drawShape.on("mouseover", (event:MouseEvent) => { 
+    //   // TODO 判斷tooltip產生的位置, tooltip anchor起始點為center middle, canvas的正中心
+    //   const 
+    //     cX = event.target.attrs.x + event.target.attrs.width/2, 
+    //     cY = event.target.attrs.y + event.target.attrs.height/2;
+    //   if (mode.value == "v") {
+    //     current = event.target;
+    //     event.target.stroke("black");
+    //     event.target.strokeWidth(2);
+    //   }
+    // });
+    // drawShape.on("mouseleave", (event) => {
+    //   if (mode.value == "v") {
+    //     event.target.stroke();
+    //     event.target.strokeWidth(0); 
+    //   }
+    // });
+    // iconLayer.add(drawShape);
+    // iconLayer.draw();
   }
 
   function cancelDraw(evt) {
     if (evt.key == "Escape" || evt.type == "mouseleave") {
-      mode.value = "v";
       stopmove();
       stage.off("mouseenter", enter);
       stage.off("mousemove", move);
@@ -628,14 +803,15 @@
     mode.value = "i";
     previewLayer.removeChildren(); 
     let {top, left, width, height} = container.value.getBoundingClientRect();
-    stage.on("mouseenter", enter);
-    stage.on("mousemove", move);
-    stage.on("mousedown", click);
-    stage.on("keydown", cancelDraw);
+    if (stage instanceof Konva.Stage) {
+      stage.on("mouseenter", enter);
+      stage.on("mousemove", move);
+      stage.on("mousedown", click);
+      stage.on("keydown", cancelDraw);
+    }
   }
 
-  // direction "V" || "H" 
-  const drawGridLine = (direction, mesh) => {
+  const drawGridLine = (direction:"V"|"H", mesh:number) => {
     const qBool = direction == "V";
     const scrollarea = $(".q-scrollarea");
     const qSize = qBool ? scrollarea.width() : scrollarea.height();
@@ -660,11 +836,13 @@
         })
       )
     }
-    if (qBool) {
-      stage.width(width.value);
-    } else {
-      stage.height(height.value);
-    }
+
+    if (stage instanceof Konva.Stage)
+      if (qBool) {
+        stage.width(width.value);
+      } else {
+        stage.height(height.value);
+      }
     gridLayer.batchDraw(); 
   }
 
@@ -687,53 +865,35 @@
       container:"canvas_container",
       width:width.value,
       height:height.value
-    })
-
-    // icon圖層
-    iconLayer = new Konva.Layer({
-      x:0,
-      y:0,
-      draggable:false,
-    }); 
-    // preview圖層
-    previewLayer = new Konva.Layer({
-      x:0,
-      y:0,
-      draggable:true
     });
-    // 格線圖層
-    gridLayer = new Konva.Layer({
-      x:0,
-      y:0,
-      draggable:false
-    })
 
-    stage.add(iconLayer)
-    stage.add(previewLayer)    
-    stage.add(gridLayer)
+    if (stage instanceof Konva.Stage) {
+      stage.add(iconLayer)
+      stage.add(previewLayer)    
+      stage.add(gridLayer)
+    }
     initGridLayer();
   }
 
   const initPreview = () => {
     const divide = 8;
-    let width = $(".q-scrollarea").width() / divide;
-    let height = $(".q-scrollarea").height() / divide;
-    let maxWidth = 300;
-    let maxHeight = 300;
+    let width = ($(".q-scrollarea")?.width() ?? 0) / divide;
+    let height = ($(".q-scrollarea")?.height() ?? 0) / divide;
+    
     previewStage = new Konva.Stage({
       container:"preview_container",
       width:width,
       height:height,
     })
 
-    let layer = new Konva.Layer({x:0,y:0});
+    let layer = new Konva.Layer({x:0,y:0, draggable:false});
     // layer.add(new Konva.Rect({x:0, y:0, width:maxWidth, height:maxHeight, fill:"red"}))
     layer.add(new Konva.Rect({x:1, y:1, width:width-3, height:height-3, fill:"white",stroke:"#333", strokeWidth:1}));
-
-    previewStage.add(layer)
+    if (previewStage instanceof Konva.Stage)
+      previewStage.add(layer)
   }
 
-  const updateWidth = (value) => {
+  const updateWidth = (value:string) => {
     width.value = Number(value);
     setTimeout(() => {
       gridLayer.find(".v-line").forEach(line => line.destroy());
@@ -741,7 +901,7 @@
     }, 600)
   }
 
-  const updateHeight = (value) => {
+  const updateHeight = (value:string) => {
     height.value = Number(value);
     setTimeout(() => {
       gridLayer.find(".h-line").forEach(line => line.destroy())
