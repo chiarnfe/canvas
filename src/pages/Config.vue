@@ -10,7 +10,7 @@
           option-label="label"
           option-value="value"
           v-model="sLocation"
-          :options="location"
+          :options="locationOptions"
           emit-value
           map-options
         />
@@ -21,7 +21,7 @@
           option-label="label"
           option-value="value"
           v-model="sFloor"
-          :options="floor"
+          :options="floorOptions"
           emit-value
           map-options
         />
@@ -74,7 +74,7 @@
         <div class="flex flex-col p-2 gap-y-2">
           <q-select 
             outlined
-            v-model="category"
+            v-model="eqpProps.category"
             label="類別"
             :options="categoryOptions"
             option-label="label"
@@ -93,17 +93,27 @@
             map-options
           ></q-select>
           <div v-if="shape=='Rect'" class="flex flex-row gap-x-2">
-            <q-input outlined class="w-[calc(50%_-_4px)]" v-model.number="rectOptions.width" label="長度" />
-            <q-input outlined class="w-[calc(50%_-_4px)]" v-model.number="rectOptions.height" label="高度" />
+            <q-input outlined class="w-[calc(50%_-_4px)]" v-model.number="rectProps.width" label="長度" />
+            <q-input outlined class="w-[calc(50%_-_4px)]" v-model.number="rectProps.height" label="高度" />
           </div>
           <div v-if="shape=='Circle'">
-            <q-input outlined v-model.number="circleOptions.radius" label="圓半徑" />
+            <q-input outlined v-model.number="circleProps.radius" label="圓半徑" />
           </div>
           <!-- <div v-if="shape=='Wedge'">  
           </div> -->
-          <div v-if="shape=='Ellipse'">
-            <q-input outlined v-model.number="ellipseOptions.radiusX" label="主軸半徑" />
-            <q-input outlined v-model.number="ellipseOptions.radiusY" label="次軸半徑" />
+          <div v-if="shape=='Ellipse'" class="flex flex-row gap-x-2">
+            <q-input 
+              outlined 
+              class="w-[calc(50%_-_4px)]"
+              v-model.number="ellipseProps.radiusX" 
+              label="主軸半徑" 
+            />
+            <q-input 
+              outlined 
+              class="w-[calc(50%_-_4px)]"
+              v-model.number="ellipseProps.radiusY" 
+              label="次軸半徑" 
+            />
           </div>
           <!-- <div v-if="shape=='Star'">
           </div> -->
@@ -111,17 +121,17 @@
             <q-input 
               outlined
               type="number"
-              v-model.number="ringOptions.outerRadius" 
+              v-model.number="ringProps.outerRadius" 
               label="外圓半徑"
-              :rules="[(val:number) => val > ringOptions.innerRadius || '外圓半徑要大於內圓半徑']" 
+              :rules="[(val:number) => val > ringProps.innerRadius || '外圓半徑要大於內圓半徑']" 
             />
             <q-input 
               outlined
               class="q-mt-sm"
               type="number"
               label="內圓半徑" 
-              v-model.number="ringOptions.innerRadius" 
-              :rules="[(val:number) => val < ringOptions.outerRadius || '內圓半徑要小於外圓半徑']" 
+              v-model.number="ringProps.innerRadius" 
+              :rules="[(val:number) => val < ringProps.outerRadius || '內圓半徑要小於外圓半徑']" 
             />
            </div>
           <!-- <div v-if="shape=='Arc'">
@@ -132,30 +142,31 @@
               class="w-[calc(50%_-_4px)]"
               label="邊數"
               type="number"
-              v-model.number="regpolyOptions.sides"
-              :rules="[(val:number) => val >= 3 || '']"
+              :min="3"
+              v-model.number="regpolyProps.sides"
+              :rules="[(val:number) => val >= 3 || '邊數必須大於等於3']"
             />
             <q-input 
               outlined
               class="w-[calc(50%_-_4px)]"
               label="邊心距"
               type="number"
-              v-model.number="regpolyOptions.radius"
+              v-model.number="regpolyProps.radius"
             />
           </div>
-          <div>
+          <div class="flex flex-col gap-y-2">
             <q-input
               outlined
               label="顏色"
-              v-model="fillColor"
+              v-model="eqpProps.fill"
             >
               <template v-slot:before>
-                <span class="w-6 h-4" :style="{backgroundColor:fillColor}"></span>
+                <span class="w-6 h-4" :style="{backgroundColor:eqpProps.fill}"></span>
               </template>
               <template v-slot:append>
                 <q-icon name="colorize" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-color no-header no-footer v-model="fillColor" />
+                    <q-color no-header no-footer v-model="eqpProps.fill" />
                   </q-popup-proxy>
                 </q-icon>
               </template>
@@ -163,9 +174,35 @@
             <q-input
               outlined
               label="機台名稱"
-              v-model="text"
-              class="q-mt-sm"
+              v-model="eqpProps.text"
             />
+            <div class="flex flex-row gap-x-2">
+              <q-input
+                outlined
+                class="w-[calc(60%_-_4px)]"
+                label="字體顏色"
+                v-model="eqpProps.color"
+              >
+                <template v-slot:append>
+                  <q-icon name="colorize" class="cursor-pointer">
+                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                      <q-color no-header no-footer v-model="eqpProps.color" />
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+              <q-select
+                outlined
+                class="w-[calc(40%_-_4px)]"
+                label="字體大小"
+                option-label="label"
+                option-value="value"
+                v-model="eqpProps.fontSize"
+                :options="fontSizeOptions"
+                emit-value
+                map-options
+              />
+            </div>
           </div>
           <div class="flex flex-row gap-x-2 justify-end">
             <q-btn v-show="mode=='v'" unelevated color="negative" label="刪除" />
@@ -184,23 +221,23 @@
         <div class="p-2 flex flex-col gap-y-2">
           <q-input 
             outlined
-            v-model="blockColor"
+            v-model="blockProps.fill"
           >
             <template v-slot:prepend>
               <label class="text-xs absolute" style="top:0.25rem">底色</label>
-              <span class="w-6 h-4" :style="{backgroundColor:blockColor}"></span>
+              <span class="w-6 h-4" :style="{backgroundColor:blockProps.fill}"></span>
             </template>
             <template v-slot:append>
               <q-icon name="colorize" class="cursor-pointer">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-color no-header no-footer v-model="blockColor" />
+                  <q-color no-header no-footer v-model="blockProps.fill" />
                 </q-popup-proxy>
               </q-icon>
             </template>
           </q-input>
           <q-input
             outlined
-            v-model="blockName"
+            v-model="blockProps.name"
             label="區塊名稱"
           />
           <div class="flex flex-row justify-end">
@@ -231,21 +268,131 @@
   import Konva from 'konva'
   
   import $ from "jquery"
+
   const showPreview = ref(true);
+  const position = ref("top-16 right-7")
+
+  const width = ref(1800);
+  const height = ref(1200);
+  const sLocation = ref("科技");
+
+  const sFloor = ref("1F");
+
+  const grid = ref(true);
+  const mode = ref<"v"|"i">("i");
+  const container = ref<HTMLDivElement|null>(null);
+
+  let previewStage = reactive<{}|Konva.Stage>({});
+
+  let stage = reactive<{}|Konva.Stage>({});
+
+  let current = reactive<Konva.Shape[]>([]);
+
+  let verticalAlign = reactive<number[]>([]);
+  let horizontalAligin = reactive<number[]>([]);
+  //const drop = ref(null);
+  //const undo = ref(null);
+
+  const mesh = 20;
+
+  let previewLayer = reactive(new Konva.Layer({x:0,y:0, draggable:true}));
+  let iconLayer = reactive<Konva.Layer>(new Konva.Layer({x:0,y:0,draggable:false}));
+  let gridLayer = reactive<Konva.Layer>(new Konva.Layer({x:0,y:0,draggable:false}));
+  
+  const shape = ref<"Rect" | "Circle" | "Ellipse" | "Ring" | "RegularPolygon">("Rect")
+
+  const scale = 0.25;
+  const GUIDELINE_OFFSET = 5;
+  
+  const rectProps = reactive({
+    width:100,
+    height:50,
+  });
+
+  const circleProps = reactive({
+    radius:50,
+  });
+  // const wedgeOptions = reactive({
+  //   radius:60,
+  //   angle:60,
+  //   rotation:-90,
+  // });
+
+  const ellipseProps = reactive({
+    radiusX:80,
+    radiusY:40
+  });
+
+  // const starOptions = reactive({
+  //   numPoints:5,
+  //   innerRadius:40,
+  //   outerRadius:70
+  // });
+
+  const ringProps = reactive({
+    innerRadius:40,
+    outerRadius:70,
+  });
+
+  // const arcOptions = reactive({
+  //   innerRadius:40,
+  //   outerRadius:70,
+  //   angle:60
+  // });
+
+  const regpolyProps = reactive({
+    sides:5,
+    radius:60,
+  });
+
+  const nodeProps = reactive<Konva.ShapeConfig>(computed(() => {
+    let options = {};
+    switch (shape.value) {
+      case "Rect":{
+        options = rectProps
+        break;
+      }
+      case "Circle":{
+        options = circleProps
+        break;
+      }
+      case "Ellipse":{
+        options = ellipseProps
+        break;
+      }
+      case "RegularPolygon":{
+        options = regpolyProps
+        break;
+      }
+      case "Ring":{
+        options = ringProps
+        break;
+      }
+    }
+    return options
+  }));
+
+  const eqpProps = reactive({
+    category:"CP",
+    text:"",
+    fill:"red",
+    fontSize:20,
+    color:"black"
+  });
+  
+  const blockProps = reactive({
+    fill:"#0018dd",
+    name:""
+  });
+
   const positionOptions = [
     {label:"右上", value:"top-16 right-7"},
     {label:"左上", value:"top-16 left-7"},
     {label:"右下", value:"bottom-7 right-7"},
     {label:"左下", value:"bottom-7 left-7"}
   ];
-
-  const position = ref("top-16 right-7")
-
-  const width = ref(1800);
-  const height = ref(1200);
-  const location = ["科技", "創新", "力行"].map(l => ({label:l, value:l}));
-  const sLocation = ref("科技")
-  const floor = reactive(computed(() => {
+  const locationOptions = ["科技", "創新", "力行"].map(l => ({label:l, value:l}));
+  const floorOptions = reactive(computed(() => {
     let _floor = [];
     switch (sLocation.value) {
       case "科技":
@@ -263,35 +410,8 @@
     }
     return _floor.map(l => ({label:l , value:l}))
   }));
-
-  const sFloor = ref("1F");
-
-  watch(floor, (nValue,_) => {
-    sFloor.value = nValue[0].value;
-  })
-
-  const grid = ref(true);
-  const mode = ref<"v"|"i">("i");
-  const container = ref<HTMLDivElement|null>(null);
-
-  let previewStage = reactive<{}|Konva.Stage>({});
-
-  let stage = reactive<{}|Konva.Stage>({});
-
-  let current = reactive<Konva.Shape[]>([]);
-
-  const verticalAlign = reactive<number[]>([]);
-  const horizontalAligin = reactive<number[]>([]);
-  //const drop = ref(null);
-  //const undo = ref(null);
-
-  const mesh = 20;
-
-  let previewLayer = reactive(new Konva.Layer({x:0,y:0, draggable:true}));
-  let iconLayer = reactive<Konva.Layer>(new Konva.Layer({x:0,y:0,draggable:false}));
-  let gridLayer = reactive<Konva.Layer>(new Konva.Layer({x:0,y:0,draggable:false}));
-  
-  const shape = ref<"Rect" | "Circle" | "Ellipse" | "Ring" | "RegularPolygon">("Rect")
+  const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map(num => ({label:num.toString(), value:num}));
+  const categoryOptions = ["CP", "FT", "氮氣櫃", "溫溼度監控"].map(l => ({label:l, value:l}));
   const shapeOptions = [
     {label:"矩形", value:"Rect"},
     {label:"圓形", value:"Circle"},
@@ -303,73 +423,9 @@
     {label:"正多邊形", value:"RegularPolygon"}
   ];
 
-  const category = ref("CP");
-  const categoryOptions = ["CP", "FT", "氮氣櫃", "溫溼度監控"].map(l => ({label:l, value:l}));
-
-  const scale = 0.25;
-  const GUIDELINE_OFFSET = 5;
-
-  const nodeOptions = reactive<Konva.ShapeConfig>(computed(() => {
-    let options = {};
-    switch (shape.value) {
-      case "Rect":{
-        options = rectOptions
-        break;
-      }
-      default:
-        break;
-    }
-    return options
-  }))
-  
-  const rectOptions = reactive({
-    width:100,
-    height:50,
+  watch(floorOptions, (nValue,_) => {
+    sFloor.value = nValue[0].value;
   });
-
-  const circleOptions = reactive({
-    radius:50,
-  });
-  // const wedgeOptions = reactive({
-  //   radius:60,
-  //   angle:60,
-  //   rotation:-90,
-  // });
-
-  const ellipseOptions = reactive({
-    radiusX:80,
-    radiusY:40
-  });
-
-  // const starOptions = reactive({
-  //   numPoints:5,
-  //   innerRadius:40,
-  //   outerRadius:70
-  // });
-
-  const ringOptions = reactive({
-    innerRadius:40,
-    outerRadius:70,
-  });
-
-  // const arcOptions = reactive({
-  //   innerRadius:40,
-  //   outerRadius:70,
-  //   angle:60
-  // });
-
-  const regpolyOptions = reactive({
-    sides:5,
-    radius:60,
-  });
-
-  const text = ref("");
-
-  const fillColor = ref<string | CanvasGradient | undefined>("red");
-  
-  const blockColor = ref<string | CanvasGradient | undefined>("#0018dd");
-
-  const blockName = ref("");
 
   // utils
   const show = () => {
@@ -563,20 +619,164 @@
       currentScaleY = stage.scaleY();
     }
 
-    let previewShape = new Konva[shape.value]({
-      x:-left + (x - 50),
-      y:-top + (y - 25),
-      fill:fillColor.value,
-      opacity:0.3,
-      name:"object",
-      ...nodeOptions.value
-    });
+    let previewShape:Konva.Shape;
+    let group:Konva.Group;
+    let fontSize = 12;
+
+    const estTextWidth = new Konva.Text({fontSize:eqpProps.fontSize}).measureSize(eqpProps.text);
+    const estCategoryWidth = new Konva.Text({fontSize}).measureSize(eqpProps.category);
+    let originX = -left + x, originY = -top + y;
+    switch (shape.value) {
+      case "Rect":{
+        originX = originX - nodeProps.value.width/2,
+          originY = originY - nodeProps.value.height/2;
+
+        group = new Konva.Group({
+          x:originX,
+          y:originY,
+          width:nodeProps.value.width,
+          height:nodeProps.value.height,
+        });
+
+        let txt = new Konva.Text({
+          x:(nodeProps.value.width - estTextWidth.width)/2,
+          y:(nodeProps.value.height - estTextWidth.height)/2,
+          width:estTextWidth.width,
+          height:estTextWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.text,
+          fontSize:eqpProps.fontSize
+        });
+
+        let category = new Konva.Text({
+          x:2,
+          y:2,
+          width:estCategoryWidth.width,
+          height:estCategoryWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.category,
+          fontSize
+        });
+
+        previewShape = new Konva.Rect({
+          x:0,
+          y:0,
+          width:nodeProps.value.width,
+          height:nodeProps.value.height,
+          fill:eqpProps.fill
+        });
+
+        group.add(previewShape);
+        group.add(txt);
+        group.add(category);
+        break;
+      }
+      case "Circle":{
+        originX = originX - nodeProps.value.radius,
+        originY = originY - nodeProps.value.radius;
+
+        group = new Konva.Group({
+          x:originX,
+          y:originY,
+          width:nodeProps.value.radius*2,
+          height:nodeProps.value.radius*2
+        });
+        
+        let txt = new Konva.Text({
+          x:nodeProps.value.radius - estTextWidth.width/2,
+          y:nodeProps.value.radius - estTextWidth.height/2,
+          width:estTextWidth.width,
+          height:estTextWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.text,
+          fontSize:eqpProps.fontSize
+        });
+
+        let category = new Konva.Text({
+          x:0,
+          y:0,
+          width:estCategoryWidth.width,
+          height:estCategoryWidth.height,
+          fill:eqpProps.fill,
+          text:eqpProps.category,
+          fontSize,
+        });
+
+        previewShape = new Konva.Circle({
+          x:nodeProps.value.radius,
+          y:nodeProps.value.radius,
+          radius:nodeProps.value.radius,
+          fill:eqpProps.fill,
+        });
+
+        group.add(previewShape);
+        group.add(txt);
+        group.add(category);
+        break;
+      }
+      case "Ellipse":{
+        originX = originX - nodeProps.value.radiusX,
+        originY = originY - nodeProps.value.radiusY;
+
+        group = new Konva.Group({
+          x:originX,
+          y:originY,
+          width:nodeProps.value.radiusX*2,
+          height:nodeProps.value.radiusY*2
+        });
+
+        let txt = new Konva.Text({
+          x:nodeProps.value.radiusX - estTextWidth.width/2,
+          y:nodeProps.value.radiusY - estTextWidth.height/2,
+          width:estTextWidth.width,
+          height:estTextWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.text,
+          fontSize:eqpProps.fontSize
+        });
+
+        let category = new Konva.Text({
+          x:0,
+          y:0,
+          width:estCategoryWidth.width,
+          height:estCategoryWidth.height,
+          fill:eqpProps.fill,
+          text:eqpProps.category,
+          fontSize
+        });
+
+        previewShape = new Konva.Ellipse({
+          x:nodeProps.value.radiusX,
+          y:nodeProps.value.radiusY,
+          radiusX:nodeProps.value.radiusX,
+          radiusY:nodeProps.value.radiusY,
+          fill:eqpProps.fill
+        });
+
+        group.add(previewShape);
+        group.add(txt);
+        group.add(category);
+        break;
+      }
+      case "RegularPolygon":{
+        originX = originX - nodeProps.value.radius,
+        originY = originY - nodeProps.value.radius;
+
+        group = new Konva.Group({
+          
+        })
+        break;
+      }
+      case "Ring":{
+        break;
+      }
+    }
     
     if (previewLayer.children.length < 1) {
-      current.push(previewShape);
-      previewLayer.add(previewShape);
+      current.push(group);
+      previewLayer.add(group);
       previewLayer.draw();
-      previewShape.startDrag();
+      group.startDrag();
     }
   }
 
@@ -652,7 +852,8 @@
   function click(evt:Konva.KonvaEventObject<MouseEvent>) {
     
     current?.[0].startDrag();
-    let drawShape:Konva.Shape | undefined = undefined;
+    let drawShape:Konva.Shape | undefined;
+    let group:Konva.Group | undefined;
     let {top, left, width, height} = container.value!.getBoundingClientRect();
     let {x, y} = evt.evt; 
     let scaleX = 0,scaleY = 0; 
@@ -660,75 +861,55 @@
       scaleX = stage.scaleX(); 
       scaleY = stage.scaleY();
     }
-    
-    const group = new Konva.Group()
+
+    let fontSize = 12;
+
+    const estTextWidth = new Konva.Text({fontSize:eqpProps.fontSize}).measureSize(eqpProps.text);
+    const estCategoryWidth = new Konva.Text({fontSize}).measureSize(eqpProps.category);
+    let originX = -left + x, originY = -top + y;
     switch (shape.value) {
       case "Rect":{
-        console.log("test")
-        let originX = -left + x - nodeOptions.value.width/2;
-        let originY = -top + y - nodeOptions.value.height/2;
+        originX = originX - nodeProps.value.width/2,
+          originY = originY - nodeProps.value.height/2;
 
-        drawShape = new Konva.Rect({
+        group = new Konva.Group({
           x:originX,
           y:originY,
-          width:nodeOptions.value.width,
-          height:nodeOptions.value.height,
-          fill:fillColor.value,
+          width:nodeProps.value.width,
+          height:nodeProps.value.height,
         });
-
-        group.setAttrs({
-          x:originX,
-          y:originY,
-          width:nodeOptions.value.width,
-          height:nodeOptions.value.height,
-        });
-
-        const estTextWidth = new Konva.Text({text:text.value, fontSize:20}).measureSize();
-
-        const txt = new Konva.Text({
-          x:-left+x-estTextWidth.width/2,
-          y:-top+y-estTextWidth.height/2,
+        
+        let txt = new Konva.Text({
+          x:(nodeProps.value.width - estTextWidth.width)/2,
+          y:(nodeProps.value.height - estTextWidth.height)/2,
           width:estTextWidth.width,
           height:estTextWidth.height,
-          text:text.value,
-          fill:'white'
+          fill:eqpProps.color,
+          text:eqpProps.text,
+          fontSize:eqpProps.fontSize
+        });
+
+        let category = new Konva.Text({
+          x:0,
+          y:0,
+          width:estCategoryWidth.width,
+          height:estCategoryWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.category,
+          fontSize,
+        });
+
+        drawShape = new Konva.Rect({
+          x:0,
+          y:0,
+          width:nodeProps.value.width,
+          height:nodeProps.value.height,
+          fill:eqpProps.fill,
         });
 
         group.add(drawShape);
         group.add(txt);
-        // let _x = -left + (x - nodeOptions.value.width/2);
-        // let _y = -top + (y - nodeOptions.value.width/2);
-
-        // const estimateText = new Konva.Text({text:text.value, fontSize:20}).measureSize();
-        // console.l
-        // const txt = new Konva.Text({
-        //   x:_x + estimateText.width/2,
-        //   y:_y + estimateText.height/2,
-        //   width:estimateText.width,
-        //   height:estimateText.height,
-        //   fontSize:20,
-        //   text:text.value,
-        //   fill:"white"
-        // })
-        // group.setAttrs({
-        //   x:_x,
-        //   y:_y,
-        //   width:nodeOptions.value.width,
-        //   height:nodeOptions.value.height,
-        //   name:"tesst"
-        // })
-
-        // drawShape = new Konva.Rect({
-        //   x:_x,
-        //   y:_y,
-        //   width:nodeOptions.value.width,
-        //   height:nodeOptions.value.height,
-        //   fill:fillColor.value,
-        //   name:category.value,
-        // });
-
-        // group.add(drawShape);
-        // group.add(txt);
+        group.add(category);
         break;
       }
       case "Ellipse":{
@@ -749,9 +930,9 @@
       }
     }
     
-    if (drawShape) {
-      drawShape.on("mousedown", elementMousedownEvent);
-      drawShape.on("mouseup", elementMouseupEvent);
+    if (drawShape && group) {
+      //drawShape.on("mousedown", elementMousedownEvent);
+      //drawShape.on("mouseup", elementMouseupEvent);
       iconLayer.add(group);
       iconLayer.draw();
 
@@ -763,7 +944,7 @@
     //   fill:fillColor.value,
     //   opacity:1,
     //   name:text.value,
-    //   ...nodeOptions.value
+    //   ...nodeProps.value
     // });
 
     
@@ -814,13 +995,14 @@
   const drawGridLine = (direction:"V"|"H", mesh:number) => {
     const qBool = direction == "V";
     const scrollarea = $(".q-scrollarea");
-    const qSize = qBool ? scrollarea.width() : scrollarea.height();
+    const qSize = qBool ? (scrollarea.width() ?? 0) : (scrollarea.height() ?? 0);
     
     const size = qBool ? width.value : height.value;
     const steps = Math.round(size/mesh);
-
+    let buffer = [];
     for (let i=0;i<=steps;i++) {
       let stroke = i == 0 ? "rgba(0,0,0,0)" : "rgba(0,0,0,0.2)";
+      buffer.push(i*mesh);
       if (i == steps && (size > qSize)) {
         stroke = "rgba(0,0,0,0)";  
       }
@@ -839,8 +1021,10 @@
 
     if (stage instanceof Konva.Stage)
       if (qBool) {
+        verticalAlign = buffer;
         stage.width(width.value);
       } else {
+        horizontalAligin = buffer;
         stage.height(height.value);
       }
     gridLayer.batchDraw(); 
