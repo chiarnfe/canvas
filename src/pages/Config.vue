@@ -763,11 +763,87 @@
         originY = originY - nodeProps.value.radius;
 
         group = new Konva.Group({
-          
+          x:originX,
+          y:originY,
+          width:nodeProps.value.radius*2,
+          height:nodeProps.value.radius*2
+        });
+
+        let txt = new Konva.Text({
+          x:nodeProps.value.radius - estTextWidth.width/2,
+          y:nodeProps.value.radius - estTextWidth.height/2,
+          width:estTextWidth.width,
+          height:estTextWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.text,
+          fontSize:eqpProps.fontSize,
+        });
+
+        let category = new Konva.Text({
+          x:0,
+          y:0,
+          width:estCategoryWidth.width,
+          height:estCategoryWidth.height,
+          fill:eqpProps.fill,
+          text:eqpProps.category,
+          fontSize,
         })
+        
+        previewShape = new Konva.RegularPolygon({
+          x:nodeProps.value.radius,
+          y:nodeProps.value.radius,
+          radius:nodeProps.value.radius,
+          sides:nodeProps.value.sides,
+          fill:eqpProps.fill
+        });
+
+        group.add(previewShape);
+        group.add(txt);
+        group.add(category);
         break;
       }
       case "Ring":{
+        originX = originX - nodeProps.value.outerRadius,
+        originY = originY - nodeProps.value.outerRadius;
+
+        group = new Konva.Group({
+          x:originX,
+          y:originY,
+          width:nodeProps.value.outerRadius*2,
+          height:nodeProps.value.outerRadius*2,
+        });
+
+        let txt = new Konva.Text({
+          x:nodeProps.value.outerRadius - estTextWidth.width/2,
+          y:nodeProps.value.outerRadius - estTextWidth.height/2,
+          width:estTextWidth.width,
+          height:estTextWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.text,
+          fontSize:eqpProps.fontSize
+        });
+
+        let category = new Konva.Text({
+          x:0,
+          y:0,
+          width:estCategoryWidth.width,
+          height:estCategoryWidth.height,
+          fill:eqpProps.color,
+          text:eqpProps.category,
+          fontSize,
+        });
+
+        previewShape = new Konva.Ring({
+          x:nodeProps.value.outerRadius,
+          y:nodeProps.value.outerRadius,
+          outerRadius:nodeProps.value.outerRadius,
+          innerRadius:nodeProps.value.innerRadius,
+          fill:eqpProps.fill,
+        });
+
+        group.add(previewShape);
+        group.add(txt);
+        group.add(category);
         break;
       }
     }
