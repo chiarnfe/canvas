@@ -255,7 +255,7 @@
         <q-btn size="md" class="q-px-sm" icon="zoom_out" @click="zoomOut" outline />
       </div>
 
-      <q-scroll-area style="height:calc(100vh - 122px);box-shadow:inset 1px 0 0 #000,inset 0 1px 0 #000,inset -1px 0 0 #000,inset 0 -1px 0 #000">
+      <q-scroll-area @scroll="scroll" style="height:calc(100vh - 122px);box-shadow:inset 1px 0 0 #000,inset 0 1px 0 #000,inset -1px 0 0 #000,inset 0 -1px 0 #000">
         <div class="w-full" ref="container" id="canvas_container"></div>
       </q-scroll-area>
       <div v-show="showPreview" :class="[position, 'absolute']" id="preview_container"></div>
@@ -265,9 +265,13 @@
 
 <script setup lang='ts'>
   import {ref, reactive, onMounted, onBeforeUnmount, watch, computed} from 'vue'
-  import Konva from 'konva'
-  
+  import Konva from 'konva'  
   import $ from "jquery"
+
+  interface ScrollInfo {
+    horizontalPosition:number
+    verticalPosition:number
+  }
 
   const showPreview = ref(true);
   const position = ref("top-16 right-7")
@@ -609,7 +613,7 @@
   }
   
   // interaction with canvas
-  function enter(evt:Konva.KonvaEventObject<MouseEvent>) {
+  function    enter(evt:Konva.KonvaEventObject<MouseEvent>) {
     let {top, left} = container.value!.getBoundingClientRect();
     let {x, y} = evt.evt;
     let currentScaleX = 0, currentScaleY = 0;
@@ -856,12 +860,10 @@
     }
   }
 
-  function move() {
+  function move(evt) {
     let children = previewLayer.children[0];
     if (previewLayer.children.length > 1) previewLayer.children.pop()
-    current.push(children)
-    if (current)
-      current?.[0].startDrag();
+    console.log(evt)
   }
 
   function stopmove() {
@@ -925,95 +927,103 @@
     evt.target.strokeWidth(0);
   }
 
+  const scroll = (evt:ScrollInfo) => {
+    if (previewLayer.children.length) {
+      const {horizontalPosition, verticalPosition} = evt;
+      console.log(previewLayer.children[0]);
+    }
+  }
+
   function click(evt:Konva.KonvaEventObject<MouseEvent>) {
-    
-    current?.[0].startDrag();
-    let drawShape:Konva.Shape | undefined;
-    let group:Konva.Group | undefined;
-    let {top, left, width, height} = container.value!.getBoundingClientRect();
-    let {x, y} = evt.evt; 
-    let scaleX = 0,scaleY = 0; 
-    if (stage instanceof Konva.Stage) {
-      scaleX = stage.scaleX(); 
-      scaleY = stage.scaleY();
-    }
+    let element = previewLayer.children[0].clone();
+    console.log(element);
+    //current?.[0].startDrag();
+   // let drawShape:Konva.Shape | undefined;
+   // let group:Konva.Group | undefined;
+   // let {top, left, width, height} = container.value!.getBoundingClientRect();
+   // let {x, y} = evt.evt; 
+   // let scaleX = 0,scaleY = 0; 
+   // if (stage instanceof Konva.Stage) {
+   //   scaleX = stage.scaleX(); 
+   //   scaleY = stage.scaleY();
+   // }
 
-    let fontSize = 12;
+   // let fontSize = 12;
 
-    const estTextWidth = new Konva.Text({fontSize:eqpProps.fontSize}).measureSize(eqpProps.text);
-    const estCategoryWidth = new Konva.Text({fontSize}).measureSize(eqpProps.category);
-    let originX = -left + x, originY = -top + y;
-    switch (shape.value) {
-      case "Rect":{
-        originX = originX - nodeProps.value.width/2,
-          originY = originY - nodeProps.value.height/2;
+   // const estTextWidth = new Konva.Text({fontSize:eqpProps.fontSize}).measureSize(eqpProps.text);
+   // const estCategoryWidth = new Konva.Text({fontSize}).measureSize(eqpProps.category);
+   // let originX = -left + x, originY = -top + y;
+   // switch (shape.value) {
+   //   case "Rect":{
+   //     originX = originX - nodeProps.value.width/2,
+   //       originY = originY - nodeProps.value.height/2;
 
-        group = new Konva.Group({
-          x:originX,
-          y:originY,
-          width:nodeProps.value.width,
-          height:nodeProps.value.height,
-        });
-        
-        let txt = new Konva.Text({
-          x:(nodeProps.value.width - estTextWidth.width)/2,
-          y:(nodeProps.value.height - estTextWidth.height)/2,
-          width:estTextWidth.width,
-          height:estTextWidth.height,
-          fill:eqpProps.color,
-          text:eqpProps.text,
-          fontSize:eqpProps.fontSize
-        });
+   //     group = new Konva.Group({
+   //       x:originX,
+   //       y:originY,
+   //       width:nodeProps.value.width,
+   //       height:nodeProps.value.height,
+   //     });
+   //     
+   //     let txt = new Konva.Text({
+   //       x:(nodeProps.value.width - estTextWidth.width)/2,
+   //       y:(nodeProps.value.height - estTextWidth.height)/2,
+   //       width:estTextWidth.width,
+   //       height:estTextWidth.height,
+   //       fill:eqpProps.color,
+   //       text:eqpProps.text,
+   //       fontSize:eqpProps.fontSize
+   //     });
 
-        let category = new Konva.Text({
-          x:0,
-          y:0,
-          width:estCategoryWidth.width,
-          height:estCategoryWidth.height,
-          fill:eqpProps.color,
-          text:eqpProps.category,
-          fontSize,
-        });
+   //     let category = new Konva.Text({
+   //       x:0,
+   //       y:0,
+   //       width:estCategoryWidth.width,
+   //       height:estCategoryWidth.height,
+   //       fill:eqpProps.color,
+   //       text:eqpProps.category,
+   //       fontSize,
+   //     });
 
-        drawShape = new Konva.Rect({
-          x:0,
-          y:0,
-          width:nodeProps.value.width,
-          height:nodeProps.value.height,
-          fill:eqpProps.fill,
-        });
+   //     drawShape = new Konva.Rect({
+   //       x:0,
+   //       y:0,
+   //       width:nodeProps.value.width,
+   //       height:nodeProps.value.height,
+   //       fill:eqpProps.fill,
+   //     });
 
-        group.add(drawShape);
-        group.add(txt);
-        group.add(category);
-        break;
-      }
-      case "Ellipse":{
+   //     group.add(drawShape);
+   //     group.add(txt);
+   //     group.add(category);
+   //     break;
+   //   }
+   //   case "Ellipse":{
 
-        break;
-      }
-      case "Circle":{
+   //     break;
+   //   }
+   //   case "Circle":{
 
-        break;
-      }
-      case "RegularPolygon":{
+   //     break;
+   //   }
+   //   case "RegularPolygon":{
 
-        break;
-      }
-      case "Ring":{
-        
-        break;
-      }
-    }
-    
-    if (drawShape && group) {
-      //drawShape.on("mousedown", elementMousedownEvent);
-      //drawShape.on("mouseup", elementMouseupEvent);
-      iconLayer.add(group);
-      iconLayer.draw();
+   //     break;
+   //   }
+   //   case "Ring":{
+   //     
+   //     break;
+   //   }
+   // }
+   // 
+   // if (drawShape && group) {
+   //   //drawShape.on("mousedown", elementMousedownEvent);
+   //   //drawShape.on("mouseup", elementMouseupEvent);
+   //   iconLayer.add(group);
+   //   iconLayer.draw();
 
-      console.log(iconLayer)
-    }
+   //   console.log(iconLayer)
+   // }
     // let drawShape = new Konva[shape.value]({
     //   x: - left + (x  - 50)*scaleX,
     //   y: - top + (y - 25)*scaleY,
@@ -1049,22 +1059,25 @@
 
   function cancelDraw(evt) {
     if (evt.key == "Escape" || evt.type == "mouseleave") {
-      stopmove();
-      stage.off("mouseenter", enter);
-      stage.off("mousemove", move);
-      stage.off("mousedown", click);
+      //stopmove();
+      //stage.off("mouseenter", enter);
+      //stage.off("mousemove", move);
+      //stage.off("mousedown", click);
     } 
   }
 
   function predraw() {
     mode.value = "i";
-    previewLayer.removeChildren(); 
-    let {top, left, width, height} = container.value.getBoundingClientRect();
+
+    //console.log(previewLayer);
+    //previewLayer.removeChildren(); 
+    //let {top, left, width, height} = container.value.getBoundingClientRect();
     if (stage instanceof Konva.Stage) {
       stage.on("mouseenter", enter);
-      stage.on("mousemove", move);
       stage.on("mousedown", click);
-      stage.on("keydown", cancelDraw);
+      //stage.on("mousemove", move);
+      //stage.on("mousedown", click);
+      //stage.on("keydown", cancelDraw);
     }
   }
 
@@ -1124,7 +1137,7 @@
     stage = new Konva.Stage({
       container:"canvas_container",
       width:width.value,
-      height:height.value
+      height:height.value,
     });
 
     if (stage instanceof Konva.Stage) {
@@ -1172,6 +1185,10 @@
     initKonva();
     initPreview();
     window.addEventListener("keydown", cancelDraw);
+    $(".q-scrollarea")!.on("mouseenter", () => {
+      let isListening = stage.isListening();
+      console.log(isListening);
+    })
   })
   onBeforeUnmount(() => {
     window.removeEventListener("keydown", cancelDraw);
