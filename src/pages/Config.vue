@@ -4,7 +4,7 @@
     <div class="column w-1/6 h-full shadow-md">
       <div class="flex flex-row gap-x-2 p-2">
         <q-select
-          class="w-[calc(66%_-_8px)]"
+          class="w-1/3"
           outlined
           label="廠區"
           option-label="label"
@@ -16,12 +16,23 @@
         />
         <q-select
           outlined
-          class="w-1/3"
+          class="w-[calc(33%_-_8px)]"
           label="樓層"
           option-label="label"
           option-value="value"
           v-model="sFloor"
           :options="floorOptions"
+          emit-value
+          map-options
+        />
+        <q-select
+          outlined
+          class="w-[calc(33%_-_8px)]"
+          label="部門"
+          option-label="label"
+          option-value="value"
+          v-model="sDepartment"
+          :options="departmentOptions"
           emit-value
           map-options
         />
@@ -42,7 +53,7 @@
             v-model.number="width"
             debounce="600"
             max="4500"
-            :rules="[(val:number) => val <= 4500 || '最大寬度為4500']"
+            :rules="[val => val <= 4500 || '最大寬度為4500']"
           />
           <q-input
             outlined
@@ -51,7 +62,7 @@
             v-model.number="height"
             debounce="600"
             max="4500"
-            :rules="[(val:number) => val <= 4500 || '最大高度為4500']"
+            :rules="[val => val <= 4500 || '最大高度為4500']"
           />
           <q-select
             outlined
@@ -123,7 +134,7 @@
               type="number"
               v-model.number="ringProps.outerRadius" 
               label="外圓半徑"
-              :rules="[(val:number) => val > ringProps.innerRadius || '外圓半徑要大於內圓半徑']" 
+              :rules="[val => val > ringProps.innerRadius || '外圓半徑要大於內圓半徑']" 
             />
             <q-input 
               outlined
@@ -131,7 +142,7 @@
               type="number"
               label="內圓半徑" 
               v-model.number="ringProps.innerRadius" 
-              :rules="[(val:number) => val < ringProps.outerRadius || '內圓半徑要小於外圓半徑']" 
+              :rules="[val => val < ringProps.outerRadius || '內圓半徑要小於外圓半徑']" 
             />
            </div>
           <!-- <div v-if="shape=='Arc'">
@@ -144,7 +155,7 @@
               type="number"
               :min="3"
               v-model.number="regpolyProps.sides"
-              :rules="[(val:number) => val >= 3 || '邊數必須大於等於3']"
+              :rules="[val => val >= 3 || '邊數必須大於等於3']"
             />
             <q-input 
               outlined
@@ -205,9 +216,9 @@
             </div>
           </div>
           <div class="flex flex-row gap-x-2 justify-end">
-            <q-btn v-show="mode=='v'" unelevated color="negative" label="刪除" />
+            <q-btn v-show="mode=='e'" unelevated color="negative" label="刪除" />
             <!-- <q-btn class="w-full" unelevated color="secondary" label="" /> -->
-            <q-btn v-show="mode=='i'" unelevated color="primary" label="新增" @click="predraw" />
+            <q-btn v-show="mode=='i' || mode=='v'" unelevated color="primary" label="新增" @click="predraw" />
           </div>     
         </div>
         
@@ -241,11 +252,24 @@
             label="區塊名稱"
           />
           <div class="flex flex-row justify-end">
-            <q-btn v-show="mode=='v'" unelevated style="width:60px" color="negative" label="刪除" />
-            <q-btn v-show="mode=='i'" unelevated style="width:60px;" color="primary" label="新增"/>
+            <q-btn 
+              v-show="mode=='e'" 
+              unelevated style="width:60px" 
+              color="negative" 
+              label="刪除"
+            />
+            <q-btn 
+              v-show="mode=='i' || mode=='v'" 
+              unelevated style="width:60px;" 
+              color="primary" 
+              label="新增"
+              @click="drawBlock"
+            />
           </div>
         </div>
       </q-expansion-item>
+      <q-space />
+      <q-btn unelevated color="primary" @click="update" label="更新" />
     </div>
     <div class="px-4 pb-4 w-5/6 relative">
       <div class="row gap-x-2 q-py-sm items-center">
@@ -253,8 +277,8 @@
         <q-space />
         <q-btn size="md" class="q-px-sm" icon="zoom_in" @click="zoomIn" outline />
         <q-btn size="md" class="q-px-sm" icon="zoom_out" @click="zoomOut" outline />
+        
       </div>
-
       <q-scroll-area @scroll="scroll" style="height:calc(100vh - 122px);box-shadow:inset 1px 0 0 #000,inset 0 1px 0 #000,inset -1px 0 0 #000,inset 0 -1px 0 #000">
         <div class="w-full" ref="container" id="canvas_container"></div>
       </q-scroll-area>
@@ -275,25 +299,25 @@
 
   const showPreview = ref(true);
   const position = ref("top-16 right-7")
-
   const width = ref(1800);
   const height = ref(1200);
-  const sLocation = ref("科技");
 
+  const sLocation = ref("科技");
   const sFloor = ref("1F");
+  const sDepartment = ref("CF");
 
   const grid = ref(true);
-  const mode = ref<"v"|"i">("i");
+  const mode = ref<"v"|"i"|"e">("v");
   const container = ref<HTMLDivElement|null>(null);
 
   let previewStage = reactive<{}|Konva.Stage>({});
 
   let stage = reactive<{}|Konva.Stage>({});
 
-  let current = reactive<Konva.Shape[]>([]);
+  let current = reactive<Konva.Group[]>([]);
 
   let verticalAlign = reactive<number[]>([]);
-  let horizontalAligin = reactive<number[]>([]);
+  let horizontalAlign = reactive<number[]>([]);
   //const drop = ref(null);
   //const undo = ref(null);
 
@@ -414,6 +438,7 @@
     }
     return _floor.map(l => ({label:l , value:l}))
   }));
+  const departmentOptions = ["Test", "CF"].map(l => ({label:l, value:l}));
   const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map(num => ({label:num.toString(), value:num}));
   const categoryOptions = ["CP", "FT", "氮氣櫃", "溫溼度監控"].map(l => ({label:l, value:l}));
   const shapeOptions = [
@@ -427,9 +452,21 @@
     {label:"正多邊形", value:"RegularPolygon"}
   ];
 
-  watch(floorOptions, (nValue,_) => {
-    sFloor.value = nValue[0].value;
+  watch([floorOptions, sDepartment], (nValue,_) => {
+    sFloor.value = nValue[0][0].value;
+    renewKonva();
   });
+
+  watch([width, height], (nValue, _) => {
+    if (stage instanceof Konva.Stage) {
+      stage.width(nValue[0]);
+      stage.find(".v-line").forEach(l => l.destroy());
+      stage.height(nValue[1]);
+      stage.find(".h-line").forEach(l => l.destroy())
+      initGridLayer();
+    }
+  })
+
 
   // utils
   const show = () => {
@@ -440,23 +477,45 @@
     showPreview.value = false;
   }
 
-  function getGuidelineStops(skipItem) {
-    const vertical = [0, stage.width()/2, stage.width()];
-    const horizontal = [0, stage.height()/2, stage.height()];
-    stage.find(".object").forEach((guideItem) => {
-      if (guideItem === skipItem)
-        return
-        
-      const item = guideItem.getClientRect();
-      vertical.push([item.x, item.x + item.width/2, item.x + item.width ]);
-      horizontal.push([item.y,  item.y + item.width/2, item.y + item.width]);
+  function getGuidelineStops() {
+    const vertical = verticalAlign.concat();
+    const horizontal = horizontalAlign.concat();
+
+    iconLayer.getChildren().forEach(children => {
+      
+      // let {x,y, width, height} = children.attrs;
+
+      // if (!vertical.includes(x)) vertical.push(x);
+      // if (!vertical.includes(x+width/2)) vertical.push(x+width/2);
+      // if (!vertical.includes(x+width)) vertical.push(x+width);
+      // if (!horizontal.includes(y)) horizontal.push(y);
+      // if (!horizontal.includes(y+height/2)) horizontal.push(y+height/2);
+      // if (!horizontal.includes(y+height)) horizontal.push(y+height);
     })
 
     return {
-      vertical:vertical.flat(),
-      horizontal:horizontal.flat()
+      vertical,
+      horizontal
     }
   }
+
+  // function getGuidelineStops(skipItem) {
+  //   const vertical = [0, stage.width()/2, stage.width()];
+  //   const horizontal = [0, stage.height()/2, stage.height()];
+  //   stage.find(".object").forEach((guideItem) => {
+  //     if (guideItem === skipItem)
+  //       return
+        
+  //     const item = guideItem.getClientRect();
+  //     vertical.push([item.x, item.x + item.width/2, item.x + item.width ]);
+  //     horizontal.push([item.y,  item.y + item.width/2, item.y + item.width]);
+  //   })
+
+  //   return {
+  //     vertical:vertical.flat(),
+  //     horizontal:horizontal.flat()
+  //   }
+  // }
 
   function getObjectSnappingEdges(node) {
     const item = node.getClientRect();
@@ -613,10 +672,10 @@
   }
   
   // interaction with canvas
-  function    enter(evt:Konva.KonvaEventObject<MouseEvent>) {
+  function enter(evt:Konva.KonvaEventObject<MouseEvent>) {
     let {top, left} = container.value!.getBoundingClientRect();
     let {x, y} = evt.evt;
-    let currentScaleX = 0, currentScaleY = 0;
+    let currentScaleX = 1, currentScaleY = 1;
     
     if (stage instanceof Konva.Stage) {
       currentScaleX = stage.scaleX();
@@ -632,14 +691,12 @@
     let originX = -left + x, originY = -top + y;
     switch (shape.value) {
       case "Rect":{
-        originX = originX - nodeProps.value.width/2,
-          originY = originY - nodeProps.value.height/2;
-
         group = new Konva.Group({
           x:originX,
           y:originY,
           width:nodeProps.value.width,
           height:nodeProps.value.height,
+          opacity:0.5
         });
 
         let txt = new Konva.Text({
@@ -649,7 +706,7 @@
           height:estTextWidth.height,
           fill:eqpProps.color,
           text:eqpProps.text,
-          fontSize:eqpProps.fontSize
+          fontSize:eqpProps.fontSize,
         });
 
         let category = new Konva.Text({
@@ -676,9 +733,6 @@
         break;
       }
       case "Circle":{
-        originX = originX - nodeProps.value.radius,
-        originY = originY - nodeProps.value.radius;
-
         group = new Konva.Group({
           x:originX,
           y:originY,
@@ -719,9 +773,6 @@
         break;
       }
       case "Ellipse":{
-        originX = originX - nodeProps.value.radiusX,
-        originY = originY - nodeProps.value.radiusY;
-
         group = new Konva.Group({
           x:originX,
           y:originY,
@@ -763,9 +814,6 @@
         break;
       }
       case "RegularPolygon":{
-        originX = originX - nodeProps.value.radius,
-        originY = originY - nodeProps.value.radius;
-
         group = new Konva.Group({
           x:originX,
           y:originY,
@@ -807,9 +855,6 @@
         break;
       }
       case "Ring":{
-        originX = originX - nodeProps.value.outerRadius,
-        originY = originY - nodeProps.value.outerRadius;
-
         group = new Konva.Group({
           x:originX,
           y:originY,
@@ -852,18 +897,39 @@
       }
     }
     
-    if (previewLayer.children.length < 1) {
+    if (previewLayer.children.length < 1 && group) {
       current.push(group);
       previewLayer.add(group);
       previewLayer.draw();
       group.startDrag();
+      group.on("dragmove", startSnapping);
+      group.on("mousedown", () => {
+        group.preventDefault();
+      });
+      group.on("mouseup", keepDrag);
+      // group.on("dragmove", startSnapping)
+      // group.on("mouseup", ()=>{})
+      // group.startDrag();
+      
+      
     }
   }
 
-  function move(evt) {
-    let children = previewLayer.children[0];
-    if (previewLayer.children.length > 1) previewLayer.children.pop()
+  const keepDrag = (evt) => {
     console.log(evt)
+  }
+  
+  const startSnapping = (evt) => {
+    const {vertical, horizontal} = getGuidelineStops();
+    const {target} = evt
+    
+  }
+
+  function move(evt) {
+    console.log(evt);
+    // let children = previewLayer.children[0];
+    // if (previewLayer.children.length > 1) previewLayer.children.pop()
+    // console.log(evt)
   }
 
   function stopmove() {
@@ -901,6 +967,79 @@
     iconLayer.find(".guide-line").forEach(l => l.destroy());
   }
 
+  function drawBlock(ev) {
+    console.log(ev)
+    let group = new Konva.Group();
+    if (current.length == 0)
+      current.push(group);
+    if (stage instanceof Konva.Stage)
+    stage.off("mouseenter", () => {
+      stage.container().style.cursor = "crosshair"
+    });
+    stage.off("mousedown", (evt) => {
+      
+    });
+    //stage.off("dragmove", ()=>{});
+    stage.on("mouseenter", () => {
+      stage.container().style.cursor = "crosshair"
+    });
+    stage.on("mousedown",(evt) => {
+      const {x, y} = stage.getPointerPosition();
+      current[0].x(x).y(y).height(0).width(0);
+    });
+
+    stage.on("mousemove", (evt) => {
+      // let group = current[0];
+      // const {x:X, y:Y} = stage.getPointerPosition();
+      // let x = group.x();
+      // let y = group.y();
+      // let rect = new Konva.Rect({
+      //   x:0,
+      //   y:0,
+      //   width:X-x,
+      //   height:Y - y,
+      //   fill:blockProps.fill,
+      //   opacity:0.3
+      // });
+      // if (group.children.length == 0)
+      //   group.add(rect) 
+    })
+
+    stage.on("mouseup", (evt) => {
+      // let group = current[0];
+      // const {x:X, y:Y} = stage.getPointerPosition();
+      // let x = group.x();
+      // let y = group.y();
+      // let rect = new Konva.Rect({
+      //   x:0,
+      //   y:0,
+      //   width:X-x,
+      //   height:Y - y,
+      //   fill:blockProps.fill,
+      //   opacity:0.3
+      // });
+      // group.add(rect);
+      // previewLayer.add(group);
+      // previewLayer.draw();
+
+    });
+
+  }
+
+  function stopDrawBlock(ev:KeyboardEvent) {
+    if (ev.key == "Escape") {
+      stage.container().style.cursor = "default";
+      stage.off("mouseenter", () => {
+        stage.container().style.cursor = "crosshair"
+      })
+      stage.off("mousedown", (evt) => {
+        console.log(evt)
+      });
+      stage.off("dragmove", ()=>{});
+      current.forEach(children => children.destroy());
+    }
+  }
+
   // TODO 新增元素的監聽事件
   // 選取
   const elementMousedownEvent = (evt:Konva.KonvaEventObject<MouseEvent>) => {
@@ -935,12 +1074,18 @@
   }
 
   function click(evt:Konva.KonvaEventObject<MouseEvent>) {
-    let element = previewLayer.children[0].clone();
-    console.log(element);
+    
+
+    // const {x, y} = evt.evt;
+    // let {top, left, width, height} = container.value!.getBoundingClientRect();
+    //previewLayer.children[0].startDrag();
+
+    //previewLayer.children[0].move({x:})
+    // previewLayer.children[0].startDrag();
+    
     //current?.[0].startDrag();
    // let drawShape:Konva.Shape | undefined;
    // let group:Konva.Group | undefined;
-   // let {top, left, width, height} = container.value!.getBoundingClientRect();
    // let {x, y} = evt.evt; 
    // let scaleX = 0,scaleY = 0; 
    // if (stage instanceof Konva.Stage) {
@@ -1057,27 +1202,32 @@
     // iconLayer.draw();
   }
 
-  function cancelDraw(evt) {
+  function cancelDraw(evt:KeyboardEvent) {
     if (evt.key == "Escape" || evt.type == "mouseleave") {
+      if (stage instanceof Konva.Stage){
+        stage.off("mouseenter",enter);
+        stage.off("mousedown", click);
+        previewLayer.removeChildren();
+      }
       //stopmove();
       //stage.off("mouseenter", enter);
       //stage.off("mousemove", move);
       //stage.off("mousedown", click);
+
     } 
   }
 
   function predraw() {
-    mode.value = "i";
 
     //console.log(previewLayer);
     //previewLayer.removeChildren(); 
     //let {top, left, width, height} = container.value.getBoundingClientRect();
     if (stage instanceof Konva.Stage) {
+      stage.off("mouseenter", enter);
+      stage.off("mousedown", click);
       stage.on("mouseenter", enter);
       stage.on("mousedown", click);
-      //stage.on("mousemove", move);
-      //stage.on("mousedown", click);
-      //stage.on("keydown", cancelDraw);
+
     }
   }
 
@@ -1108,28 +1258,21 @@
       )
     }
 
-    if (stage instanceof Konva.Stage)
-      if (qBool) {
-        verticalAlign = buffer;
-        stage.width(width.value);
-      } else {
-        horizontalAligin = buffer;
-        stage.height(height.value);
-      }
+    if (qBool) {
+      verticalAlign = buffer;
+    } else {
+      horizontalAlign = buffer;
+    }
     gridLayer.batchDraw(); 
+  }
+
+  const update = () => {
+    console.log(iconLayer.toJSON(), stage.toJSON());
   }
 
   const initGridLayer = () => {
     drawGridLine("V",mesh);
     drawGridLine("H",mesh);
-  }
-
-  const startClick = (evt) => {
-    console.log(evt);
-  }
-
-  const attach = () => {
-    stage.on("click", startClick);
   }
   
   // init canvas 
@@ -1144,6 +1287,22 @@
       stage.add(iconLayer)
       stage.add(previewLayer)    
       stage.add(gridLayer)
+    }
+    initGridLayer();
+  }
+
+  const renewKonva = () => {
+    if (stage instanceof Konva.Stage) {
+      stage.off();
+      stage.removeChildren();
+      stage.width(width.value);
+      stage.height(height.value);
+      iconLayer.removeChildren();
+      previewLayer.removeChildren();
+      gridLayer.removeChildren();
+      current = [];
+      verticalAlign = [];
+      horizontalAlign = [];
     }
     initGridLayer();
   }
@@ -1184,13 +1343,10 @@
   onMounted(() => {
     initKonva();
     initPreview();
-    window.addEventListener("keydown", cancelDraw);
-    $(".q-scrollarea")!.on("mouseenter", () => {
-      let isListening = stage.isListening();
-      console.log(isListening);
-    })
+    // window.addEventListener("keydown", cancelDraw);
+    // window.addEventListener("keydown", stopDrawBlock);
   })
   onBeforeUnmount(() => {
-    window.removeEventListener("keydown", cancelDraw);
+    // window.removeEventListener("keydown", cancelDraw);
   })
 </script>
