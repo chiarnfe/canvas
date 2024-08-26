@@ -20,7 +20,7 @@ export default defineConfig({
   build:{
     manifest:true,
     rollupOptions:{
-      input:"./src/main.js",
+      input:"./src/main.ts",
     },
     outDir:"../cfm/CFM/ts/vue/dist"
   },

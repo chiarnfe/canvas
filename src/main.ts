@@ -5,7 +5,6 @@ import "quasar/src/css/index.sass"
 import './style.css'
 import App from './App.vue'
 import {createRouter, createWebHistory } from 'vue-router'
-import $ from 'jquery'
 
 const router = createRouter({
   history:createWebHistory(),
@@ -15,25 +14,25 @@ const router = createRouter({
 })
 
 
-let app_node = document.getElementById("app");
+//let app_node = document.getElementById("app");
 //const shadow = app_node.attachShadow({mode:"open"});
-const div = document.createElement("div");
+//const div = document.createElement("div");
 //div.setAttribute("id", "shadow");
 //
-const materialLink = document.createElement("link");
-materialLink.setAttribute("rel", "stylesheet");
-materialLink.setAttribute("type", "text/css");
-materialLink.setAttribute("href", "../node_modules/@quasar/extras/material-icons/material-icons.css");
+// const materialLink = document.createElement("link");
+// materialLink.setAttribute("rel", "stylesheet");
+// materialLink.setAttribute("type", "text/css");
+// materialLink.setAttribute("href", "../node_modules/@quasar/extras/material-icons/material-icons.css");
 
 //
-const link = document.createElement("link");
-link.setAttribute("rel", "stylesheet");
-link.setAttribute("type", "text/css");
-link.setAttribute("href", "https://cdn.jsdelivr.net/npm/quasar@2.16.8/dist/quasar.prod.css");
+// const link = document.createElement("link");
+// link.setAttribute("rel", "stylesheet");
+// link.setAttribute("type", "text/css");
+// link.setAttribute("href", "https://cdn.jsdelivr.net/npm/quasar@2.16.8/dist/quasar.prod.css");
 
-app_node.appendChild(materialLink);
-app_node.appendChild(link);
-app_node.appendChild(div);
+// app_node!.appendChild(materialLink);
+// app_node!.appendChild(link);
+// app_node!.appendChild(div);
 //const tailwindcss = document.createElement("script");
 //tailwindcss.setAttribute("src", "https://cdn.tailwindcss.com");
 //app.mount(div);
@@ -47,6 +46,6 @@ app.use(Quasar, {
   plugins:{}
 })
 
-app.mount(div)
+app.mount("#app")
 
 //multiple page reference https://stackoverflow.com/questions/65868976/how-to-build-a-multi-pages-application-by-vite2-and-vue3   

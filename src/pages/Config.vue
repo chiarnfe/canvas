@@ -38,7 +38,7 @@
         />
       </div>
       <q-expansion-item
-        group
+        group="group"
         icon="aspect_ratio"
         label="版面調整"
         @show="show"
@@ -77,7 +77,11 @@
         </div>
       </q-expansion-item>
       <q-separator class="q-ml-sm q-mr-md" />
-      <q-expansion-item group icon="dashboard" label="編輯機台">
+      <q-expansion-item 
+        group="group"
+        icon="dashboard"
+        label="編輯機台"
+      >
         <div class="flex flex-col p-2 gap-y-2">
           <q-select
             outlined
@@ -182,7 +186,7 @@
             />
           </div>
           <div class="flex flex-col gap-y-2">
-            <q-input outlined label="顏色" v-model="eqpProps.fill">
+            <q-input outlined label="圖例背景色" v-model="eqpProps.fill">
               <template v-slot:before>
                 <span
                   class="w-6 h-4"
@@ -261,7 +265,11 @@
         </div>
       </q-expansion-item>
       <q-separator class="q-ml-sm q-mr-md" />
-      <q-expansion-item group icon="space_dashboard" label="編輯底圖">
+      <q-expansion-item 
+        group="group" 
+        icon="space_dashboard" 
+        label="編輯底圖"
+      >
         <div class="p-2 flex flex-col gap-y-2">
           <q-input outlined v-model="blockProps.fill">
             <template v-slot:prepend>
@@ -371,7 +379,7 @@ const height = ref(1200);
 
 const sLocation = ref("科技");
 const sFloor = ref("1F");
-const sDepartment = ref("CF");
+const sDepartment = ref("DS");
 
 const grid = ref(true);
 const mode = ref<"v" | "i" | "e">("v");
@@ -383,8 +391,6 @@ let stage = reactive<{} | Konva.Stage>({});
 
 let current = reactive<Konva.Group[]>([]);
 
-let verticalAlign = reactive<number[]>([]);
-let horizontalAlign = reactive<number[]>([]);
 //const drop = ref(null);
 //const undo = ref(null);
 
@@ -498,27 +504,8 @@ const locationOptions = ["科技", "創新", "力行"].map((l) => ({
   label: l,
   value: l,
 }));
-const floorOptions = reactive(
-  computed(() => {
-    let _floor = [];
-    switch (sLocation.value) {
-      case "科技":
-        _floor = ["1F", "2F", "3F", "7F"];
-        break;
-      case "創新":
-        _floor = ["2F", "3F", "4F"];
-        break;
-      case "力行":
-        _floor = ["3F"];
-        break;
-      default:
-        _floor = ["1F", "2F", "3F", "7F"];
-        break;
-    }
-    return _floor.map((l) => ({ label: l, value: l }));
-  }),
-);
-const departmentOptions = ["Test", "CF"].map((l) => ({ label: l, value: l }));
+const floorOptions = ref(["1F", "2F", "3F", "7F"].map(l => ({value:l, label:l})));
+const departmentOptions = ["TEST", "DS"].map((l) => ({ label: l, value: l }));
 const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map((num) => ({
   label: num.toString(),
   value: num,
@@ -538,10 +525,26 @@ const shapeOptions = [
   { label: "正多邊形", value: "RegularPolygon" },
 ];
 
-watch([floorOptions, sDepartment], (nValue, _) => {
-  sFloor.value = nValue[0][0].value;
+watch(sLocation, (nValue, _) => {
+  let floor = ["1F", "2F", "3F", "7F"];
+  switch (nValue) {
+    case "創新":{
+      floor = ["2F", "3F", "4F"];
+      sFloor.value = "2F";
+      break;
+    }
+    case "力行":{
+      floor = ["3F"];
+      sFloor.value = "3F";
+      break;
+    }
+    case "科學":
+      sFloor.value = "1F";
+      break;
+  }
+  floorOptions.value = floor.map(l => ({value:l,label:l}));
   renewKonva();
-});
+})
 
 watch([width, height], (nValue, _) => {
   if (stage instanceof Konva.Stage) {
@@ -552,6 +555,14 @@ watch([width, height], (nValue, _) => {
     initGridLayer();
   }
 });
+
+watch(grid, (nValue, _) => {
+  if (nValue) {
+    initGridLayer();
+  } else {
+    gridLayer.removeChildren();
+  }
+})
 
 // utils
 const show = () => {
@@ -803,18 +814,18 @@ function zoomOut() {
   stage.scale({ x: lastScaleX - scale, y: lastScaleY - scale });
 }
 
-// debug
-function mouse(evt) {
-  let { top, left } = container.value.getBoundingClientRect();
-  const { x, y } = evt;
-  console.log(x - left, y - top);
-}
+// // debug
+// function mouse(evt) {
+//   let { top, left } = container.value.getBoundingClientRect();
+//   const { x, y } = evt;
+//   console.log(x - left, y - top);
+// }
 
 // interaction with canvas
 function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
   let { top, left } = container.value!.getBoundingClientRect();
   let { x, y } = evt.evt;
-  let currentScaleX = 1,
+  let currentScaleX = 0,
     currentScaleY = 1;
 
   if (stage instanceof Konva.Stage) {
@@ -832,22 +843,23 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
   const estCategoryWidth = new Konva.Text({ fontSize }).measureSize(
     eqpProps.category,
   );
+  const {x:_x_, y:_y_} = stage.getPointerPosition();
   let originX = -left + x,
-    originY = -top + y;
+  originY = -top + y;
   switch (shape.value) {
     case "Rect": {
       group = new Konva.Group({
         x: originX,
         y: originY,
-        width: nodeProps.value.width,
-        height: nodeProps.value.height,
+        width: rectProps.width,
+        height: rectProps.height,
         opacity: 0.5,
         name: "cfm-object",
       });
 
       let txt = new Konva.Text({
-        x: (nodeProps.value.width - estTextWidth.width) / 2,
-        y: (nodeProps.value.height - estTextWidth.height) / 2,
+        x: (rectProps.width - estTextWidth.width) / 2,
+        y: (rectProps.height - estTextWidth.height) / 2,
         width: estTextWidth.width,
         height: estTextWidth.height,
         fill: eqpProps.color,
@@ -857,23 +869,24 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
       });
 
       let category = new Konva.Text({
-        x: 2,
-        y: 2,
+        x: 0,
+        y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        fill: eqpProps.color,
+        opacity:0,
         text: eqpProps.category,
-        fontSize,
         name: `cfm-${eqpProps.category}`,
       });
 
       previewShape = new Konva.Rect({
         x: 0,
         y: 0,
-        width: nodeProps.value.width,
-        height: nodeProps.value.height,
+        width: rectProps.width,
+        height: rectProps.height,
         fill: eqpProps.fill,
         name: "cfm-frame",
+        stroke:"black",
+        strokeWidth:2
       });
 
       group.add(previewShape);
@@ -885,14 +898,14 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
       group = new Konva.Group({
         x: originX,
         y: originY,
-        width: nodeProps.value.radius * 2,
-        height: nodeProps.value.radius * 2,
+        width: circleProps.radius * 2,
+        height: circleProps.radius * 2,
         name: "cfm-object",
       });
 
       let txt = new Konva.Text({
-        x: nodeProps.value.radius - estTextWidth.width / 2,
-        y: nodeProps.value.radius - estTextWidth.height / 2,
+        x: circleProps.radius - estTextWidth.width / 2,
+        y: circleProps.radius - estTextWidth.height / 2,
         width: estTextWidth.width,
         height: estTextWidth.height,
         fill: eqpProps.color,
@@ -906,18 +919,20 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        fill: eqpProps.fill,
+        opacity:0,
         text: eqpProps.category,
         fontSize,
         name: `cfm-${eqpProps.category}`,
       });
 
       previewShape = new Konva.Circle({
-        x: nodeProps.value.radius,
-        y: nodeProps.value.radius,
-        radius: nodeProps.value.radius,
+        x: circleProps.radius,
+        y: circleProps.radius,
+        radius: circleProps.radius,
         fill: eqpProps.fill,
         name: "cfm-frame",
+        stroke:"black",
+        strokeWidth:2
       });
 
       group.add(previewShape);
@@ -929,14 +944,14 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
       group = new Konva.Group({
         x: originX,
         y: originY,
-        width: nodeProps.value.radiusX * 2,
-        height: nodeProps.value.radiusY * 2,
+        width: ellipseProps.radiusX * 2,
+        height: ellipseProps.radiusY * 2,
         name: "cfm-object",
       });
 
       let txt = new Konva.Text({
-        x: nodeProps.value.radiusX - estTextWidth.width / 2,
-        y: nodeProps.value.radiusY - estTextWidth.height / 2,
+        x: ellipseProps.radiusX - estTextWidth.width / 2,
+        y: ellipseProps.radiusY - estTextWidth.height / 2,
         width: estTextWidth.width,
         height: estTextWidth.height,
         fill: eqpProps.color,
@@ -950,19 +965,21 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        fill: eqpProps.fill,
+        opacity:0,
         text: eqpProps.category,
         fontSize,
         name: `cfm-${eqpProps.category}`,
       });
 
       previewShape = new Konva.Ellipse({
-        x: nodeProps.value.radiusX,
-        y: nodeProps.value.radiusY,
-        radiusX: nodeProps.value.radiusX,
-        radiusY: nodeProps.value.radiusY,
+        x: ellipseProps.radiusX,
+        y: ellipseProps.radiusY,
+        radiusX: ellipseProps.radiusX,
+        radiusY: ellipseProps.radiusY,
         fill: eqpProps.fill,
         name: "cfm-frame",
+        stroke:"black",
+        strokeWidth:2
       });
 
       group.add(previewShape);
@@ -974,14 +991,14 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
       group = new Konva.Group({
         x: originX,
         y: originY,
-        width: nodeProps.value.radius * 2,
-        height: nodeProps.value.radius * 2,
+        width: regpolyProps.radius * 2,
+        height: regpolyProps.radius * 2,
         name: "cfm-object",
       });
 
       let txt = new Konva.Text({
-        x: nodeProps.value.radius - estTextWidth.width / 2,
-        y: nodeProps.value.radius - estTextWidth.height / 2,
+        x: regpolyProps.radius - estTextWidth.width / 2,
+        y: regpolyProps.radius - estTextWidth.height / 2,
         width: estTextWidth.width,
         height: estTextWidth.height,
         fill: eqpProps.color,
@@ -995,19 +1012,21 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        fill: eqpProps.fill,
+        opacity:0,
         text: eqpProps.category,
         fontSize,
         name: `cfm-${eqpProps.category}`,
       });
 
       previewShape = new Konva.RegularPolygon({
-        x: nodeProps.value.radius,
-        y: nodeProps.value.radius,
-        radius: nodeProps.value.radius,
-        sides: nodeProps.value.sides,
+        x: regpolyProps.radius,
+        y: regpolyProps.radius,
+        radius: regpolyProps.radius,
+        sides: regpolyProps.sides,
         fill: eqpProps.fill,
         name: "cfm-frame",
+        stroke:"black",
+        strokeWidth:2
       });
 
       group.add(previewShape);
@@ -1019,14 +1038,14 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
       group = new Konva.Group({
         x: originX,
         y: originY,
-        width: nodeProps.value.outerRadius * 2,
-        height: nodeProps.value.outerRadius * 2,
+        width: ringProps.outerRadius * 2,
+        height: ringProps.outerRadius * 2,
         name: "cfm-object",
       });
 
       let txt = new Konva.Text({
-        x: nodeProps.value.outerRadius - estTextWidth.width / 2,
-        y: nodeProps.value.outerRadius - estTextWidth.height / 2,
+        x: ringProps.outerRadius - estTextWidth.width / 2,
+        y: ringProps.outerRadius - estTextWidth.height / 2,
         width: estTextWidth.width,
         height: estTextWidth.height,
         fill: eqpProps.color,
@@ -1040,19 +1059,21 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        fill: eqpProps.color,
+        opacity:0,
         text: eqpProps.category,
         fontSize,
         name: `cfm-${eqpProps.category}`,
       });
 
       previewShape = new Konva.Ring({
-        x: nodeProps.value.outerRadius,
-        y: nodeProps.value.outerRadius,
-        outerRadius: nodeProps.value.outerRadius,
-        innerRadius: nodeProps.value.innerRadius,
+        x: ringProps.outerRadius,
+        y: ringProps.outerRadius,
+        outerRadius: ringProps.outerRadius,
+        innerRadius: ringProps.innerRadius,
         fill: eqpProps.fill,
         name: "cfm-frame",
+        stroke:"black",
+        strokeWidth:2
       });
 
       group.add(previewShape);
@@ -1061,6 +1082,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
       break;
     }
   }
+
 
   if (previewLayer.children.length < 1 && group) {
     previewLayer.add(group);
@@ -1135,6 +1157,7 @@ const startInsertSnapping = (evt: Konva.KonvaEventObject<MouseEvent>) => {
 };
 
 const hoverHighLight = (evt: Konva.KonvaEventObject<MouseEvent>) => {
+
   const { target } = evt;
   let rect = target.getParent().find(".cfm-frame")[0];
   rect.stroke("black").strokeWidth(2);
@@ -1150,10 +1173,10 @@ const pickNode = (evt: Konva.KonvaEventObject<MouseEvent>) => {
   mode.value = "e";
   let group = evt.target.getParent();
   group.draggable(true);
-  group.setAttr("name", "selected-cfm-frame");
+  group.setAttr("name", "selected-cfm-object");
   const [frame, txt, category] = group.getChildren();
   eqpProps.category = category.getAttrs().text;
-  eqpProps.color = category.getAttrs().fill;
+  eqpProps.color = txt.getAttrs().fill;
   eqpProps.text = txt.getAttrs().text;
   eqpProps.fontSize = txt.getAttrs().fontSize;
   eqpProps.fill = frame.getAttrs().fill;
@@ -1162,25 +1185,37 @@ const pickNode = (evt: Konva.KonvaEventObject<MouseEvent>) => {
 
   switch (className) {
     case "Rect": {
+      rectProps.width = frame.getAttr("width");
+      rectProps.height = frame.getAttr("height");
       break;
     }
     case "Circle": {
+      circleProps.radius = frame.getAttr("radius");
       break;
     }
     case "Ellipse": {
+      ellipseProps.radiusX = frame.getAttr("radiusX");
+      ellipseProps.radiusY = frame.getAttr("radiusY");
       break;
     }
     case "RegularPolygon": {
+      regpolyProps.sides = frame.getAttr("sides");
+      regpolyProps.radius = frame.getAttr("radius");
       break;
     }
     case "Ring": {
+      ringProps.innerRadius = frame.getAttr("innerRadius");
+      ringProps.outerRadius = frame.getAttr("outerRadius");
       break;
     }
   }
 };
 
+const cancelEditNode = (evt:KeyboardEvent) => {
+}
+
 const updateNode = () => {
-  let group = iconLayer.find(".selected-cfm-frame")[0];
+  let group = iconLayer.find(".selected-cfm-object")[0];
   const [frame, txt, category] = group.getChildren();
   const { fill, fontSize, text, color } = eqpProps;
   const txtWidth = new Konva.Text({ fontSize }).measureSize(text);
@@ -1188,46 +1223,100 @@ const updateNode = () => {
     eqpProps.category,
   );
   let className = frame.getClassName();
+
   frame.setAttr("fill", fill);
-  category.setAttr("fill", color);
   category.width(categoryWidth.width);
   category.setAttr("text", eqpProps.category);
   category.setAttr("name", `cfm-${category}`);
   switch (className) {
     case "Rect": {
-      let _width = frame.getAttr("width");
-      let _height = frame.getAttr("height");
       txt.setAttrs({
-        x: (_width - txtWidth.width) / 2,
-        y: (_height - txtWidth.height) / 2,
+        x: (rectProps.width - txtWidth.width) / 2,
+        y: (rectProps.height - txtWidth.height) / 2,
         width: txtWidth.width,
         height: txtWidth.height,
         text,
         fontSize,
         name: `cfm-${text}`,
+        fill: color,
       });
+
+      frame.setAttr("width", rectProps.width);
+      frame.setAttr("height", rectProps.height);
       break;
     }
     case "Circle": {
+      txt.setAttrs({
+        x:(circleProps.radius - txtWidth.width) / 2,
+        y:(circleProps.radius - txtWidth.height) / 2,
+        width: txtWidth.width,
+        height: txtWidth.height,
+        text,
+        fontSize,
+        name: `cfm-${text}`,
+        fill: color,
+      });
+      frame.setAttr("radius", circleProps.radius);
       break;
     }
     case "Ellipse": {
+      txt.setAttrs({
+        x:ellipseProps.radiusX - txtWidth.width/2,
+        y:ellipseProps.radiusY - txtWidth.height/2,
+        width:txtWidth.width,
+        height:txtWidth.height,
+        text,
+        fontSize,
+        name: `cfm-${text}`,
+        fill: color,
+      });
+      frame.setAttr("radiusX", ellipseProps.radiusX);
+      frame.setAttr("radiusY", ellipseProps.radiusY);
       break;
     }
     case "RegularPolygon": {
+      txt.setAttrs({
+        x:regpolyProps.radius - txtWidth.width /2,
+        y:regpolyProps.radius - txtWidth.height /2,
+        width:txtWidth.width,
+        height:txtWidth.height,
+        fill:color,
+        text,
+        name: `cfm-${text}`,
+        fontSize,
+      });
+      
+      frame.setAttr("sides", regpolyProps.sides);
+      frame.setAttr("radius", regpolyProps.radius);
       break;
     }
     case "Ring": {
+      txt.setAttrs({
+        x:ringProps.outerRadius - txtWidth.width/2,
+        y:ringProps.outerRadius - txtWidth.height/2,
+        width:txtWidth.width,
+        height:txtWidth.height,
+        fill:color,
+        text,
+        name:`cfm-${text}`,
+        fontSize,
+      });
+      frame.setAttrs({
+        x:ringProps.outerRadius,
+        y:ringProps.outerRadius,
+        outerRadius:ringProps.outerRadius,
+        innerRadius:ringProps.innerRadius,
+      })
       break;
     }
   }
-  group.setAttr("name", "cfm-frame");
+  group.setAttr("name", "cfm-object");
   group.draggable(false);
   mode.value = "v";
 };
 
 const destroyNode = () => {
-  const group = stage.find(".selected-cfm-frame")[0];
+  const group = iconLayer.find(".selected-cfm-object")[0];
   group.off();
   group.destroy();
   mode.value = "v";
@@ -1261,73 +1350,94 @@ const dragStart = (evt) => {
 };
 
 const dragEnd = (evt) => {
-  stage.find(".guide-line").forEach((l) => l.destroy());
+  // TODO: destroy guide line;
+  gridLayer.find(".grid-guide-line").forEach(l => l.destroy());
+  gridLayer.draw();
 };
+
+// @ts-ignore
+const createPreviewBlockGroup = (evt:Konva.KonvaEventObject<MouseEvent>) => {
+  let group = new Konva.Group({x,y,width:0,height:0, opacity:0.5});
+  if (previewLayer.getChildren().length)
+  previewLayer.add(group);
+}
+
+// @ts-ignore
+const createPreviewBlock = (evt:Konva.KonvaEventObj<MouseEvent>) => {
+  const { x, y } = stage.getPointerPosition();
+  //let transformer = new Konva.Transformer({visible:false});
+  let group = new Konva.Group({
+    x,y,width:0,height:0,
+  })
+  let text = new Konva.Text({fontSize:12, text:blockProps.name});
+  let rect = new Konva.Rect({
+    x:0, y:0, width:0, height:0, opacity:0.5, fill:blockProps.fill, name:"fill"
+  });
+  group.add(rect).add(text);
+
+  //transformer.nodes([group]);
+  if (!previewLayer.getChildren().length) {
+    previewLayer.add(group);
+    stage.off("mousemove", drawPreviewBlock);
+    stage.on("mousemove", drawPreviewBlock);
+    // stage.on("mouseup", () => {
+
+    //   stage.off("mousemove", drawPreviewBlock);
+    // })
+  }
+    
+}
+
+const drawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
+  let {x:_x ,y:_y} = stage.getPointerPosition();
+  let group = previewLayer.getChildren()[0];
+  let x = group.x();
+  let y = group.y();
+  let width = Math.abs(_x - x), height = Math.abs(_y - y);
+  let offsetX = 0, offsetY = 0;
+  if (_x - x < 0) offsetX = width;
+  if (_y - y < 0) offsetY = height;
+  let rect = group.getChildren()[0];
+  rect.width(width);
+  rect.height(height);
+  if (_x - x < 0) rect.offsetX(offsetX);
+  if (_y - y < 0) rect.offsetY(offsetY);
+}
+
+const drawBlockToLayer = (evt:Konva.KonvaEventObject<MouseEvent>) => {
+  stage.off("mousemove", drawPreviewBlock);
+  let group = previewLayer.getChildren()[0].clone();
+  group.find(".fill")[0].opacity(1);
+  iconLayer.add(group);
+  iconLayer.draw();
+  iconLayer.getChildren().forEach(c => c.zIndex(0));
+  previewLayer.removeChildren();
+  iconLayer.getChildren().forEach(c => console.log(c.zIndex()));
+
+}
+
+const beforeDrawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
+  stage.find(".grid-guide-line").forEach(l => l.destroy());
+  stage.container().style.cursor = "crosshair";
+  // const {x, y} = stage.getPointerPosition();
+  
+  // const gridlineStops = getGridlineStops(evt.target);
+  // const itemBounds = getObjectSnappingEdges(evt.target);
+  // const guides = getGuidelines(gridlineStops, itemBounds);
+  // console.log(guides);
+
+}
 
 function drawBlock(ev) {
   let group = new Konva.Group();
   if (current.length == 0) current.push(group);
-  if (stage instanceof Konva.Stage)
-    stage.off("mouseenter", () => {
-      stage.container().style.cursor = "crosshair";
-    });
-  stage.off("mousedown", (evt) => {});
-  //stage.off("dragmove", ()=>{});
-  stage.on("mouseenter", () => {
-    stage.container().style.cursor = "crosshair";
-  });
-  stage.on("mousedown", (evt) => {
-    const { x, y } = stage.getPointerPosition();
-    current[0].x(x).y(y).height(0).width(0);
-  });
-
-  stage.on("mousemove", (evt) => {
-    // let group = current[0];
-    // const {x:X, y:Y} = stage.getPointerPosition();
-    // let x = group.x();
-    // let y = group.y();
-    // let rect = new Konva.Rect({
-    //   x:0,
-    //   y:0,
-    //   width:X-x,
-    //   height:Y - y,
-    //   fill:blockProps.fill,
-    //   opacity:0.3
-    // });
-    // if (group.children.length == 0)
-    //   group.add(rect)
-  });
-
-  stage.on("mouseup", (evt) => {
-    // let group = current[0];
-    // const {x:X, y:Y} = stage.getPointerPosition();
-    // let x = group.x();
-    // let y = group.y();
-    // let rect = new Konva.Rect({
-    //   x:0,
-    //   y:0,
-    //   width:X-x,
-    //   height:Y - y,
-    //   fill:blockProps.fill,
-    //   opacity:0.3
-    // });
-    // group.add(rect);
-    // previewLayer.add(group);
-    // previewLayer.draw();
-  });
-}
-
-function stopDrawBlock(ev: KeyboardEvent) {
-  if (ev.key == "Escape") {
-    stage.container().style.cursor = "default";
-    stage.off("mouseenter", () => {
-      stage.container().style.cursor = "crosshair";
-    });
-    stage.off("mousedown", (evt) => {
-      console.log(evt);
-    });
-    stage.off("dragmove", () => {});
-    current.forEach((children) => children.destroy());
+  if (stage instanceof Konva.Stage) {
+    stage.off("mouseenter", beforeDrawPreviewBlock);
+    stage.off("mousedown", createPreviewBlock);
+    stage.off("mouseup", drawBlockToLayer);
+    stage.on("mouseenter", beforeDrawPreviewBlock);
+    stage.on("mousedown", createPreviewBlock);
+    stage.on("mouseup", drawBlockToLayer);
   }
 }
 
@@ -1343,6 +1453,9 @@ function cancelDraw(evt: KeyboardEvent) {
   if (evt.key == "Escape" || evt.type == "mouseleave") {
     if (stage instanceof Konva.Stage) {
       stage.off("mouseenter", enter);
+      mode.value = "v";
+      iconLayer.find(".selected-cfm-object").forEach(children => children.name("cfm-object"));
+      console.log(iconLayer.find(".selected-cfm-object"), iconLayer.find(".cfm-object"))
     }
   }
 }
@@ -1380,12 +1493,6 @@ const drawGridLine = (direction: "V" | "H", mesh: number) => {
       }),
     );
   }
-
-  if (qBool) {
-    verticalAlign = buffer;
-  } else {
-    horizontalAlign = buffer;
-  }
   gridLayer.batchDraw();
 };
 
@@ -1417,15 +1524,12 @@ function initKonva() {
 const renewKonva = () => {
   if (stage instanceof Konva.Stage) {
     stage.off();
-    stage.removeChildren();
     stage.width(width.value);
     stage.height(height.value);
     iconLayer.removeChildren();
     previewLayer.removeChildren();
     gridLayer.removeChildren();
     current = [];
-    verticalAlign = [];
-    horizontalAlign = [];
   }
   initGridLayer();
 };
@@ -1442,7 +1546,6 @@ const initPreview = () => {
   });
 
   let layer = new Konva.Layer({ x: 0, y: 0, draggable: false });
-  // layer.add(new Konva.Rect({x:0, y:0, width:maxWidth, height:maxHeight, fill:"red"}))
   layer.add(
     new Konva.Rect({
       x: 1,
@@ -1457,26 +1560,18 @@ const initPreview = () => {
   if (previewStage instanceof Konva.Stage) previewStage.add(layer);
 };
 
-// const updateWidth = (value:string) => {
-//   width.value = Number(value);
-//   setTimeout(() => {
-//     gridLayer.find(".v-line").forEach(line => line.destroy());
-//     drawGridLine("V", mesh);
-//   }, 600)
-// }
+// const payload = {
+//   BU:"",
+//   NumberPerAPage:-1,
+//   PageName:"DS_CFM_MAP",
+//   PageNumber:-1,
+//   QueryArr:[sLocation.value, sFloor.value, "", "", "", ""]
+// };
 
-// const updateHeight = (value:string) => {
-//   height.value = Number(value);
-//   setTimeout(() => {
-//     gridLayer.find(".h-line").forEach(line => line.destroy())
-//     drawGridLine("H", mesh);
-//   }, 600)
-// }
 onMounted(() => {
   initKonva();
   initPreview();
   window.addEventListener("keydown", cancelDraw);
-  // window.addEventListener("keydown", stopDrawBlock);
 });
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", cancelDraw);
