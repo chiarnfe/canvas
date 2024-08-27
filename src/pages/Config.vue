@@ -1367,11 +1367,11 @@ const createPreviewBlock = (evt:Konva.KonvaEventObj<MouseEvent>) => {
   let group = new Konva.Group({
     x,y,width:0,height:0,
   });
-  let text = new Konva.Text({fontSize:12, text:blockProps.name});
+  let text = new Konva.Text({fontSize:12, text:blockProps.name, fill:blockProps.color, opacity:0.5});
   let rect = new Konva.Rect({
     x:0, y:0, width:0, height:0, opacity:0.5, fill:blockProps.fill, name:"fill"
   });
-  group.add(text).add(rect);
+  group.add(rect).add(text);
   stage.off("mousemove", showGridlineGuide);
 
   if (!previewLayer.getChildren().length) {
@@ -1425,6 +1425,7 @@ const drawBlockToLayer = (evt:Konva.KonvaEventObject<MouseEvent>) => {
   stage.off("mouseenter", beforeDrawPreviewBlock);
   if (previewLayer.getChildren().length) {
     let group = previewLayer.getChildren()[0].clone();
+    group.find(`.${blockProps.name}`)[0].opacity(blockProps.opacity);
     group.find(".fill")[0].opacity(1);
     group.on("mouseover", hoverBlock);
     group.on("mouseleave", leaveBlock);
@@ -1455,7 +1456,10 @@ const pickBlock = (evt) => {
   group.draggable(true);
   editBlock.value = true;
   mode.value = "e";
-  console.log(rect, txt);
+  blockProps.fill = rect.getAttr("fill");
+  blockProps.name = txt.getAttr("name");
+  blockProps.opacity = txt.getAttr("opacity");
+  blockProps.color = txt.getAttr("fill");
 }
 
 const updateBlock = () => {
