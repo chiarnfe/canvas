@@ -273,9 +273,8 @@
         label="編輯底圖"
       >
         <div class="p-2 flex flex-col gap-y-2">
-          <q-input outlined v-model="blockProps.fill">
-            <template v-slot:prepend>
-              <label class="text-xs absolute" style="top: 0.25rem">底色</label>
+          <q-input outlined v-model="blockProps.fill" label="底圖背景色">
+            <template v-slot:before>
               <span
                 class="w-6 h-4"
                 :style="{ backgroundColor: blockProps.fill }"
@@ -294,7 +293,23 @@
             </template>
           </q-input>
           <q-input outlined v-model="blockProps.name" label="區塊名稱" />
-          <q-input outlined v-model="blockProps.color" label="字體顏色" />
+          <q-input 
+            outlined 
+            v-model="blockProps.color" 
+            label="字體顏色"
+          >
+            <template v-slot:append>
+              <q-icon name="colorize" class="cursor-pointer">
+                <q-popup-proxy
+                  cover
+                  transition-show="scale"
+                  transition-hide="scale"
+                >
+                  <q-color no-header no-footer v-model="blockProps.color" />
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
           <div class="flex flex-row">
             <q-radio v-model="blockProps.opacity" :val="1" label="顯示名稱" />
             <q-radio v-model="blockProps.opacity" :val="0" label="隱藏名稱" />
@@ -306,6 +321,7 @@
               style="width: 60px"
               color="negative"
               label="刪除"
+              @click="removeBlock"
             />
             <q-btn 
               v-show="mode == 'e'"
@@ -313,6 +329,7 @@
               style="width: 60px"
               color="secondary"
               label="更新"
+              @click="updateBlock"
             />
             <q-btn
               v-show="mode == 'i' || mode == 'v'"
@@ -326,7 +343,10 @@
         </div>
       </q-expansion-item>
       <q-space />
-      <q-btn unelevated color="primary" @click="update" label="更新" />
+      <div class="flex flex-row justify-end gap-x-2">        
+        <q-btn unelevated color="primary" @click="loadToBoard" label="載入" />
+        <q-btn unelevated color="primary" @click="saveToLocal" label="更新" />
+      </div>
     </div>
     <div class="px-4 pb-4 w-5/6 relative">
       <div class="row gap-x-2 q-py-sm items-center">
@@ -377,10 +397,10 @@ import {
   onMounted,
   onBeforeUnmount,
   watch,
-  computed,
 } from "vue";
 import Konva from "konva";
 import $ from "jquery";
+import axios from 'axios';
 
 interface ScrollInfo {
   horizontalPosition: number;
@@ -413,12 +433,12 @@ let current = reactive<Konva.Group[]>([]);
 
 const mesh = 20;
 
-let previewLayer = reactive(new Konva.Layer({ x: 0, y: 0, draggable: true }));
+let previewLayer = reactive(new Konva.Layer({ x: 0, y: 0, draggable: true , name: "preview"}));
 let iconLayer = reactive<Konva.Layer>(
-  new Konva.Layer({ x: 0, y: 0, draggable: false }),
+  new Konva.Layer({ x: 0, y: 0, draggable: false, name: "icon" }),
 );
 let gridLayer = reactive<Konva.Layer>(
-  new Konva.Layer({ x: 0, y: 0, draggable: false }),
+  new Konva.Layer({ x: 0, y: 0, draggable: false, name: "grid" }),
 );
 
 const shape = ref<"Rect" | "Circle" | "Ellipse" | "Ring" | "RegularPolygon">(
@@ -503,7 +523,7 @@ const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map((num) => ({
   label: num.toString(),
   value: num,
 }));
-const categoryOptions = ["CP", "FT", "氮氣櫃", "溫溼度監控"].map((l) => ({
+const categoryOptions = ["DS", "CP", "FT", "氮氣櫃", "溫溼度監控"].map((l) => ({
   label: l,
   value: l,
 }));
@@ -518,9 +538,9 @@ const shapeOptions = [
   { label: "正多邊形", value: "RegularPolygon" },
 ];
 
-watch(sLocation, (nValue, _) => {
+watch([sLocation, sFloor, sDepartment], (nValue, _) => {
   let floor = ["1F", "2F", "3F", "7F"];
-  switch (nValue) {
+  switch (nValue[0]) {
     case "創新":{
       floor = ["2F", "3F", "4F"];
       sFloor.value = "2F";
@@ -857,7 +877,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: `cfm-${eqpProps.text}`,
+        name:"name"
       });
 
       let category = new Konva.Text({
@@ -867,7 +887,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         height: estCategoryWidth.height,
         opacity:0,
         text: eqpProps.category,
-        name: `cfm-${eqpProps.category}`,
+        name:"category"
       });
 
       previewShape = new Konva.Rect({
@@ -903,7 +923,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: `cfm-${eqpProps.text}`,
+        name:"name"
       });
 
       let category = new Konva.Text({
@@ -914,7 +934,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         opacity:0,
         text: eqpProps.category,
         fontSize,
-        name: `cfm-${eqpProps.category}`,
+        name:"category",
       });
 
       previewShape = new Konva.Circle({
@@ -949,7 +969,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: `cfm-${eqpProps.text}`,
+        name: "name",
       });
 
       let category = new Konva.Text({
@@ -960,7 +980,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         opacity:0,
         text: eqpProps.category,
         fontSize,
-        name: `cfm-${eqpProps.category}`,
+        name: "category",
       });
 
       previewShape = new Konva.Ellipse({
@@ -996,7 +1016,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: `cfm-${eqpProps.text}`,
+        name: "name",
       });
 
       let category = new Konva.Text({
@@ -1007,7 +1027,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         opacity:0,
         text: eqpProps.category,
         fontSize,
-        name: `cfm-${eqpProps.category}`,
+        name: "category",
       });
 
       previewShape = new Konva.RegularPolygon({
@@ -1043,7 +1063,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: `cfm-${eqpProps.text}`,
+        name: "name",
       });
 
       let category = new Konva.Text({
@@ -1054,7 +1074,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         opacity:0,
         text: eqpProps.category,
         fontSize,
-        name: `cfm-${eqpProps.category}`,
+        name:"category"
       });
 
       previewShape = new Konva.Ring({
@@ -1108,8 +1128,8 @@ const cancelInsert = (evt: KeyboardEvent | MouseEvent) => {
 const insertToIconLayer = () => {
   let children = previewLayer.getChildren()[0];
   let clone = children.clone().opacity(1);
-  clone.on("mouseover", hoverHighLight);
-  clone.on("mouseleave", leaveHighLight);
+  //clone.on("mouseover", hoverHighLight);
+  //clone.on("mouseleave", leaveHighLight);
   clone.on("click", pickNode);
   clone.on("dragmove", dragStart);
   clone.on("dragend", dragEnd);
@@ -1225,7 +1245,6 @@ const updateNode = () => {
   frame.setAttr("fill", fill);
   category.width(categoryWidth.width);
   category.setAttr("text", eqpProps.category);
-  category.setAttr("name", `cfm-${category}`);
   switch (className) {
     case "Rect": {
       txt.setAttrs({
@@ -1235,10 +1254,8 @@ const updateNode = () => {
         height: txtWidth.height,
         text,
         fontSize,
-        name: `cfm-${text}`,
         fill: color,
       });
-
       frame.setAttr("width", rectProps.width);
       frame.setAttr("height", rectProps.height);
       break;
@@ -1251,7 +1268,6 @@ const updateNode = () => {
         height: txtWidth.height,
         text,
         fontSize,
-        name: `cfm-${text}`,
         fill: color,
       });
       frame.setAttr("radius", circleProps.radius);
@@ -1265,7 +1281,6 @@ const updateNode = () => {
         height:txtWidth.height,
         text,
         fontSize,
-        name: `cfm-${text}`,
         fill: color,
       });
       frame.setAttr("radiusX", ellipseProps.radiusX);
@@ -1280,10 +1295,8 @@ const updateNode = () => {
         height:txtWidth.height,
         fill:color,
         text,
-        name: `cfm-${text}`,
         fontSize,
       });
-      
       frame.setAttr("sides", regpolyProps.sides);
       frame.setAttr("radius", regpolyProps.radius);
       break;
@@ -1296,7 +1309,6 @@ const updateNode = () => {
         height:txtWidth.height,
         fill:color,
         text,
-        name:`cfm-${text}`,
         fontSize,
       });
       frame.setAttrs({
@@ -1321,7 +1333,7 @@ const destroyNode = () => {
 };
 
 const dragStart = (evt) => {
-  stage.find(".guide-line").forEach((l) => l.destroy());
+  iconLayer.find(".guide-line").forEach((l) => l.destroy());
   const lineGuideStops = getGuidelineStops(evt.target);
   const itemBounds = getObjectSnappingEdges(evt.target);
   const guides = getGuidelines(lineGuideStops, itemBounds);
@@ -1349,8 +1361,8 @@ const dragStart = (evt) => {
 
 const dragEnd = (evt) => {
   // TODO: destroy guide line;
-  gridLayer.find(".grid-guide-line").forEach(l => l.destroy());
-  gridLayer.draw();
+  iconLayer.find(".guide-line").forEach(l => l.destroy());
+  iconLayer.draw();
 };
 
 // @ts-ignore
@@ -1365,9 +1377,9 @@ const createPreviewBlock = (evt:Konva.KonvaEventObj<MouseEvent>) => {
   stage.find(".grid-guide-line").forEach(l => l.destroy());
   const { x, y } = stage.getPointerPosition();
   let group = new Konva.Group({
-    x,y,width:0,height:0,
+    x,y,width:0,height:0,name:"block"
   });
-  let text = new Konva.Text({fontSize:12, text:blockProps.name, fill:blockProps.color, opacity:0.5});
+  let text = new Konva.Text({fontSize:12, text:blockProps.name, fill:blockProps.color, opacity:0.5, name:"name"});
   let rect = new Konva.Rect({
     x:0, y:0, width:0, height:0, opacity:0.5, fill:blockProps.fill, name:"fill"
   });
@@ -1425,46 +1437,91 @@ const drawBlockToLayer = (evt:Konva.KonvaEventObject<MouseEvent>) => {
   stage.off("mouseenter", beforeDrawPreviewBlock);
   if (previewLayer.getChildren().length) {
     let group = previewLayer.getChildren()[0].clone();
-    group.find(`.${blockProps.name}`)[0].opacity(blockProps.opacity);
-    group.find(".fill")[0].opacity(1);
-    group.on("mouseover", hoverBlock);
-    group.on("mouseleave", leaveBlock);
+    group.find("Text")[0].opacity(blockProps.opacity);
+    group.find("Rect")[0].opacity(1);
     group.on("mousedown", pickBlock);
     iconLayer.add(group);
     iconLayer.draw();
     let itemCount = iconLayer.getChildren().length;
-    console.log(itemCount);
+    iconLayer.find(".block").forEach((f,i) => f.zIndex(i));
+    iconLayer.find(".cfm-object").forEach((o,i) => o.zIndex(itemCount - 1 -i));
   }
-//  iconLayer.find(".fill").forEach((f,i) => f.zIndex(i));
-//  iconLayer.find(".cfm-object").forEach((o,i) => o.zIndex(itemCount-i));
   previewLayer.removeChildren();
   stage.find(".grid-guide-line").forEach(l => l.destroy());
   stage.off("mouseup", drawBlockToLayer); 
 }
 
-const hoverBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
-  evt.target.stroke("black").strokeWidth(2);
+const moveBlock = (evt) => {
+  stage.find('.guide-line').forEach(l => l.destroy());
+  let lineGuideStops = getGuidelineStops(evt.target);
+  let itemBounds = getObjectSnappingEdges(evt.target);
+  const guides = getGuidelines(lineGuideStops, itemBounds);
+  if (!guides.length) return;
+  drawGuideline(guides);
+  const absPos = evt.target.absolutePosition();
+
+  guides.forEach(line => {
+    switch (line.orientation) {
+      case "V":{
+        absPos.x = line.lineGuide + line.offset;
+        break;
+      }
+      case "H":{
+        absPos.y = line.lineGuide + line.offset;
+        break;
+      }
+    }
+  });
+  evt.target.absolutePosition(absPos);
 }
 
-const leaveBlock = (evt) => {
-  evt.target.stroke(null).strokeWidth(0);
+const leaveBlock = () => {
+  stage.find('.guide-line').forEach(l => l.destroy());
 }
 
 const pickBlock = (evt) => {
-  let group = evt.target.getParent();  
-  const [rect, txt] = group.getChildren();
+  let group = evt.target.getParent();
+  group.on("dragmove", moveBlock);
+  group.on("mouseup", leaveBlock);
+  iconLayer.find(".block").forEach(grp => {
+    if (grp.isAncestorOf(evt.target)) {
+      evt.target.name("selected-fill");
+    } else {
+      grp.find("Rect")[0].name("fill")
+    }
+  });
+  let rect = group.find("Rect")[0];
+  let txt = group.find("Text")[0];
   group.draggable(true);
   editBlock.value = true;
   mode.value = "e";
   blockProps.fill = rect.getAttr("fill");
-  blockProps.name = txt.getAttr("name");
+  blockProps.name = txt.getAttr("text");
   blockProps.opacity = txt.getAttr("opacity");
   blockProps.color = txt.getAttr("fill");
 }
 
 const updateBlock = () => {
-  mode.value = "i";
+  mode.value = "v";
+  let rect = iconLayer.find(".selected-fill")[0];
+  let group = rect.getParent();
+  let txt = group.find("Text")[0];
+  group.off("dragmove", moveBlock);
+  group.off("mouseup", leaveBlock);
+  group.draggable(false);
+  rect.setAttr("fill", blockProps.fill);
+  txt.setAttrs({
+    text:blockProps.name,
+    fill:blockProps.color,
+    opacity:blockProps.opacity,
+  });
+  rect.name("fill")
+}
 
+const removeBlock = () => {
+  let group = iconLayer.find(".selected-fill")[0].getParent();
+  group.destroy();
+  mode.value = "v";
 }
 
 const beforeDrawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
@@ -1573,10 +1630,6 @@ const drawGridLine = (direction: "V" | "H", mesh: number) => {
   gridLayer.batchDraw();
 };
 
-const update = () => {
-  console.log(iconLayer.toJSON());
-};
-
 const initGridLayer = () => {
   drawGridLine("V", mesh);
   drawGridLine("H", mesh);
@@ -1588,6 +1641,7 @@ function initKonva() {
     container: "canvas_container",
     width: width.value,
     height: height.value,
+    name:"main"
   });
 
   if (stage instanceof Konva.Stage) {
@@ -1669,6 +1723,48 @@ const initPreview = () => {
 //   PageNumber:-1,
 //   QueryArr:[sLocation.value, sFloor.value, "", "", "", ""]
 // };
+const saveToLocal = async () => {
+  previewLayer.remove();
+  gridLayer.remove();
+  
+  let payload = {
+    PageName:sDepartment.value + "_CFM_MAP",
+    BU:"",
+    DeleteArr:[],
+    InsertArr:[],
+    UpdateArr:[],
+  };
+  
+  stage.find("Group").forEach(group => {
+    let str = [sLocation.value, sFloor.value];
+    let name = group.find(".name")[0].getAttr("text");
+    let groupAttrs = group.toJSON().replaceAll(",", "，");
+    str.push(name);
+    str.push(sDepartment.value);
+    str.push(groupAttrs);
+    payload.InsertArr.push(str.join(","));
+  });
+  let stageStr = [sLocation.value, sFloor.value, "Stage", sDepartment.value];
+  let stageAttr = JSON.stringify({width:width.value, height:height.value}).replaceAll(",", "，");
+  stageStr.push(stageAttr);
+  payload.InsertArr.push(stageStr.join(','));
+  
+  //await axios.post("http://localhost:60135/Home/Update", payload).then(res => console.log(res))
+}
+
+const loadToBoard = async () => {
+  let payload = {
+    BU:"",
+    NumberPerAPage:-1,
+    PageName:sDepartment.value + "_CFM_MAP",
+    PageNumber:-1,
+    QueryArr:[sLocation.value, sFloor.value, "", "", "", ""]
+  }
+  // console.log(localStorage.getItem("stage"));
+  stage.add(previewLayer);
+  stage.add(gridLayer);
+  await axios.post("http://localhost:60135/Home/HomePageSearch", payload).then(res => console.log(res))
+}
 
 onMounted(() => {
   initKonva();
