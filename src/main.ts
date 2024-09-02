@@ -9,9 +9,10 @@ import {createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history:createWebHistory(),
   routes:[
-    { path:"/Home/NCFM", component: () => import('./pages/Config.vue') },
+    { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor`, component: () => import('./pages/Config.vue') },
+    // { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor1`, component: () => import('./pages/Config.vue') },
   ]
-})
+});
 
 
 //let app_node = document.getElementById("app");

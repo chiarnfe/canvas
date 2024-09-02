@@ -1,197 +1,284 @@
 <template>
   <div class="w-full border" style="height: 50px"></div>
   <div class="flex flex-row w-full" style="height: calc(100vh - 50px)">
-    <div class="column w-1/6 h-full shadow-md">
-      <div class="flex flex-row gap-x-2 p-2">
-        <q-select
-          class="w-1/3"
-          outlined
-          label="廠區"
-          option-label="label"
-          option-value="value"
-          v-model="sLocation"
-          :options="locationOptions"
-          emit-value
-          map-options
-        />
-        <q-select
-          outlined
-          class="w-[calc(33%_-_8px)]"
-          label="樓層"
-          option-label="label"
-          option-value="value"
-          v-model="sFloor"
-          :options="floorOptions"
-          emit-value
-          map-options
-        />
-        <q-select
-          outlined
-          class="w-[calc(33%_-_8px)]"
-          label="部門"
-          option-label="label"
-          option-value="value"
-          v-model="sDepartment"
-          :options="departmentOptions"
-          emit-value
-          map-options
-        />
-      </div>
-      <q-expansion-item
-        group="group"
-        icon="aspect_ratio"
-        label="版面調整"
-        @show="show"
-        @hide="hide"
-        :default-opened="true"
-      >
-        <div class="flex flex-col gap-y-2 p-2">
-          <q-input
+    <div class="column justify-between w-1/6 h-full shadow-md">
+      <div class="h-fit">
+        <div class="flex flex-row gap-x-2 p-2">
+          <q-select
+            class="w-1/3"
             outlined
-            label="版面寬度"
-            type="number"
-            v-model.number="width"
-            debounce="600"
-            max="4500"
-            :rules="[(val) => val <= 4500 || '最大寬度為4500']"
-          />
-          <q-input
-            outlined
-            label="版面高度"
-            type="number"
-            v-model.number="height"
-            debounce="600"
-            max="4500"
-            :rules="[(val) => val <= 4500 || '最大高度為4500']"
+            label="廠區"
+            option-label="label"
+            option-value="value"
+            v-model="sLocation"
+            :options="locationOptions"
+            emit-value
+            map-options
           />
           <q-select
             outlined
-            label="預覽視窗"
+            class="w-[calc(33%_-_8px)]"
+            label="樓層"
             option-label="label"
             option-value="value"
-            v-model="position"
-            :options="positionOptions"
+            v-model="sFloor"
+            :options="floorOptions"
+            emit-value
+            map-options
+          />
+          <q-select
+            outlined
+            class="w-[calc(33%_-_8px)]"
+            label="部門"
+            option-label="label"
+            option-value="value"
+            v-model="sDepartment"
+            :options="departmentOptions"
             emit-value
             map-options
           />
         </div>
-      </q-expansion-item>
-      <q-separator class="q-ml-sm q-mr-md" />
-      <q-expansion-item
-        v-model="editNode"
-        group="group"
-        icon="dashboard"
-        label="編輯機台"
-      >
-        <div class="flex flex-col p-2 gap-y-2">
-          <q-select
-            outlined
-            v-model="eqpProps.category"
-            label="類別"
-            :options="categoryOptions"
-            option-label="label"
-            option-value="value"
-            emit-value
-            map-options
-          />
-          <q-select
-            outlined
-            v-model="shape"
-            label="選擇圖形"
-            :options="shapeOptions"
-            option-label="label"
-            option-value="value"
-            emit-value
-            map-options
-          ></q-select>
-          <div v-if="shape == 'Rect'" class="flex flex-row gap-x-2">
+        <q-expansion-item
+          group="group"
+          icon="aspect_ratio"
+          label="版面調整"
+          @show="show"
+          @hide="hide"
+          :default-opened="true"
+        >
+          <div class="flex flex-col gap-y-2 p-2">
             <q-input
               outlined
-              class="w-[calc(50%_-_4px)]"
-              v-model.number="rectProps.width"
-              label="長度"
-            />
-            <q-input
-              outlined
-              class="w-[calc(50%_-_4px)]"
-              v-model.number="rectProps.height"
-              label="高度"
-            />
-          </div>
-          <div v-if="shape == 'Circle'">
-            <q-input
-              outlined
-              v-model.number="circleProps.radius"
-              label="圓半徑"
-            />
-          </div>
-          <!-- <div v-if="shape=='Wedge'">  
-          </div> -->
-          <div v-if="shape == 'Ellipse'" class="flex flex-row gap-x-2">
-            <q-input
-              outlined
-              class="w-[calc(50%_-_4px)]"
-              v-model.number="ellipseProps.radiusX"
-              label="主軸半徑"
-            />
-            <q-input
-              outlined
-              class="w-[calc(50%_-_4px)]"
-              v-model.number="ellipseProps.radiusY"
-              label="次軸半徑"
-            />
-          </div>
-          <!-- <div v-if="shape=='Star'">
-          </div> -->
-          <div v-if="shape == 'Ring'">
-            <q-input
-              outlined
+              label="版面寬度"
               type="number"
-              v-model.number="ringProps.outerRadius"
-              label="外圓半徑"
-              :rules="[
-                (val) =>
-                  val > ringProps.innerRadius || '外圓半徑要大於內圓半徑',
-              ]"
+              v-model.number="width"
+              debounce="600"
+              max="4500"
+              :rules="[(val) => val <= 4500 || '最大寬度為4500']"
             />
             <q-input
               outlined
-              class="q-mt-sm"
+              label="版面高度"
               type="number"
-              label="內圓半徑"
-              v-model.number="ringProps.innerRadius"
-              :rules="[
-                (val) =>
-                  val < ringProps.outerRadius || '內圓半徑要小於外圓半徑',
-              ]"
+              v-model.number="height"
+              debounce="600"
+              max="4500"
+              :rules="[(val) => val <= 4500 || '最大高度為4500']"
             />
+            <!-- <q-select
+              outlined
+              label="預覽視窗"
+              option-label="label"
+              option-value="value"
+              v-model="position"
+              :options="positionOptions"
+              emit-value
+              map-options
+            /> -->
           </div>
-          <!-- <div v-if="shape=='Arc'">
-          </div> -->
-          <div v-if="shape == 'RegularPolygon'" class="flex flex-row gap-x-2">
-            <q-input
+        </q-expansion-item>
+        <q-separator class="q-ml-sm q-mr-md" />
+        <q-expansion-item
+          v-model="editNode"
+          group="group"
+          icon="dashboard"
+          label="編輯機台"
+        >
+          <div class="flex flex-col p-2 gap-y-2">
+            <q-select
               outlined
-              class="w-[calc(50%_-_4px)]"
-              label="邊數"
-              type="number"
-              :min="3"
-              v-model.number="regpolyProps.sides"
-              :rules="[(val) => val >= 3 || '邊數必須大於等於3']"
+              v-model="eqpProps.category"
+              label="類別"
+              :options="categoryOptions"
+              option-label="label"
+              option-value="value"
+              emit-value
+              map-options
             />
-            <q-input
+            <q-select
               outlined
-              class="w-[calc(50%_-_4px)]"
-              label="邊心距"
-              type="number"
-              v-model.number="regpolyProps.radius"
-            />
+              v-model="shape"
+              label="選擇圖形"
+              :options="shapeOptions"
+              option-label="label"
+              option-value="value"
+              emit-value
+              map-options
+            ></q-select>
+            <div v-if="shape == 'Rect'" class="flex flex-row gap-x-2">
+              <q-input
+                outlined
+                class="w-[calc(50%_-_4px)]"
+                v-model.number="rectProps.width"
+                label="長度"
+              />
+              <q-input
+                outlined
+                class="w-[calc(50%_-_4px)]"
+                v-model.number="rectProps.height"
+                label="高度"
+              />
+            </div>
+            <div v-if="shape == 'Circle'">
+              <q-input
+                outlined
+                v-model.number="circleProps.radius"
+                label="圓半徑"
+              />
+            </div>
+            <!-- <div v-if="shape=='Wedge'">  
+            </div> -->
+            <div v-if="shape == 'Ellipse'" class="flex flex-row gap-x-2">
+              <q-input
+                outlined
+                class="w-[calc(50%_-_4px)]"
+                v-model.number="ellipseProps.radiusX"
+                label="主軸半徑"
+              />
+              <q-input
+                outlined
+                class="w-[calc(50%_-_4px)]"
+                v-model.number="ellipseProps.radiusY"
+                label="次軸半徑"
+              />
+            </div>
+            <!-- <div v-if="shape=='Star'">
+            </div> -->
+            <div v-if="shape == 'Ring'">
+              <q-input
+                outlined
+                type="number"
+                v-model.number="ringProps.outerRadius"
+                label="外圓半徑"
+                :rules="[
+                  (val) =>
+                    val > ringProps.innerRadius || '外圓半徑要大於內圓半徑',
+                ]"
+              />
+              <q-input
+                outlined
+                class="q-mt-sm"
+                type="number"
+                label="內圓半徑"
+                v-model.number="ringProps.innerRadius"
+                :rules="[
+                  (val) =>
+                    val < ringProps.outerRadius || '內圓半徑要小於外圓半徑',
+                ]"
+              />
+            </div>
+            <!-- <div v-if="shape=='Arc'">
+            </div> -->
+            <div v-if="shape == 'RegularPolygon'" class="flex flex-row gap-x-2">
+              <q-input
+                outlined
+                class="w-[calc(50%_-_4px)]"
+                label="邊數"
+                type="number"
+                :min="3"
+                v-model.number="regpolyProps.sides"
+                :rules="[(val) => val >= 3 || '邊數必須大於等於3']"
+              />
+              <q-input
+                outlined
+                class="w-[calc(50%_-_4px)]"
+                label="邊心距"
+                type="number"
+                v-model.number="regpolyProps.radius"
+              />
+            </div>
+            <div class="flex flex-col gap-y-2">
+              <q-input outlined label="圖例背景色" v-model="eqpProps.fill">
+                <template v-slot:before>
+                  <span
+                    class="w-6 h-4"
+                    :style="{ backgroundColor: eqpProps.fill }"
+                  ></span>
+                </template>
+                <template v-slot:append>
+                  <q-icon name="colorize" class="cursor-pointer">
+                    <q-popup-proxy
+                      cover
+                      transition-show="scale"
+                      transition-hide="scale"
+                    >
+                      <q-color no-header no-footer v-model="eqpProps.fill" />
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+              <q-input outlined label="機台名稱" v-model="eqpProps.text" />
+              <div class="flex flex-row gap-x-2">
+                <q-input
+                  outlined
+                  class="w-[calc(60%_-_4px)]"
+                  label="字體顏色"
+                  v-model="eqpProps.color"
+                >
+                  <template v-slot:append>
+                    <q-icon name="colorize" class="cursor-pointer">
+                      <q-popup-proxy
+                        cover
+                        transition-show="scale"
+                        transition-hide="scale"
+                      >
+                        <q-color no-header no-footer v-model="eqpProps.color" />
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
+                <q-select
+                  outlined
+                  class="w-[calc(40%_-_4px)]"
+                  label="字體大小"
+                  option-label="label"
+                  option-value="value"
+                  v-model="eqpProps.fontSize"
+                  :options="fontSizeOptions"
+                  emit-value
+                  map-options
+                />
+              </div>
+            </div>
+            <div class="flex flex-row gap-x-2 justify-end">
+              <q-btn
+                v-show="mode == 'e'"
+                unelevated
+                color="negative"
+                label="刪除"
+                @click="destroyNode"
+              />
+              <q-btn
+                v-show="mode == 'e'"
+                unelevated
+                color="secondary"
+                label="更新"
+                @click="updateNode"
+              />
+              <!-- <q-btn class="w-full" unelevated color="secondary" label="" /> -->
+              <q-btn
+                v-show="mode == 'i' || mode == 'v'"
+                unelevated
+                color="primary"
+                label="新增"
+                @click="predraw"
+              />
+            </div>
           </div>
-          <div class="flex flex-col gap-y-2">
-            <q-input outlined label="圖例背景色" v-model="eqpProps.fill">
+        </q-expansion-item>
+        <q-separator class="q-ml-sm q-mr-md" />
+        <q-expansion-item
+          v-model="editBlock"
+          group="group" 
+          icon="space_dashboard" 
+          label="編輯底圖"
+        >
+          <div class="p-2 flex flex-col gap-y-2">
+            <q-input outlined v-model="blockProps.fill" label="底圖背景色">
               <template v-slot:before>
                 <span
                   class="w-6 h-4"
-                  :style="{ backgroundColor: eqpProps.fill }"
+                  :style="{ backgroundColor: blockProps.fill }"
                 ></span>
               </template>
               <template v-slot:append>
@@ -201,152 +288,63 @@
                     transition-show="scale"
                     transition-hide="scale"
                   >
-                    <q-color no-header no-footer v-model="eqpProps.fill" />
+                    <q-color no-header no-footer v-model="blockProps.fill" />
                   </q-popup-proxy>
                 </q-icon>
               </template>
             </q-input>
-            <q-input outlined label="機台名稱" v-model="eqpProps.text" />
-            <div class="flex flex-row gap-x-2">
-              <q-input
-                outlined
-                class="w-[calc(60%_-_4px)]"
-                label="字體顏色"
-                v-model="eqpProps.color"
-              >
-                <template v-slot:append>
-                  <q-icon name="colorize" class="cursor-pointer">
-                    <q-popup-proxy
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-color no-header no-footer v-model="eqpProps.color" />
-                    </q-popup-proxy>
-                  </q-icon>
-                </template>
-              </q-input>
-              <q-select
-                outlined
-                class="w-[calc(40%_-_4px)]"
-                label="字體大小"
-                option-label="label"
-                option-value="value"
-                v-model="eqpProps.fontSize"
-                :options="fontSizeOptions"
-                emit-value
-                map-options
+            <q-input outlined v-model="blockProps.name" label="區塊名稱" />
+            <q-input 
+              outlined 
+              v-model="blockProps.color" 
+              label="字體顏色"
+            >
+              <template v-slot:append>
+                <q-icon name="colorize" class="cursor-pointer">
+                  <q-popup-proxy
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
+                    <q-color no-header no-footer v-model="blockProps.color" />
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+            <div class="flex flex-row">
+              <q-radio v-model="blockProps.opacity" :val="1" label="顯示名稱" />
+              <q-radio v-model="blockProps.opacity" :val="0" label="隱藏名稱" />
+            </div>
+            <div class="flex flex-row gap-x-2 justify-end">
+              <q-btn
+                v-show="mode == 'e'"
+                unelevated
+                style="width: 60px"
+                color="negative"
+                label="刪除"
+                @click="removeBlock"
+              />
+              <q-btn 
+                v-show="mode == 'e'"
+                unelevated
+                style="width: 60px"
+                color="secondary"
+                label="更新"
+                @click="updateBlock"
+              />
+              <q-btn
+                v-show="mode == 'i' || mode == 'v'"
+                unelevated
+                style="width: 60px"
+                color="primary"
+                label="新增"
+                @click="drawBlock"
               />
             </div>
           </div>
-          <div class="flex flex-row gap-x-2 justify-end">
-            <q-btn
-              v-show="mode == 'e'"
-              unelevated
-              color="negative"
-              label="刪除"
-              @click="destroyNode"
-            />
-            <q-btn
-              v-show="mode == 'e'"
-              unelevated
-              color="secondary"
-              label="編輯"
-              @click="updateNode"
-            />
-            <!-- <q-btn class="w-full" unelevated color="secondary" label="" /> -->
-            <q-btn
-              v-show="mode == 'i' || mode == 'v'"
-              unelevated
-              color="primary"
-              label="新增"
-              @click="predraw"
-            />
-          </div>
-        </div>
-      </q-expansion-item>
-      <q-separator class="q-ml-sm q-mr-md" />
-      <q-expansion-item
-        v-model="editBlock"
-        group="group" 
-        icon="space_dashboard" 
-        label="編輯底圖"
-      >
-        <div class="p-2 flex flex-col gap-y-2">
-          <q-input outlined v-model="blockProps.fill" label="底圖背景色">
-            <template v-slot:before>
-              <span
-                class="w-6 h-4"
-                :style="{ backgroundColor: blockProps.fill }"
-              ></span>
-            </template>
-            <template v-slot:append>
-              <q-icon name="colorize" class="cursor-pointer">
-                <q-popup-proxy
-                  cover
-                  transition-show="scale"
-                  transition-hide="scale"
-                >
-                  <q-color no-header no-footer v-model="blockProps.fill" />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-          <q-input outlined v-model="blockProps.name" label="區塊名稱" />
-          <q-input 
-            outlined 
-            v-model="blockProps.color" 
-            label="字體顏色"
-          >
-            <template v-slot:append>
-              <q-icon name="colorize" class="cursor-pointer">
-                <q-popup-proxy
-                  cover
-                  transition-show="scale"
-                  transition-hide="scale"
-                >
-                  <q-color no-header no-footer v-model="blockProps.color" />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-          <div class="flex flex-row">
-            <q-radio v-model="blockProps.opacity" :val="1" label="顯示名稱" />
-            <q-radio v-model="blockProps.opacity" :val="0" label="隱藏名稱" />
-          </div>
-          <div class="flex flex-row gap-x-2 justify-end">
-            <q-btn
-              v-show="mode == 'e'"
-              unelevated
-              style="width: 60px"
-              color="negative"
-              label="刪除"
-              @click="removeBlock"
-            />
-            <q-btn 
-              v-show="mode == 'e'"
-              unelevated
-              style="width: 60px"
-              color="secondary"
-              label="更新"
-              @click="updateBlock"
-            />
-            <q-btn
-              v-show="mode == 'i' || mode == 'v'"
-              unelevated
-              style="width: 60px"
-              color="primary"
-              label="新增"
-              @click="drawBlock"
-            />
-          </div>
-        </div>
-      </q-expansion-item>
-      <q-space />
-      <div class="flex flex-row justify-end gap-x-2">        
-        <q-btn unelevated color="primary" @click="loadToBoard" label="載入" />
-        <q-btn unelevated color="primary" @click="saveToLocal" label="更新" />
+        </q-expansion-item>
       </div>
+      <q-btn unelevated class="q-ma-sm" color="primary" @click="saveToDb" label="上傳" />
     </div>
     <div class="px-4 pb-4 w-5/6 relative">
       <div class="row gap-x-2 q-py-sm items-center">
@@ -388,6 +386,19 @@
       ></div>
     </div>
   </div>
+  <q-dialog v-model="dialog" backdrop-filter="blur(4px) grayscale(100%)">
+    <q-card class="w-96">
+      <q-card-section class="row items-center q-pb-none text-h5">
+        Attension
+      </q-card-section>
+      <q-card-section class="h-24">
+        {{message}}
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="關閉" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -401,12 +412,10 @@ import {
 import Konva from "konva";
 import $ from "jquery";
 import axios from 'axios';
-
 interface ScrollInfo {
   horizontalPosition: number;
   verticalPosition: number;
 }
-
 const showPreview = ref(true);
 const position = ref("top-16 right-7");
 const width = ref(1800);
@@ -422,11 +431,12 @@ const editNode = ref(false);
 const editBlock = ref(false);
 const container = ref<HTMLDivElement | null>(null);
 
+const dialog = ref(false);
+const message = ref("");
+
 let previewStage = reactive<{} | Konva.Stage>({});
 
 let stage = reactive<{} | Konva.Stage>({});
-
-let current = reactive<Konva.Group[]>([]);
 
 //const drop = ref(null);
 //const undo = ref(null);
@@ -493,7 +503,7 @@ const regpolyProps = reactive({
 });
 
 const eqpProps = reactive({
-  category: "CP",
+  category: "DS",
   text: "",
   fill: "red",
   fontSize: 20,
@@ -523,10 +533,12 @@ const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map((num) => ({
   label: num.toString(),
   value: num,
 }));
-const categoryOptions = ["DS", "CP", "FT", "氮氣櫃", "溫溼度監控"].map((l) => ({
+
+const categoryOptions = ref(["DS", "氮氣櫃", "溫溼度監控"].map((l) => ({
   label: l,
   value: l,
-}));
+})));
+
 const shapeOptions = [
   { label: "矩形", value: "Rect" },
   { label: "圓形", value: "Circle" },
@@ -538,33 +550,46 @@ const shapeOptions = [
   { label: "正多邊形", value: "RegularPolygon" },
 ];
 
-watch([sLocation, sFloor, sDepartment], (nValue, _) => {
-  let floor = ["1F", "2F", "3F", "7F"];
-  switch (nValue[0]) {
-    case "創新":{
-      floor = ["2F", "3F", "4F"];
-      sFloor.value = "2F";
-      break;
-    }
-    case "力行":{
-      floor = ["3F"];
-      sFloor.value = "3F";
-      break;
-    }
-    case "科學":
-      sFloor.value = "1F";
-      break;
-  }
-  floorOptions.value = floor.map(l => ({value:l,label:l}));
+watch([sLocation, sFloor, sDepartment], async (nValue, oValue) => {
   renewKonva();
+  let floor = ["1F", "2F", "3F", "7F"];
+  if (nValue[0] !== oValue[0]) {
+    switch (nValue[0]) {
+      case "創新":{
+        sFloor.value = "2F";
+        floor = ["2F", "3F", "4F"];
+        break;
+      }
+      case "力行":{
+        sFloor.value = "3F";
+        floor = ["3F"];
+        break;
+      }
+      case "科技":{
+        sFloor.value = "1F";
+        break;
+      }
+    }
+    floorOptions.value = floor.map(l => ({value:l,label:l}));
+  }
+
+  if (nValue[2] !== oValue[2]) {
+    if (nValue[2] == "TEST") {
+      eqpProps.category = "CP";
+      categoryOptions.value = ["CP", "FT", "氮氣櫃", "溫溼度監控"].map(l => ({value:l, label:l}))
+    } else if (nValue[2] == "DS") {
+      eqpProps.category = "DS";
+      categoryOptions.value = ["DS", "氮氣櫃", "溫溼度監控"].map(l => ({value:l, label:l}))
+    }
+  }
+  load();
 })
 
 watch([width, height], (nValue, _) => {
   if (stage instanceof Konva.Stage) {
     stage.width(nValue[0]);
-    stage.find(".v-line").forEach((l) => l.destroy());
     stage.height(nValue[1]);
-    stage.find(".h-line").forEach((l) => l.destroy());
+    gridLayer.removeChildren();
     initGridLayer();
   }
 });
@@ -867,6 +892,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         height: rectProps.height,
         opacity: 0.5,
         name: "cfm-object",
+        state: "insert",
       });
 
       let txt = new Konva.Text({
@@ -913,6 +939,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         width: circleProps.radius * 2,
         height: circleProps.radius * 2,
         name: "cfm-object",
+        state: "insert",
       });
 
       let txt = new Konva.Text({
@@ -959,6 +986,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         width: ellipseProps.radiusX * 2,
         height: ellipseProps.radiusY * 2,
         name: "cfm-object",
+        state: "insert"
       });
 
       let txt = new Konva.Text({
@@ -1006,6 +1034,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         width: regpolyProps.radius * 2,
         height: regpolyProps.radius * 2,
         name: "cfm-object",
+        state: "insert"
       });
 
       let txt = new Konva.Text({
@@ -1053,6 +1082,7 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         width: ringProps.outerRadius * 2,
         height: ringProps.outerRadius * 2,
         name: "cfm-object",
+        state: "insert"
       });
 
       let txt = new Konva.Text({
@@ -1095,19 +1125,16 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
     }
   }
 
-
   if (previewLayer.children.length < 1 && group) {
     previewLayer.add(group);
     previewLayer.draw();
     group.startDrag();
     window.removeEventListener("keydown", cancelInsert);
-    $(".q-scrollarea").off("mouseleave", cancelInsert);
     group.off("dragmove", startInsertSnapping);
     stage.off("mouseup", keepDrag);
     stage.off("mousedown", insertToIconLayer);
 
     window.addEventListener("keydown", cancelInsert);
-    $(".q-scrollarea").off("mouseleave", cancelInsert);
     group.on("dragmove", startInsertSnapping);
     stage.on("mouseup", keepDrag);
     stage.on("mousedown", insertToIconLayer);
@@ -1144,9 +1171,12 @@ const keepDrag = () => {
 const startInsertSnapping = (evt: Konva.KonvaEventObject<MouseEvent>) => {
   
   const {left, top} = document.getElementById('canvas_container').getBoundingClientRect();
-
-  stage.find(".grid-guide-line").forEach((l) => l.destroy());
+  
+  stage.find(".grid-guide-line").forEach((l:Konva.Line) => l.destroy());
   const { target } = evt;
+  // target.y(Math.max(target.y(), 0));
+  // target.x(Math.max(target.x(), 0));
+
   const gridlineStops = getGridlineStops();
   if (stage.scaleX() !== 1 || stage.scaleY() !== 1)
     target.absolutePosition({x:evt.evt.clientX - left, y:evt.evt.clientY - top}); 
@@ -1197,7 +1227,7 @@ const pickNode = (evt: Konva.KonvaEventObject<MouseEvent>) => {
   eqpProps.text = txt.getAttrs().text;
   eqpProps.fontSize = txt.getAttrs().fontSize;
   eqpProps.fill = frame.getAttrs().fill;
-  let className = frame.getClassName();
+  let className = frame.getClassName() as "Rect" | "Circle" | "Ellipse" | "RegularPolygon" | "Ring";
   shape.value = className;
 
   switch (className) {
@@ -1229,7 +1259,6 @@ const pickNode = (evt: Konva.KonvaEventObject<MouseEvent>) => {
 };
 
 const cancelEditNode = (evt:KeyboardEvent) => {
-
 }
 
 const updateNode = () => {
@@ -1241,6 +1270,12 @@ const updateNode = () => {
     eqpProps.category,
   );
   let className = frame.getClassName();
+
+  const state = group.getAttr("state");
+  
+  if (state !== "insert") {
+    group.setAttr("state", "update");
+  }
 
   frame.setAttr("fill", fill);
   category.width(categoryWidth.width);
@@ -1329,6 +1364,11 @@ const destroyNode = () => {
   const group = iconLayer.find(".selected-cfm-object")[0];
   group.off();
   group.destroy();
+  // group.setAttrs({
+  //   state:"delete",
+  //   name:'cfm-object',
+  //   opacity:0,
+  // });
   mode.value = "v";
 };
 
@@ -1360,24 +1400,14 @@ const dragStart = (evt) => {
 };
 
 const dragEnd = (evt) => {
-  // TODO: destroy guide line;
   iconLayer.find(".guide-line").forEach(l => l.destroy());
-  iconLayer.draw();
 };
 
-// @ts-ignore
-const createPreviewBlockGroup = (evt:Konva.KonvaEventObject<MouseEvent>) => {
-  let group = new Konva.Group({x,y,width:0,height:0, opacity:0.5});
-  if (previewLayer.getChildren().length)
-  previewLayer.add(group);
-}
-
-// @ts-ignore
-const createPreviewBlock = (evt:Konva.KonvaEventObj<MouseEvent>) => {
+const createPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
   stage.find(".grid-guide-line").forEach(l => l.destroy());
   const { x, y } = stage.getPointerPosition();
   let group = new Konva.Group({
-    x,y,width:0,height:0,name:"block"
+    x,y,width:0,height:0,name:"block", state:"insert"
   });
   let text = new Konva.Text({fontSize:12, text:blockProps.name, fill:blockProps.color, opacity:0.5, name:"name"});
   let rect = new Konva.Rect({
@@ -1432,6 +1462,7 @@ const drawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
 }
 
 const drawBlockToLayer = (evt:Konva.KonvaEventObject<MouseEvent>) => {
+  stage.container().style.cursor = "default";
   stage.off("mousemove", drawPreviewBlock);
   stage.off("mousedown", createPreviewBlock);
   stage.off("mouseenter", beforeDrawPreviewBlock);
@@ -1453,6 +1484,8 @@ const drawBlockToLayer = (evt:Konva.KonvaEventObject<MouseEvent>) => {
 
 const moveBlock = (evt) => {
   stage.find('.guide-line').forEach(l => l.destroy());
+  // console.log(evt.target)
+  if (evt.target.getAttr("state") !== "insert") evt.target.setAttr("state", "update");
   let lineGuideStops = getGuidelineStops(evt.target);
   let itemBounds = getObjectSnappingEdges(evt.target);
   const guides = getGuidelines(lineGuideStops, itemBounds);
@@ -1506,6 +1539,7 @@ const updateBlock = () => {
   let rect = iconLayer.find(".selected-fill")[0];
   let group = rect.getParent();
   let txt = group.find("Text")[0];
+  if (group.getAttr("state") !== "insert") group.setAttr("state", "update");
   group.off("dragmove", moveBlock);
   group.off("mouseup", leaveBlock);
   group.draggable(false);
@@ -1520,7 +1554,13 @@ const updateBlock = () => {
 
 const removeBlock = () => {
   let group = iconLayer.find(".selected-fill")[0].getParent();
+  group.off();
   group.destroy();
+  // group.setAttrs({
+  //   state:"delete",
+  //   opacity:0,
+  // });
+  // group.find("Rect")[0].name("fill");
   mode.value = "v";
 }
 
@@ -1562,8 +1602,6 @@ const cancelDrawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
 }
 
 function drawBlock(ev) {
-  let group = new Konva.Group();
-  if (current.length == 0) current.push(group);
   if (stage instanceof Konva.Stage) {
     stage.off("mouseenter", beforeDrawPreviewBlock);
     stage.off("mousedown", createPreviewBlock);
@@ -1595,7 +1633,12 @@ function cancelDraw(evt: KeyboardEvent) {
 }
 
 function predraw() {
+  if (previewLayer.getChildren().length) {
+    previewLayer.removeChildren();
+  }
+  
   if (stage instanceof Konva.Stage) {
+    stage.find(".grid-guide-line").forEach((l:Konva.Line) => l.destroy());
     stage.off("mouseenter", enter);
     stage.on("mouseenter", enter);
   }
@@ -1660,7 +1703,6 @@ const renewKonva = () => {
     iconLayer.removeChildren();
     previewLayer.removeChildren();
     gridLayer.removeChildren();
-    current = [];
   }
   initGridLayer();
 };
@@ -1713,7 +1755,6 @@ const initPreview = () => {
  //   }),
  // );
  // if (previewStage instanceof Konva.Stage) previewStage.add(layer);
-
 };
 
 // const payload = {
@@ -1723,9 +1764,15 @@ const initPreview = () => {
 //   PageNumber:-1,
 //   QueryArr:[sLocation.value, sFloor.value, "", "", "", ""]
 // };
-const saveToLocal = async () => {
+const saveToDb = async () => {
+  
   previewLayer.remove();
   gridLayer.remove();
+  
+  // let itemName = [sLocation.value, sFloor.value, sDepartment.value].join(",");
+  // let data = stage.toJSON();
+  // console.log(data);
+  // localStorage.setItem(itemName, data);
   
   let payload = {
     PageName:sDepartment.value + "_CFM_MAP",
@@ -1735,40 +1782,118 @@ const saveToLocal = async () => {
     UpdateArr:[],
   };
   
+  let dept = sDepartment.value == "TEST" ? "測試" : "切挑";
   stage.find("Group").forEach(group => {
     let str = [sLocation.value, sFloor.value];
     let name = group.find(".name")[0].getAttr("text");
-    let groupAttrs = group.toJSON().replaceAll(",", "，");
     str.push(name);
-    str.push(sDepartment.value);
+  
+    if (group.name() == "cfm-object") {
+      let bu = group.find(".category")[0].getAttr("text");
+      if (!["CP", "DS", "FT"].includes(bu)) {
+        str.push(bu + `(${dept})`);
+      } else {
+        str.push(bu);
+      }
+    } else if (group.name() == "block") {
+      str.push("底圖"+`(${dept})`);
+    }
+    let groupAttrs:string = (group.toJSON()).replaceAll(",", "，");
     str.push(groupAttrs);
     payload.InsertArr.push(str.join(","));
   });
-  let stageStr = [sLocation.value, sFloor.value, "Stage", sDepartment.value];
+
+  let stageStr = [sLocation.value, sFloor.value, "圖層", `圖層(${dept})`];
   let stageAttr = JSON.stringify({width:width.value, height:height.value}).replaceAll(",", "，");
   stageStr.push(stageAttr);
   payload.InsertArr.push(stageStr.join(','));
   
-  //await axios.post("http://localhost:60135/Home/Update", payload).then(res => console.log(res))
+  let res = await axios.post(window.location.origin + window.location.pathname + "/../Update", payload);
+  if (res.status == 200 && res.data[1]) {
+    dialog.value = true;
+    message.value = "儲存成功!";
+    stage.add(previewLayer);
+    stage.add(gridLayer);
+    iconLayer.removeChildren();
+    load();
+  }
 }
 
-const loadToBoard = async () => {
+const load = async () => {
+  let itemName = [sLocation.value, sFloor.value, sDepartment.value].join(',');
+
   let payload = {
     BU:"",
     NumberPerAPage:-1,
-    PageName:sDepartment.value + "_CFM_MAP",
-    PageNumber:-1,
-    QueryArr:[sLocation.value, sFloor.value, "", "", "", ""]
+    PageName: sDepartment.value + "_CFM_MAP",
+    QueryArr:[]
   }
-  // console.log(localStorage.getItem("stage"));
-  stage.add(previewLayer);
-  stage.add(gridLayer);
-  await axios.post("http://localhost:60135/Home/HomePageSearch", payload).then(res => console.log(res))
+
+  if (sDepartment.value == "DS") payload.QueryArr = [sLocation.value, sFloor.value, "", "", "", ""];
+  else if (sDepartment.value == "TEST") payload.QueryArr = [sLocation.value, sFloor.value, "機台", "", "", "", "", "", "", "", ""];
+
+  let res = await axios.post(window.location.origin + window.location.pathname + "/../HomePageSearch", payload);
+  if (res.data.length > 0 && res.status == 200) {
+    res.data.forEach((row:string, i:number) => {
+      let [,,,,,grpAttrs] = row.split(",");
+      let attrs = JSON.parse(grpAttrs.replaceAll("，", ","));
+      if (Object.prototype.hasOwnProperty.call(attrs, "className")) {
+        let group = new Konva.Group({
+          x:attrs.attrs.x,
+          y:attrs.attrs.y,
+          width:attrs.attrs.width,
+          height:attrs.attrs.height,
+          name:attrs.attrs.name
+        });
+
+        attrs.children.forEach(child => {
+          switch (child.className) {
+            case "Text":{
+              const text = new Konva.Text({
+                fill:child.attrs.fill,
+                name:child.attrs.name,
+                text:child.attrs.text
+              });
+              if (Object.prototype.hasOwnProperty.call(child.attrs, "x")) text.setAttr("x", child.attrs.x);
+              if (Object.prototype.hasOwnProperty.call(child.attrs, "y")) text.setAttr("y", child.attrs.y);
+              if (Object.prototype.hasOwnProperty.call(child.attrs, "fontSize")) text.setAttr("fontSize", child.attrs.fontSize);
+              if (Object.prototype.hasOwnProperty.call(child.attrs, "opacity")) text.setAttr("opacity", child.attrs.opacity);
+              group.add(text);
+              break;
+            }
+            case "Rect":{
+              const rect = new Konva.Rect({
+                fill:child.attrs.fill,
+                height:child.attrs.height,
+                width:child.attrs.width,
+                name:child.attrs.name,
+                stroke:child.attrs.stroke
+              });
+              group.add(rect);
+              break;
+            }
+          }
+          group.on("click", pickNode);
+          group.on("dragmove", dragStart);
+          group.on("dragend", dragEnd);
+          iconLayer.add(group);
+        });
+        iconLayer.batchDraw();
+      } else {
+        width.value = attrs.width;
+        height.value = attrs.height;
+      }
+    })
+  }
+}
+
+const preCheck = () => {
+  console.log(iconLayer.toObject());
 }
 
 onMounted(() => {
   initKonva();
-  initPreview();
+  load();
   window.addEventListener("keydown", cancelDraw);
 });
 onBeforeUnmount(() => {

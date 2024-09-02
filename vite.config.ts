@@ -21,13 +21,18 @@ export default defineConfig({
     manifest:true,
     rollupOptions:{
       input:"./src/main.ts",
+      output:{
+        entryFileNames:`assets/[name].js`,
+        chunkFileNames:`assets/[name].js`,
+        assetFileNames:`assets/[name].[ext]`
+      }
     },
-    outDir:"../cfm/CFM/ts/vue/dist"
+    outDir:"./dist"
   },
   server:{
     proxy:{
       "*":{
-        target:"http://localhost:60135/Home/NCFM",
+        target:"http://localhost:59024/Home/CFMEditor",
         changeOrigin:true
       }
     },
