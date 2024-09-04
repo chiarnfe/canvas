@@ -1583,9 +1583,7 @@ const pickBlock = (evt) => {
   let group = evt.target.getParent() as Konva.Group;
   group.on("dragmove", moveBlock);
   group.on("mouseup", leaveBlock);
-  group.on("transformend", () => {
-    tr.detach();
-  });
+  group.on("transformend", blockTransformend);
 
   tr.nodes([group]);
   iconLayer.add(tr);
@@ -1606,6 +1604,12 @@ const pickBlock = (evt) => {
   blockProps.color = txt.getAttr("fill");
   blockProps.width = Math.ceil(rect.width() * group.scaleX());
   blockProps.height = Math.ceil(rect.height() * group.scaleY());
+}
+
+const blockTransformend = (evt) => {
+  let rect = evt.target.find('Rect')[0];
+  blockProps.width = rect.width() * evt.target.scaleX();
+  blockProps.height = rect.height() * evt.target.scaleY();
 }
 
 const handleGroupScaleX = (evt:number) => {
@@ -1635,6 +1639,8 @@ const handleGroupScaleY = (evt:number) => {
 
 const updateBlock = () => {
   mode.value = "v";
+  let transformer = iconLayer.find("Transformer")[0];
+  transformer.detach();
   let rect = iconLayer.find(".selected-fill")[0];
   let group = rect.getParent();
   let txt = group.find("Text")[0];
