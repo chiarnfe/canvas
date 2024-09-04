@@ -283,8 +283,8 @@
               <q-radio v-model="blockProps.opacity" :val="1" label="顯示名稱" />
               <q-radio v-model="blockProps.opacity" :val="0" label="隱藏名稱" />
             </div>
-            <q-input v-show="mode=='e'" outlined :model-value="blockProps.width" label="底圖寬度" debounce='600' />
-            <q-input v-show="mode=='e'" outlined :model-value="blockProps.height" label="底圖高度" debounce='600' />
+            <q-input type="number" v-show="mode=='e'" outlined :model-value="blockProps.width" @update:model-value="handleGroupScaleX" label="底圖寬度" debounce='600' />
+            <q-input type="number" v-show="mode=='e'" outlined :model-value="blockProps.height" @update:model-value="handleGroupScaleY" label="底圖高度" debounce='600' />
             <div class="flex flex-row gap-x-2 justify-end">
               <q-btn
                 v-show="mode == 'e'"
@@ -1528,7 +1528,6 @@ const drawBlockToLayer = () => {
     group.find("Text")[0].opacity(blockProps.opacity);
     group.find("Rect")[0].opacity(1);
     group.on("click", pickBlock);
-    group.on("click", dblPickBlock);
     iconLayer.add(group);
     iconLayer.draw();
     let itemCount = iconLayer.getChildren().length;
@@ -1569,16 +1568,33 @@ const leaveBlock = () => {
 }
 
 const pickBlock = (evt) => {
-  let group = evt.target.getParent();
-  group.on("dragmove", moveBlock);
-  group.on("mouseup", leaveBlock);
   iconLayer.find(".block").forEach(grp => {
     if (grp.isAncestorOf(evt.target)) {
       evt.target.name("selected-fill");
     } else {
       grp.find("Rect")[0].name("fill")
     }
+  }); 
+
+  let tr = new Konva.Transformer({
+    visible:true,
+    rotateEnabled:false,
   });
+  let group = evt.target.getParent() as Konva.Group;
+  group.on("dragmove", moveBlock);
+  group.on("mouseup", leaveBlock);
+  group.on("transformend", () => {
+    tr.detach();
+  });
+
+  tr.nodes([group]);
+  iconLayer.add(tr);
+  iconLayer.draw();
+  iconLayer.find("Transformer").forEach(child => {
+    if (child._id !== tr._id) child.destroy();
+  });
+
+
   let rect = group.find("Rect")[0];
   let txt = group.find("Text")[0];
   group.draggable(true);
@@ -1588,34 +1604,33 @@ const pickBlock = (evt) => {
   blockProps.name = txt.getAttr("text");
   blockProps.opacity = txt.getAttr("opacity");
   blockProps.color = txt.getAttr("fill");
-  blockProps.width = rect.width();
-  blockProps.height = rect.height();
+  blockProps.width = Math.ceil(rect.width() * group.scaleX());
+  blockProps.height = Math.ceil(rect.height() * group.scaleY());
 }
 
-const dblPickBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
+const handleGroupScaleX = (evt:number) => {
+  console.log(typeof evt);
+  let selectedFill = iconLayer.find(".selected-fill");
+  if (selectedFill.length) {
+    let rect = selectedFill[0];
+    let group = rect.getParent();
+    let width = rect.width();
+    let scaleX = evt/width;
+    group.scaleX(scaleX);
+  }
+  blockProps.width = evt
+}
 
-  let tr = new Konva.Transformer({
-    visible:true
-  });
-  let group = evt.target.getParent() as Konva.Group;
-  let rect = group.find("Rect")[0];
-  group.on("transform", (evt) => {
-    let width = Math.ceil(rect.width() * evt.target.scaleX());
-    let height = Math.ceil(rect.height() * evt.target.scaleY());
-    rect.width(width);
-    rect.height(height);
-    blockProps.width = width;
-    blockProps.height = height;
-    // blockProps.width = Math.ceil(width * evt.target.scaleX());
-    // blockProps.height = Math.ceil(height * evt.target.scaleY());
-
-  })
-  tr.nodes([group]);
-  iconLayer.add(tr);
-  iconLayer.draw();
-  iconLayer.find("Transformer").forEach(child => {
-    if (child._id !== tr._id) child.destroy();
-  });
+const handleGroupScaleY = (evt:number) => {
+  let selectedFill = iconLayer.find(".selected-fill");
+  if (selectedFill.length) {
+    let rect = selectedFill[0];
+    let group = rect.getParent();
+    let height = rect.height();
+    let scaleY = evt/height;
+    group.scaleY(scaleY);
+  }
+  blockProps.height = evt
 }
 
 const updateBlock = () => {
@@ -1639,11 +1654,6 @@ const removeBlock = () => {
   let group = iconLayer.find(".selected-fill")[0].getParent();
   group.off();
   group.destroy();
-  // group.setAttrs({
-  //   state:"delete",
-  //   opacity:0,
-  // });
-  // group.find("Rect")[0].name("fill");
   mode.value = "v";
 }
 
