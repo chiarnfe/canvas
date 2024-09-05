@@ -292,7 +292,7 @@
                 style="width: 60px"
                 color="negative"
                 label="刪除"
-                @click="removeBlock"
+                @click="destroyBlock"
               />
               <q-btn 
                 v-show="mode == 'e'"
@@ -318,47 +318,49 @@
       <q-btn unelevated class="q-ma-sm" color="primary" label="上傳" @click="saveToDb" />
     </div>
     <div class="px-4 pb-4 w-5/6 relative">
-      <div class="row items-center py-3">
-        <div class="flex flex-row gap-x-2 w-1/3">
-          <q-select
-            class="w-1/3"
-            outlined
-            label="廠區"
-            option-label="label"
-            option-value="value"
-            v-model="sLocation"
-            :options="locationOptions"
-            emit-value
-            map-options
-          />
-          <q-select
-            outlined
-            class="w-[calc(33%_-_8px)]"
-            label="樓層"
-            option-label="label"
-            option-value="value"
-            v-model="sFloor"
-            :options="floorOptions"
-            emit-value
-            map-options
-          />
-          <q-select
-            outlined
-            class="w-[calc(33%_-_8px)]"
-            label="部門"
-            option-label="label"
-            option-value="value"
-            v-model="sDepartment"
-            :options="departmentOptions"
-            emit-value
-            map-options
-          />
+      <div class="row items-center py-3 justify-between">
+        <div class="flex flex-row items-center">   
+          <div class="flex flex-row gap-x-2 min-w-[360px]">
+            <q-select
+              class="w-1/3"
+              outlined
+              label="廠區"
+              option-label="label"
+              option-value="value"
+              v-model="sLocation"
+              :options="locationOptions"
+              emit-value
+              map-options
+            />
+            <q-select
+              outlined
+              class="w-[calc(33%_-_8px)]"
+              label="樓層"
+              option-label="label"
+              option-value="value"
+              v-model="sFloor"
+              :options="floorOptions"
+              emit-value
+              map-options
+            />
+            <q-select
+              outlined
+              class="w-[calc(33%_-_8px)]"
+              label="部門"
+              option-label="label"
+              option-value="value"
+              v-model="sDepartment"
+              :options="departmentOptions"
+              emit-value
+              map-options
+            />
+          </div>
+          <q-btn unelevated color="primary" class="q-ml-sm" style="height:2.5rem" label="搜尋" @click="load" />
         </div>
-        <q-btn unelevated color="primary" style="height:2.5rem" label="搜尋" @click="load" />
-        <div class="row gap-x-2 q-py-sm items-center">
+        <div class="row gap-x-2 q-py-sm relative">
+          <span class="absolute -top-3 right-0">縮放比例{{currentScale*100 + "%"}}</span>
           <q-checkbox label="顯示格線" v-model="grid" />
           <q-space />
-          <span>縮放比例{{currentScale*100 + "%"}}</span>
           <q-btn
             size="md"
             class="q-px-sm"
@@ -406,6 +408,25 @@
       <q-card-actions align="right">
         <q-btn flat label="關閉" color="primary" v-close-popup />
       </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="isLoading" backdrop-filter="blur(4px)" persistent> 
+    <q-card class="w-96">
+      <q-card-section class="row items-center q-pb-none text-h5 justify-center">
+        資料讀取中...
+      </q-card-section>
+      <q-card-section class="flex flex-col items-center justify-center h-48 pt-0">
+      <q-circular-progress
+        font-size="16px"
+        indeterminate
+        size="90px"
+        :thinkness="0.2"
+        color="primary"
+        center-color="grey-5"
+        track-color="transparent"
+        class="q-mb-md q-mx-md"
+      />
+      </q-card-section> 
     </q-card>
   </q-dialog>
 </template>
@@ -465,8 +486,8 @@ const position = ref("top-16 right-7");
 const width = ref(1800);
 const height = ref(1200);
 
-const sLocation = ref("創新");
-const sFloor = ref("3F");
+const sLocation = ref("科技");
+const sFloor = ref("1F");
 const sDepartment = ref("TEST");
 
 const grid = ref(true);
@@ -548,7 +569,7 @@ const regpolyProps = reactive({
 });
 
 const eqpProps = reactive({
-  category: "DS",
+  category: "CP",
   text: "",
   fill: "red",
   fontSize: 20,
@@ -581,7 +602,7 @@ const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map((num) => ({
   value: num,
 }));
 
-const categoryOptions = ref(["DS", "氮氣櫃", "溫溼度監控"].map((l) => ({
+const categoryOptions = ref(["CP", "FT", "氮氣櫃", "溫溼度監控"].map((l) => ({
   label: l,
   value: l,
 })));
@@ -890,9 +911,9 @@ function zoomIn() {
   stage.scale({ 
     x: scale + lastScale,
     y: scale + lastScale,
-    width: width.value * (scale + lastScale),
-    height: height.value * (scale + lastScale)
   });
+  stage.width(width.value * (scale + lastScale));
+  stage.height(height.value * (scale + lastScale));
   currentScale.value = lastScale + scale;
 }
 
@@ -902,9 +923,10 @@ function zoomOut() {
     stage.scale({ 
       x: lastScaleX - scale, 
       y: lastScaleX - scale,
-      width: width.value * (lastScaleX - scale),
-      height: height.value * (lastScaleX - scale)
     });
+
+    stage.width(width.value * (lastScaleX - scale));
+    stage.height(height.value * (lastScaleX - scale))
     currentScale.value = lastScaleX - scale;
   }
 }
@@ -1324,12 +1346,6 @@ const updateNode = () => {
   );
   let className = frame.getClassName();
 
-  const state = group.getAttr("state");
-  
-  if (state !== "insert") {
-    group.setAttr("state", "update");
-  }
-
   frame.setAttr("fill", fill);
   category.width(categoryWidth.width);
   category.setAttr("text", eqpProps.category);
@@ -1350,8 +1366,8 @@ const updateNode = () => {
     }
     case "Circle": {
       txt.setAttrs({
-        x:(circleProps.radius - txtWidth.width) / 2,
-        y:(circleProps.radius - txtWidth.height) / 2,
+        x:circleProps.radius - txtWidth.width / 2,
+        y:circleProps.radius - txtWidth.height / 2,
         width: txtWidth.width,
         height: txtWidth.height,
         text,
@@ -1417,11 +1433,6 @@ const destroyNode = () => {
   const group = iconLayer.find(".selected-cfm-object")[0];
   group.off();
   group.destroy();
-  // group.setAttrs({
-  //   state:"delete",
-  //   name:'cfm-object',
-  //   opacity:0,
-  // });
   mode.value = "v";
 };
 
@@ -1477,8 +1488,7 @@ const createPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
     previewLayer.add(group);
     stage.off("mousemove", drawPreviewBlock);
     stage.on("mousemove", drawPreviewBlock);
-  }
-    
+  } 
 }
 
 const drawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
@@ -1491,11 +1501,18 @@ const drawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
   let offsetX = 0, offsetY = 0;
   if (_x - x < 0) offsetX = width;
   if (_y - y < 0) offsetY = height;
-  let rect = group.getChildren()[0];
+  let rect = group.find("Rect")[0];
+  let text = group.find("Text")[0];
   rect.width(width);
   rect.height(height);
-  if (_x - x < 0) rect.offsetX(offsetX);
-  if (_y - y < 0) rect.offsetY(offsetY);
+  if (_x - x < 0) {
+    rect.offsetX(offsetX);
+    text.offsetX(offsetX);
+  };
+  if (_y - y < 0){
+    rect.offsetY(offsetY);
+    text.offsetY(offsetY);
+  }
   const gridlineStops = getGridlineStops();
   const itemBounds = {
     vertical:[
@@ -1579,6 +1596,7 @@ const pickBlock = (evt) => {
   let tr = new Konva.Transformer({
     visible:true,
     rotateEnabled:false,
+    flipEnabled:false,
   });
   let group = evt.target.getParent() as Konva.Group;
   group.on("dragmove", moveBlock);
@@ -1608,12 +1626,11 @@ const pickBlock = (evt) => {
 
 const blockTransformend = (evt) => {
   let rect = evt.target.find('Rect')[0];
-  blockProps.width = rect.width() * evt.target.scaleX();
-  blockProps.height = rect.height() * evt.target.scaleY();
+  blockProps.width = Math.ceil(rect.width() * evt.target.scaleX());
+  blockProps.height = Math.ceil(rect.height() * evt.target.scaleY());
 }
 
 const handleGroupScaleX = (evt:number) => {
-  console.log(typeof evt);
   let selectedFill = iconLayer.find(".selected-fill");
   if (selectedFill.length) {
     let rect = selectedFill[0];
@@ -1639,7 +1656,7 @@ const handleGroupScaleY = (evt:number) => {
 
 const updateBlock = () => {
   mode.value = "v";
-  let transformer = iconLayer.find("Transformer")[0];
+  let transformer = iconLayer.find("Transformer")[0] as Konva.Transformer;
   transformer.detach();
   let rect = iconLayer.find(".selected-fill")[0];
   let group = rect.getParent();
@@ -1656,10 +1673,12 @@ const updateBlock = () => {
   rect.name("fill");
 }
 
-const removeBlock = () => {
+const destroyBlock = () => {
   let group = iconLayer.find(".selected-fill")[0].getParent();
+  let transformer = iconLayer.find("Transformer")[0];
   group.off();
   group.destroy();
+  transformer.destroy();
   mode.value = "v";
 }
 
@@ -1863,59 +1882,52 @@ const initPreview = () => {
 //   PageNumber:-1,
 //   QueryArr:[sLocation.value, sFloor.value, "", "", "", ""]
 // };
-const saveToDb =  () => {
+const saveToDb = async () => {
+  iconLayer.find("Transformer").forEach(transformer => transformer.destroy());
   
-  // previewLayer.remove();
-  // gridLayer.remove();
-  iconLayer.getChildren().forEach(group => console.log(group.zIndex(),group.toJSON()))
-  // let itemName = [sLocation.value, sFloor.value, sDepartment.value].join(",");
-  // let data = stage.toJSON();
-  // console.log(data);
-  // localStorage.setItem(itemName, data);
+  let payload = {
+    PageName:sDepartment.value + "_CFM_MAP",
+    BU:"",
+    DeleteArr:[],
+    InsertArr:[],
+    UpdateArr:[],
+  };
   
-  // let payload = {
-  //   PageName:sDepartment.value + "_CFM_MAP",
-  //   BU:"",
-  //   DeleteArr:[],
-  //   InsertArr:[],
-  //   UpdateArr:[],
-  // };
+  let dept = sDepartment.value == "TEST" ? "測試" : "切挑";
+  stage.find("Group").forEach(group => {
+   let str = [sLocation.value, sFloor.value];
+   let name = group.find(".name")[0].getAttr("text");
+   str.push(name);
+   let obj = group.toObject();
+   let zIndex = group.zIndex();
+   obj["zIndex"] = zIndex;
   
-  // let dept = sDepartment.value == "TEST" ? "測試" : "切挑";
-  // stage.find("Group").forEach(group => {
-  //   let str = [sLocation.value, sFloor.value];
-  //   let name = group.find(".name")[0].getAttr("text");
-  //   str.push(name);
-  
-  //   if (group.name() == "cfm-object") {
-  //     let bu = group.find(".category")[0].getAttr("text");
-  //     if (!["CP", "DS", "FT"].includes(bu)) {
-  //       str.push(bu + `(${dept})`);
-  //     } else {
-  //       str.push(bu);
-  //     }
-  //   } else if (group.name() == "block") {
-  //     str.push("底圖"+`(${dept})`);
-  //   }
-  //   let groupAttrs:string = (group.toJSON()).replaceAll(",", "，");
-  //   str.push(groupAttrs);
-  //   payload.InsertArr.push(str.join(","));
-  // });
-
-  // let stageStr = [sLocation.value, sFloor.value, "圖層", `圖層(${dept})`];
-  // let stageAttr = JSON.stringify({width:width.value, height:height.value}).replaceAll(",", "，");
-  // stageStr.push(stageAttr);
-  // payload.InsertArr.push(stageStr.join(','));
-  
-  // let res = await axios.post(window.location.origin + window.location.pathname + "/../Update", payload);
-  // if (res.status == 200 && res.data[1]) {
-  //   dialog.value = true;
-  //   message.value = "儲存成功!";
-  //   stage.add(previewLayer);
-  //   stage.add(gridLayer);
-  //   iconLayer.removeChildren();
-  //   load();
-  // }
+    if (group.name() == "cfm-object") {
+      let bu = group.find(".category")[0].getAttr("text");
+      if (!["CP", "DS", "FT"].includes(bu)) {
+        str.push(bu + `(${dept})`);
+      } else {
+        str.push(bu);
+      }
+    } else if (group.name() == "block") {
+      str.push("底圖"+`(${dept})`);
+    }
+    let groupAttrs:string = JSON.stringify(obj).replaceAll(",", "，");
+    str.push(groupAttrs);
+    payload.InsertArr.push(str.join(","));
+  });
+  let stageStr = [sLocation.value, sFloor.value, "圖層", `圖層(${dept})`];
+  let stageAttr = JSON.stringify({width:width.value, height:height.value}).replaceAll(",", "，");
+  stageStr.push(stageAttr);
+  payload.InsertArr.push(stageStr.join(','));
+    
+  let res = await axios.post(window.location.origin + window.location.pathname + "/../Update", payload);
+  if (res.status == 200 && res.data[1]) {
+    dialog.value = true;
+    message.value = "儲存成功!";
+    iconLayer.removeChildren();
+    load();
+  }
 }
 
 const load = async () => {
@@ -1932,11 +1944,13 @@ const load = async () => {
   else if (sDepartment.value == "TEST") payload.QueryArr = [sLocation.value, sFloor.value, "機台", "", "", "", "", "", "", "", ""];
 
   registerTick(async () => {
-    let res = await axios.post("http://localhost:59024" + window.location.pathname + "/../HomePageSearch", payload);
+    let indexMap = new Map();
+    let res = await axios.post(window.location.origin + window.location.pathname + "/../HomePageSearch", payload);
     if (res.data.length > 0 && res.status == 200) {
       res.data.forEach((row:string, i:number) => {
         let grpAttrs = sDepartment.value == "TEST" ? row.split(",")[6]: row.split(",")[5];
         let attrs = JSON.parse(grpAttrs.replaceAll("，", ","));
+
         if (Object.prototype.hasOwnProperty.call(attrs, "className")) {
           let group = new Konva.Group({
             x:attrs.attrs.x,
@@ -1946,6 +1960,13 @@ const load = async () => {
             name:attrs.attrs.name
           });
 
+          if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleX")) group.scaleX(attrs.attrs.scaleX);
+          if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleY")) group.scaleY(attrs.attrs.scaleY);
+          if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
+            let indexName = attrs.attrs.x + "." + attrs.attrs.y + "." + attrs.attrs.name;
+            indexMap.set(indexName, attrs.zIndex);
+          }
+
           attrs.children.forEach(child => {
             switch (child.className) {
               case "Text":{
@@ -1954,10 +1975,14 @@ const load = async () => {
                   name:child.attrs.name,
                   text:child.attrs.text
                 });
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "width")) text.setAttr("width", child.attrs.width);
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "height")) text.setAttr("height", child.attrs.height);
                 if (Object.prototype.hasOwnProperty.call(child.attrs, "x")) text.setAttr("x", child.attrs.x);
                 if (Object.prototype.hasOwnProperty.call(child.attrs, "y")) text.setAttr("y", child.attrs.y);
                 if (Object.prototype.hasOwnProperty.call(child.attrs, "fontSize")) text.setAttr("fontSize", child.attrs.fontSize);
                 if (Object.prototype.hasOwnProperty.call(child.attrs, "opacity")) text.setAttr("opacity", child.attrs.opacity);
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) text.setAttr("offsetX", child.attrs.offsetX);
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) text.setAttr("offsetY", child.attrs.offsetY);
                 group.add(text);
                 break;
               }
@@ -1967,13 +1992,33 @@ const load = async () => {
                   height:child.attrs.height,
                   width:child.attrs.width,
                   name:child.attrs.name,
-                  stroke:child.attrs.stroke
                 });
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "stroke")) rect.setAttr("stroke", child.attrs.stroke);
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "strokeWidth")) rect.setAttr("strokeWidth", child.attrs.strokeWidth);
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) rect.setAttr("offsetX", child.attrs.offsetX);
+                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) rect.setAttr("offsetY", child.attrs.offsetY);
                 group.add(rect);
                 break;
               }
+              case "Circle":{
+                const circle = new Konva.Circle({
+                  fill:child.attrs.fill,
+                  x:child.attrs.x,
+                  y:child.attrs.y,
+                  radius:child.attrs.radius,
+                  name:child.attrs.name,
+                  stroke:child.attrs.stroke,
+                  strokeWidth:child.attrs.strokeWidth
+                });
+                group.add(circle);
+                break;
+              }
             }
-            group.on("click", pickNode);
+            if (attrs.attrs.name == "cfm-object"){
+              group.on("click", pickNode);
+            } else {
+              group.on("click", pickBlock);
+            }
             group.on("dragmove", dragStart);
             group.on("dragend", dragEnd);
             iconLayer.add(group);
@@ -1983,6 +2028,14 @@ const load = async () => {
           width.value = attrs.width;
           height.value = attrs.height;
         }
+      });
+      iconLayer.getChildren().forEach(child => {
+        let x = child.getAttr("x");
+        let y = child.getAttr("y");
+        let name = child.getAttr("name");
+        let indexName = x + "." + y + "." + name;
+        let index = indexMap.get(indexName);
+        child.zIndex(index);
       })
     }
     isLoading.value = false;
@@ -1999,7 +2052,7 @@ const loseFocusWhenSwitchExpansionItem = () => {
 
 onMounted(() => {
   initKonva();
-  // load();
+  load();
   window.addEventListener("keydown", cancelDraw);
 });
 onBeforeUnmount(() => {
