@@ -15,7 +15,6 @@
       map-options
       outlined
       dense
-      hide-dropdown-icon
     >
       <template v-slot:before>
         <label for="fact" class="text-sm">
@@ -32,7 +31,6 @@
       map-options
       outlined
       dense
-      hide-dropdown-icon
     >
       <template v-slot:before>
         <label class="text-sm">
@@ -49,7 +47,6 @@
       map-options
       outlined
       dense
-      hide-dropdown-icon
       multiple
     >
       <template v-slot:before>
@@ -92,7 +89,6 @@
   <q-scroll-area class="w-5/6" style="box-shadow:inset 1px 0 0 #000, inset 0 1px 0 #000, inset -1px 0 0 #000, inset 0 -1px 0 #000;height:calc(100vh - 210px)">
     <div class="w-full" ref="container" id="canvas_container"></div>
   </q-scroll-area>
-
 </div>
 <q-dialog v-model="isLoading" backdrop-filter="blur(4px)">
   <q-card class="w-96">
@@ -303,6 +299,7 @@ const loadLayer = (data:string[]) => {
     child.zIndex(index);
   })
   layer.batchDraw();
+  isLoading.value = false;
 }
 
 const loadMap = async () => {
@@ -328,6 +325,7 @@ const loadTab = async () => {
 }
 
 const loadData = () => {
+  isLoading.value = true;
   let url = window.location.origin + window.location.pathname + "/../HomePageSearch";
   const tabPayload = {
     BU:"",
