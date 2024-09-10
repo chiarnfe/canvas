@@ -85,13 +85,26 @@
 </div>
 <q-separator class="q-my-md" />
 <div class="flex flex-row pb-4 gap-x-2">
-  <div v-show="!showTab"  class="w-[calc(16.66%_-_50px)] flex flex-col gap-y-1">
-      <q-btn v-for="(tab, index) in tabList" :class="['w-full', index < 4 ? '!cursor-default':'']">
-        <span>{{tab.tabText}}</span>
-        <span class="w-4 h-4" :style="{backgroundColor:tab.tabColor.replaceAll('，', ',')}"></span>
-        <span>{{tab.tabCount}}</span>
-      </q-btn>
-      <div class="border border-red-500">12吋機台紅框</div>
+  <div v-show="!showTab"  class="w-[calc(16.66%_-_50px)] flex flex-col gap-y-1 overflow-auto px-2 min-w-[180px]">
+    <q-btn 
+      v-for="(tab, index) in tabList" 
+      :key="index"
+      :class="['w-full py-0 pr-0 pl-2', index < 6 ? '!cursor-default':'']" 
+      size="sm" 
+      :ripple="false" 
+      no-caps
+      v-on="index > 5 ? {click:getEqpStatus}:{}"
+      :data-status="tab.tabText"
+    >
+      <template v-slot:default>
+        <div class='flex flex-row items-center w-full'>
+          <span class="w-2/3 text-left">{{tab.tabText}}</span>
+          <span class="w-4 h-6 block mr-1" :style="{backgroundColor:tab.tabColor.replaceAll('，', ',')}"></span>
+          <span class="flex flex-1 justify-center">{{tab.tabCount}}</span>
+        </div>
+      </template>
+    </q-btn>
+    <div class="ring-2 ring-inset ring-red-500 h-6 flex flex-row items-center justify-center rounded-sm">12吋機台紅框</div>
   </div>
   <q-btn icon="chevron_right" unelevated color="primary" class="px-1" @click="toggleTab" /> 
   <q-scroll-area :class="[!showTab ? 'w-5/6':'w-[calc(100%_-_50px)]']" style="box-shadow:inset 1px 0 0 #000, inset 0 1px 0 #000, inset -1px 0 0 #000, inset 0 -1px 0 #000;height:calc(100vh - 210px)">
@@ -113,66 +126,66 @@
     </q-card-section>
     <q-separator />
     <q-card-section class="overflow-auto">
-    <q-markup-table class="px-4">
+    <q-markup-table class="px-4" flat>
       <thead>
         <tr>
-          <th colspan="4" class="!text-base">機況明細</th>
+          <th colspan="4" class="!text-base !bg-gray-400">機況明細</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>機台</td>
-          <td>{{detail[0]}}</td>
-          <td>批號</td>
-          <td>{{detail[9]}}</td>
+          <td class="!bg-gray-400 text-center">機台</td>
+          <td class="text-center">{{detail[0]}}</td>
+          <td class="!bg-gray-400 text-center">批號</td>
+          <td class="text-center">{{detail[9]}}</td>
         </tr>
         <tr>
-          <td>站點</td>
-          <td>{{detail[1]}}</td>
-          <td>Change Time</td>
-          <td>{{detail[10]}}</td>
+          <td class="!bg-gray-400 text-center">站點</td>
+          <td class="text-center">{{detail[1]}}</td>
+          <td class="!bg-gray-400 text-center">Change Time</td>
+          <td class="text-center">{{detail[10]}}</td>
         </tr>
         <tr>
-          <td>機群</td>
-          <td>{{detail[2]}}</td>
-          <td>產品種類</td>
-          <td>{{detail[11]}}</td>
+          <td class="!bg-gray-400 text-center">機群</td>
+          <td class="text-center">{{detail[2]}}</td>
+          <td class="!bg-gray-400 text-center">產品種類</td>
+          <td class="text-center">{{detail[11]}}</td>
         </tr>
         <tr>
-          <td>機型</td>
-          <td>{{detail[3]}}</td>
-          <td>備註</td>
-          <td>{{detail[12]}}</td>
+          <td class="!bg-gray-400 text-center">機型</td>
+          <td class="text-center">{{detail[3]}}</td>
+          <td class="!bg-gray-400 text-center">備註</td>
+          <td class="text-center">{{detail[12]}}</td>
         </tr>
         <tr>
-          <td>機種</td>
-          <td>{{detail[4]}}</td>
-          <td>OP工號</td>
-          <td>{{detail[13]}}</td>
+          <td class="!bg-gray-400 text-center">機種</td>
+          <td class="text-center">{{detail[4]}}</td>
+          <td class="!bg-gray-400 text-center">OP工號</td>
+          <td class="text-center">{{detail[13]}}</td>
         </tr>
         <tr>
-          <td>機況</td>
-          <td>{{detail[5]}}</td>
-          <td>狀態時間HR</td>
-          <td>{{detail[14]}}</td>
+          <td class="!bg-gray-400 text-center">機況</td>
+          <td class="text-center">{{detail[5]}}</td>
+          <td class="!bg-gray-400 text-center">狀態時間HR</td>
+          <td class="text-center">{{detail[14]}}</td>
         </tr>
         <tr>
-          <td>客戶代碼</td>
-          <td>{{detail[6]}}</td>
-          <td>Z1</td>
-          <td>{{detail[15]}}</td>
+          <td class="!bg-gray-400 text-center">客戶代碼</td>
+          <td class="text-center">{{detail[6]}}</td>
+          <td class="!bg-gray-400 text-center">Z1</td>
+          <td class="text-center">{{detail[15]}}</td>
         </tr>
         <tr>
-          <td>流程卡</td>
-          <td>{{detail[7]}}</td>
-          <td>Z2</td>
-          <td>{{detail[16]}}</td>
+          <td class="!bg-gray-400 text-center">流程卡</td>
+          <td class="text-center">{{detail[7]}}</td>
+          <td class="!bg-gray-400 text-center">Z2</td>
+          <td class="text-center">{{detail[16]}}</td>
         </tr>
         <tr>
-          <td>型號</td>
-          <td>{{detail[8]}}</td>
-          <td></td>
-          <td></td>
+          <td class="!bg-gray-400 text-center">型號</td>
+          <td class="text-center">{{detail[8]}}</td>
+          <td class="text-center"></td>
+          <td class="text-center"></td>
         </tr>
       </tbody>
     </q-markup-table>
@@ -183,11 +196,31 @@
     </q-card-actions>
   </q-card>
 </q-dialog>
+<q-dialog full-width v-model="showEQPStatusList" backdrop-filter="blur(4px)" >
+  <q-card class="relative">
+    <q-btn unelevated icon="close" class="absolute top-2 right-2" v-close-popup />
+    <q-card-section class="row items-center q-pb-none text-h5">
+      Header
+    </q-card-section>
+    <q-separator />
+    <q-card-section class="overflow-auto">
+     <!-- <q-table
+        :columns="columns"
+        :rows="rows"
+        row-key="name"
+      />-->
+    </q-card-section>
+    <q-separator />
+    <q-card-actions align="right" class="border-t-1 border-black">
+      <q-btn unelevated v-close-popup label="關閉" />
+    </q-card-actions>
+  </q-card>
+</q-dialog>
 </div>
 </template>
 <script setup lang="ts">
-import {ref, reactive, watch, onMounted, onBeforeUnmount, nextTick} from 'vue';
-import axios from 'axios';
+import {ref, reactive, watch, onMounted} from 'vue';
+
 import Konva from 'konva';
 import $ from 'jquery';
 
@@ -202,18 +235,17 @@ cust.split(";").forEach(row => {
 const isLoading = ref(false);
 const showDetail = ref(false);
 const showTab = ref(false);
-const showEQPStatus = ref(false);
+const showEQPStatusList = ref(false);
 
 const width = ref(1800);
 const height = ref(1200);
 const container = ref<HTMLDivElement|null>(null);
-const ul = ref<HTMLUlElement|null>(null);
 const factoryOptions = ["科技", "創新", "力行"].map(f => ({value:f, label:f}));
 const floorOptions = ref(["1F", "2F", "3F", "7F"].map(f => ({value:f, label:f})));
 
 const sFactory = ref("科技");
 const sFloor = ref("1F");
-const sClient = ref([]);
+const sClient = ref(['']);
 const sEqp = ref("");
 const sEqpType = ref("");
 const sModel = ref("");
@@ -229,6 +261,37 @@ const layer = reactive<Konva.Layer>(
 let detail = reactive<string[]>([]);
 let tabList = ref<any[]>([]);
 let eqpStatusList = reactive<any[]>([]);
+
+let columns = [
+  { name:"eqp_no", label:"Time", field: row => row.name, sortable:false },
+]
+//let columns = [
+//  {name:"Time", label:"Time", field:"Time"},
+//  {name:"8:00", label:"8:00", field:"8:00"},
+//  {name:"9:00", label:"9:00", field:"9:00"},
+//  {name:"10:00", label:"10:00", field:"10:00"},
+//  {name:"11:00", label:"11:00", field:"11:00"},
+//  {name:"12:00", label:"12:00", field:"12:00"},
+//  {name:"13:00", label:"13:00", field:"13:00"},
+//  {name:"14:00", label:"14:00", field:"14:00"},
+//  {name:"15:00", label:"15:00", field:"15:00"},
+//  {name:"16:00", label:"16:00", field:"16:00"},
+//  {name:"17:00", label:"17:00", field:"17:00"},
+//  {name:"18:00", label:"18:00", field:"18:00"},
+//  {name:"19:00", label:"19:00", field:"19:00"},
+//  {name:"20:00", label:"20:00", field:"20:00"},
+//  {name:"21:00", label:"21:00", field:"21:00"},
+//  {name:"22:00", label:"22:00", field:"22:00"},
+//  {name:"23:00", label:"23:00", field:"23:00"},
+//  {name:"24:00", label:"24:00", field:"24:00"},
+//  {name:"1:00", label:"1:00", field:"1:00"},
+//  {name:"2:00", label:"2:00", field:"2:00"},
+//  {name:"3:00", label:"3:00", field:"3:00"},
+//  {name:"4:00", label:"4:00", field:"4:00"},
+//  {name:"5:00", label:"5:00", field:"5:00"},
+//  {name:"6:00", label:"6:00", field:"6:00"},
+//  {name:"7:00", label:"7:00", field:"7:00"},
+//];
 
 watch(sFactory, (nValue, oValue) => {
   let floor = ["1F", "2F", "3F", "7F"];
@@ -253,7 +316,7 @@ const loadLayer = (data:string[]) => {
   let indexMap = new Map();
   data.forEach(row => {
     // temp 溫度在ds用不到
-    const [eqpType, eqp_no, clientName, statusTime, bu, jsonAttrs, eqpStatus, _temp, bgColor, modelName, z1, z2, bool] = row.split(",");
+    const [eqpType, eqp_no, clientName, statusTime, bu, jsonAttrs, eqpStatus, temp, bgColor, modelName, z1, z2, bool] = row.split(",");
     let attrs = JSON.parse(jsonAttrs.replaceAll("，",","));
     if (bu.includes("圖層")) {
       stage.value.setAttrs({
@@ -274,6 +337,7 @@ const loadLayer = (data:string[]) => {
         let indexName = attrs.attrs.x + "." + attrs.attrs.y + "." + attrs.attrs.name;
         indexMap.set(indexName, attrs.zIndex);
       }
+      //console.log({eqpType}, {eqp_no}, {clientName}, {statusTime}, {bu}, {jsonAttrs}, {eqpStatus}, {temp}, {bgColor}, {modelName}, {z1}, {z2}, {bool});
 
       if (eqpType.length) group.setAttr("eqpType", eqpType);
       if (clientName.length) group.setAttr("clientName", clientName);
@@ -284,6 +348,10 @@ const loadLayer = (data:string[]) => {
       if (z2 && !bu.includes("底圖")) group.setAttr("z2", z2);
       if (!bu.includes("底圖") || !bu.includes("圖層")) group.setAttr("bu", bu);
       if (!bu.includes("底圖") || !bu.includes("圖層")) group.setAttr("eqp_no", eqp_no);
+      if (bu.includes("溫溼度監控")) {
+        group.setAttr("temp", temp);
+        group.setAttr("humid", z1);
+      }
       attrs.children.forEach(child => {
         switch (child.className) {
           case "Rect":{
@@ -383,8 +451,14 @@ const loadLayer = (data:string[]) => {
           }
         }
       });
-      if (!bu.includes("底圖") && !bu.includes("圖層") && eqp_no !== "B") {
+
+      if (!bu.includes("底圖") && !bu.includes("圖層") && eqp_no !== "B" && !bu.includes("溫溼度監控")) {
         group.on("click", loadDetail);
+      } else if (bu.includes("溫溼度監控")) {
+        group.on("click", () => {
+          let destination = window.location.origin + window.location.pathname + "/../../Default/TEMP"
+          window.open(destination, "_blank").focus();
+        })
       }
       layer.add(group);
     }
@@ -404,6 +478,7 @@ const loadLayer = (data:string[]) => {
 const loadDetail = (e) => {
   let group = e.target.getParent();
   const {eqp_no, bu} = group.getAttrs();
+  console.log(group.getAttrs())
   isLoading.value = true;
   let payload = {
     BU:"",
@@ -448,8 +523,6 @@ const downloadExcel = async () => {
   });
 }
 
-
-
 const loadTab = (data:string[]) => { 
   const [row_title, row_text, row_count, row_color] = data;
   let title = row_title.split(",");
@@ -469,8 +542,36 @@ const loadTab = (data:string[]) => {
   tabList.value = list;
 }
 
-const test = () => {
-  layer.find('Group').forEach(l => console.log(l.getAttrs()))
+const getEqpStatus = (e) => {
+  isLoading.value = true;
+  let status = $(e.target).closest(".q-btn")[0].dataset.status;
+  let eqpName = [];
+  layer.find(".cfm-object").forEach(group => {
+    let attrs = group.getAttrs();
+    if (attrs.status == status) {
+      eqpName.push(attrs.eqp_no);
+    }
+  })
+  const payload = {
+    BU:"",
+    NumberPerAPage:-1,
+    PageName:"DS_EQP",
+    PageNumber:-1,
+    QueryArr:[sFactory.value, sFloor.value, eqpName.join("@"), status]
+  };
+
+  $.ajax({
+    type:"POST",
+    url,
+    data:JSON.stringify(payload),
+    success:loadStatusList
+  });
+}
+
+const loadStatusList = (data:string[]) => {
+  isLoading.value = false;
+  showEQPStatusList.value = true;
+
 }
 
 

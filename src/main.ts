@@ -3,8 +3,10 @@ import { Quasar } from 'quasar'
 import "@quasar/extras/material-icons/material-icons.css"
 import "quasar/src/css/index.sass"
 import './style.css'
+import "floating-vue/dist/style.css"
 import App from './App.vue'
 import {createRouter, createWebHistory } from 'vue-router'
+import FloatingVue from 'floating-vue';
 
 const router = createRouter({
   history:createWebHistory(),
@@ -12,7 +14,7 @@ const router = createRouter({
     { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor`, component: () => import('./pages/Config.vue') },
     //{ path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor1`, component: () => import('./pages/Config.vue') },
     { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor1`, component:() => import('./pages/DScfm.vue') },
-    // { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/DSCFM`, component:() => import('./pages/TESTcfm.vue') }
+    // { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor1`, component:() => import('./pages/TESTcfm.vue') }
     // { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor1`, component: () => import('./pages/Config.vue') },
   ]
 });
@@ -46,6 +48,7 @@ const router = createRouter({
 //shadow.appendChild(div);
 const app = createApp(App)
 app.use(router)
+app.use(FloatingVue)
 app.use(Quasar, {
   plugins:{}
 })

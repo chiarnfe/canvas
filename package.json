@@ -12,6 +12,7 @@
     "@quasar/extras": "^1.16.12",
     "@types/jquery": "^3.5.30",
     "axios": "^1.7.2",
+    "floating-vue": "^5.2.2",
     "jquery": "^3.7.1",
     "konva": "^9.3.14",
     "prettier": "^3.3.3",
