@@ -18,4 +18,24 @@
   const cust = $("#TEST_CFM_CUST").text() as string;
 
   const isLoading = ref(false);
+
+  const layer = reactive<Konva.Layer>(
+    new Konva.Layer({
+      x:0,
+      y:0,
+      draggable:false,
+    })
+  );
+
+  const sFactory = ref("科技");
+  const sFloor = ref("1F");
+  const sClient = ref([""]);
+  const sCategory = ref("機台");
+  const sEqp = ref("");
+  const sEqpType = ref("");
+  const sModel = ref("");
+  const sOCR = ref("");
+  const sProduct = ref("");
+  const sPack = ref("");
+  const sImpEqp = ref("");
 </script>
