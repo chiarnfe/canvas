@@ -76,7 +76,7 @@
         label="搜尋"
         class="px-3 py-1 rounded-md"
         style="border: 1px solid #aaa"
-        @click="loadTab"
+        @click="loadData"
       />
     </div>
     <q-separator class="q-my-md" />
@@ -229,21 +229,22 @@
           v-close-popup
         />
         <q-card-section class="items-center row q-pb-none text-h5">
-          Header
+          {{eqpStatus}}
         </q-card-section>
         <q-separator />
         <q-card-section class="overflow-auto">
           <q-table
             class="sticky-first-column"
             :rows="eqpStatusList"
+            :pagination="{rowsPerPage:10}"
             :columns="columns"
             row-key="id"
           >
             <template v-slot:header="props">
               <q-tr>
                 <q-th>Date</q-th>
-                <q-th colspan="17">{{ new Date() }}</q-th>
-                <q-th colspan="7">{{ new Date() }}</q-th>
+                <q-th colspan="17">{{ today.toLocaleDateString("zh-TW", {month:"2-digit", day:"2-digit"}) }}</q-th>
+                <q-th colspan="7">{{ tomorrow.toLocaleDateString("zh-TW", {month:"2-digit", day:"2-digit"}) }}</q-th>
               </q-tr>
               <q-tr>
                 <q-th v-for="col in props.cols" :key="col.name">{{
@@ -260,14 +261,16 @@
                     boxShadow:
                       'inset -8px 0 0 ' + colorSetting[props.row.label[4]],
                   }"
+                  :data-eqp="props.row.label[0]"
+                  @click="getEqpMCDetail"
                 >
                   <VTooltip>
                     <span>{{ props.row.label[0] }}</span>
                     <template #popper>
-                      {{ props.row.label[0] }}/{{ props.row.label[1] }}/{{
+                      {{ props.row.label[0] }}【{{ props.row.label[1] }}/{{
                         props.row.label[2]
                       }}{{ props.row.label[3] }}/{{ props.row.label[4] }}
-                    </template>
+                    】</template>
                   </VTooltip>
                 </q-td>
                 <q-td colspan="24">
@@ -276,12 +279,13 @@
                     v-for="child in props.row.row"
                     :key="child[2]"
                     :style="{
-                      marginTop: '7px',
                       backgroundColor: colorSetting[child[0]],
                       width: child[1] + '%',
                       height: '100%',
                     }"
                     :data-index="child[2]"
+                    :data-eqp="props.row.label[0]"
+                    @click="getEqpDetail"
                   ></div>
                 </q-td>
               </q-tr>
@@ -295,13 +299,100 @@
       </q-card>
     </q-dialog>
   </div>
+  <q-dialog full-width v-model="showEQPDetail" backdrop-filter="blur(4px)">
+    <q-card class="relative">
+      <q-btn unelevated icon="close" class="absolute z-10 px-2 py-0 top-2 right-2"/>
+      <q-card-section class="items-center row q-pb-none text-h5">
+        機台/{{eqpTarget}}
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <q-table
+          :columns="detailColumns"
+          :rows="eqpDetailData"
+          :pagination="{rowsPerPage:10}"
+          row-key="name"
+        >
+          <template #header="props">
+            <q-tr>
+              <q-th class="text-center" v-for="col in props.cols" :key="col.name">
+                {{col.label}}
+              </q-th>
+            </q-tr>
+          </template>
+          <template #body-cell-STATUS2="props">
+            <q-td class="text-center">{{props.row.STATUS2}}</q-td>
+          </template>
+          <template #body-cell-PERIOD_TIME="props">
+            <q-td class="text-center">{{props.row.PERIOD_TIME}}</q-td>
+          </template>
+          <template #body-cell-START_TIME="props">
+            <q-td class="text-center">{{props.row.START_TIME}}</q-td>
+          </template>
+          <template #body-cell-END_TIME="props">
+            <q-td class="text-center">{{props.row.END_TIME}}</q-td>
+          </template>
+          <template #body-cell-EQP_AREA="props">
+            <q-td class="text-center">{{props.row.EQP_AREA}}</q-td>
+          </template>
+          <template #body-cell-CST_NO="props">
+            <q-td class="text-center">{{props.row.CST_NO}}</q-td>
+          </template>
+          <template #body-cell-DEVICE_NO="props">
+            <q-td class="text-center">{{props.row.DEVICE_NO}}</q-td>
+          </template>
+          <template #body-cell-RUNCARD="props">
+            <q-td class="text-center">{{props.row.RUNCARD}}</q-td>
+          </template>
+          <template #body-cell-REMARK="props">
+            <q-td class="text-center">{{props.row.REMARK}}</q-td>
+          </template>
+        </q-table>
+      </q-card-section>
+      <q-separator />
+      <q-card-actions align="right">
+        <q-btn unelevated v-close-popup label="關閉" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog full-width v-model="showEQPMC" backdrop-filter="blur(4px)">
+    <q-card class="relative">
+      <q-btn unelevated icon="close" class="absolute z-10 px-2 py-0 top-2 right-2"/>
+      <q-card-section class="items-center row q-pb-none text-h5">
+        {{eqpTarget}}
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <q-table
+          :columns="eqpMCDetailHeader"
+          :rows="eqpMCDetailRow"
+          row-key="name"
+          :pagination="{rowsPerPage:10}"
+        >
+          <template #header="props">
+            <q-tr>
+              <q-th v-for="col in props.cols" :key="col.name">{{col.name}}</q-th>
+            </q-tr>
+          </template>
+          <template #body="props">
+            <q-tr>
+              <q-td v-for="(text,idex) in props.row" class="text-center">
+                {{text}}
+              </q-td>
+            </q-tr>
+          </template>
+        </q-table>
+      </q-card-section>
+      <q-separator />
+      <q-card-actions align="right">
+        <q-btn unelevated v-close-popup label="關閉" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 <style scoped lang="scss">
 .sticky-first-column {
   position: relative;
-  th:first-child {
-    box-shadow: inset -2px 0 0 rgba(0, 0, 0, 0.12);
-  }
   th:first-child,
   td:first-child {
     background-color: white;
@@ -317,6 +408,8 @@ import {ref, reactive, watch, onMounted} from 'vue'
 import Konva from 'konva'
 import $ from 'jquery'
 
+const today = new Date()
+const tomorrow = new Date(new Date().setDate(today.getDate()+1))
 const url =
   window.location.origin + window.location.pathname + '/../HomePageSearch'
 const cust = $('#DS_CFM_CUST').text() as string
@@ -330,6 +423,8 @@ const isLoading = ref(false)
 const showDetail = ref(false)
 const showTab = ref(false)
 const showEQPStatusList = ref(false)
+const showEQPDetail = ref(false)
+const showEQPMC = ref(false)
 
 const width = ref(1800)
 const height = ref(1200)
@@ -357,10 +452,26 @@ const layer = reactive<Konva.Layer>(
 let detail = reactive<string[]>([])
 let tabList = ref<any[]>([])
 let eqpStatusList = reactive<{label: string[]; row: string[][]}[]>([])
+let eqpStatus = ref("");
 let colorSetting = reactive({})
+let eqpTarget = ref("")
+let eqpMCDataCount = ref(0);
+let eqpMCDetailHeader = ref<{name:string,label:string}[]>([]);
+let eqpMCDetailRow = reactive<string[][]>([]);
+let eqpDetailData = reactive<Record<string,string>[]>([]);
 
 let columns = [{name: 'Time', label: 'Time', field: row => row.label}]
-
+let detailColumns = [
+  {name:"STATUS2", label:"STATUS2"},
+  {name:"PERIOD_TIME", label:"PERIOD_TIME"},
+  {name:"START_TIME", label:"START_TIME"},
+  {name:"END_TIME", label:"END_TIME"},
+  {name:"EQP_AREA", label:"EQP_AREA"},
+  {name:"CST_NO", label:"CST_NO"},
+  {name:"DEVICE_NO", label:"DEVICE_NO"},
+  {name:"RUNCARD", label:"RUNCARD"},
+  {name:"REMARK", label:"REMARK"},
+]
 let time = [
   {name: '8:00', label: '8:00', field: '8:00'},
   {name: '9:00', label: '9:00', field: '9:00'},
@@ -406,6 +517,7 @@ watch(sFactory, (nValue, _) => {
 const toggleTab = () => {
   showTab.value = !showTab.value
 }
+
 const loadLayer = (data: string[]) => {
   layer.removeChildren()
   let indexMap = new Map()
@@ -586,8 +698,14 @@ const loadLayer = (data: string[]) => {
         eqp_no !== 'B' &&
         !bu.includes('溫溼度監控')
       ) {
+        group.on("mouseenter", showTooltip);
+        group.on("mousemove", moveTooltip);
+        group.on("mouseleave", removeTooltip);
         group.on('click', loadDetail)
       } else if (bu.includes('溫溼度監控')) {
+        group.on("mouseenter", showTooltip);
+        group.on("mousemove", moveTooltip);
+        group.on("mouseleave", removeTooltip);
         group.on('click', () => {
           let destination =
             window.location.origin +
@@ -611,10 +729,168 @@ const loadLayer = (data: string[]) => {
   isLoading.value = false
 }
 
+const showTooltip = (e) => {
+  let index = layer.getChildren().length;
+  let group = e.target.getParent();
+  let height = 20;
+  const gapY = 4;
+  const {x, y} = stage.value.getPointerPosition(); 
+  let tooltipGroup = new Konva.Group({
+    x:x+10,
+    y:y+10,
+    name:"tooltip"
+  });
+  let width = 120;
+  let bu = group.getAttr("bu");
+  if (!bu.includes("溫溼度監控")) {
+    let eqp_no = group.getAttr("eqp_no");
+    let eqp_text = new Konva.Text({
+      x:5,
+      y:gapY,
+      text:eqp_no,
+      fontSize:12,
+      fill:"#333"
+    });
+    if (eqp_text.width() > width) width = eqp_text.width() + 10
+    tooltipGroup.add(eqp_text);
+    let {clientName, statusTime, modelName, z1, z2} = group.getAttrs();
+    if (clientName && clientName.length > 0) {
+      let text = new Konva.Text({
+        x:5,
+        y:2*gapY + 12,
+        text:clientName,
+        fontSize:12,
+        fill:"#333"
+      });
+      height+=16;
+      tooltipGroup.add(text)
+      let text_width = text.width();
+      if (text_width > width) width = text_width + 10
+      if (height < text.y() + 16) height = text.y() + 16;
+    }
+    if (statusTime && statusTime.length > 0) {
+      let text = new Konva.Text({
+        x:5,
+        y:3*gapY + 12*2,
+        text:statusTime,
+        fontSize:12,
+        fill:"#333"
+      }); 
+      height+=16;
+      tooltipGroup.add(text)
+      let text_width = text.width();
+      if (text_width > width) width = text_width + 10
+      if (height < text.y() + 16) height = text.y() + 16;
+    }
+    if (modelName && modelName.length > 0) {
+      let text = new Konva.Text({
+        x:5,
+        y:4*gapY + 12*3,
+        text:modelName,
+        fontSize:12,
+        fill:"#333"
+      });
+      height+=16;
+      tooltipGroup.add(text);
+      let text_width = text.width();
+      if (text_width > width) width = text_width + 10
+      if (height < text.y() + 16) height = text.y() + 16;
+    }
+    if (z1 && z1.length > 0) {
+      let text = new Konva.Text({
+        x:5,
+        y:5*gapY + 12*4,
+        text:z1,
+        fontSize:12,
+        fill:"#333"
+      });
+      height+=16;
+      tooltipGroup.add(text); 
+      let text_width = text.width();
+      if (text_width > width) width = text_width + 10
+      if (height < text.y() + 16) height = text.y() + 16;
+    }
+    if (z2 && z2.length > 0) {
+      let text = new Konva.Text({
+        x:5,
+        y:6*gapY + 12*5,
+        text:z2,
+        fontSize:12,
+        fill:"#333"
+      });
+      height+=16;
+      tooltipGroup.add(text);
+      let text_width = text.width();
+      if (text_width > width) width = text_width + 10
+      if (height < text.y() + 16) height = text.y() + 16;
+    } 
+  } else {
+    let {eqp_no, temp, humid} = group.getAttrs();
+    height = 68;
+    let title = new Konva.Text({
+      x:5,
+      y:gapY,
+      text:"溫溼度監控",
+      fontSize:12,
+      fill:"#333"
+    });
+    let eqp_text = new Konva.Text({
+      x:5,
+      y:2*gapY + 12,
+      text:eqp_no,
+      fontSize:12,
+      fill:"#333"
+    }); 
+    let temp_text = new Konva.Text({
+      x:5,
+      y:3*gapY + 12*2,
+      text:"溫度:"+temp,
+      fontSize:12,
+      fill:"#333"
+    });
+    let humid_text = new Konva.Text({
+      x:5,
+      y:4*gapY + 12*3,
+      text:"濕度:"+humid,
+      fontSize:12,
+      fill:"#333"
+    });
+    if (title.width() > width) width = title.width() + 10
+    if (eqp_text.width() > width) width = eqp_text.width() + 10
+    if (temp_text.width() > width) width = temp_text.width() + 10
+    if (humid_text.width() > width) width = humid_text.width() + 10
+    tooltipGroup.add(title);
+    tooltipGroup.add(eqp_text);
+    tooltipGroup.add(temp_text);
+    tooltipGroup.add(humid_text);
+  }
+  let rect = new Konva.Rect({
+    width,
+    height,
+    fill:'#eee',
+    stroke:"#333",
+    strokeWidth:1
+  });
+  tooltipGroup.add(rect);
+  layer.add(tooltipGroup);
+  rect.zIndex(0)
+}
+
+const moveTooltip = (e) => {
+  let tooltip = layer.find(".tooltip")[0];
+  let {x, y} = stage.value.getPointerPosition();
+  tooltip.absolutePosition({x:x+10, y:y+10});
+
+}
+
+const removeTooltip = (e) => {
+  let tooltip = layer.find(".tooltip")[0];
+  tooltip.destroy();
+}
+
 const loadDetail = e => {
   let group = e.target.getParent()
   const {eqp_no, bu} = group.getAttrs()
-  console.log(group.getAttrs())
   isLoading.value = true
   let payload = {
     BU: '',
@@ -658,7 +934,9 @@ const downloadExcel = async () => {
     url: window.location.origin + window.location.pathname + '/../ExportExcel',
     data: JSON.stringify(payload),
     success: res => {
-      console.log(res)
+      let a = $("#HiddenClickBtn")
+      a.attr("href", window.location.origin + res);
+      a.click();
     },
     async: true,
     dataType: 'json',
@@ -691,9 +969,50 @@ const loadTab = (data: string[]) => {
   tabList.value = list
 }
 
+const loadEqpDetailData = (data:string[]) => {
+  let buffer:Record<string,string>[] = [];
+  data.forEach(row => {
+    const [STATUS2,PERIOD_TIME,START_TIME,END_TIME,EQP_AREA,CST_NO, DEVICE_NO, RUNCARD, REMARK] = row.split(",");
+    buffer.push({
+      STATUS2,
+      PERIOD_TIME,
+      START_TIME,
+      END_TIME,
+      EQP_AREA,
+      CST_NO,
+      DEVICE_NO,
+      RUNCARD,
+      REMARK
+    })
+  });
+  eqpDetailData = buffer;
+  showEQPDetail.value = true
+}
+
+const loadEqpMcData = (data:string[]) => {
+  const [header, ...rest] = data;
+  let headerArr = [];
+  let buffer = []
+  header.split(",").forEach(str => {
+    headerArr.push({
+      align:"center",
+      name:str,
+      label:str,
+    })
+  });
+  eqpMCDetailHeader.value = headerArr;
+  
+  rest.forEach(row => {
+    buffer.push(row.split(","))
+  });
+  eqpMCDetailRow = buffer;
+  showEQPMC.value = true;
+}
+
 const getEqpStatus = e => {
   //isLoading.value = true
   let status = $(e.target).closest('.q-btn')[0].dataset.status
+  eqpStatus.value = status
   let eqpName = []
   layer.find('.cfm-object').forEach(group => {
     let attrs = group.getAttrs()
@@ -714,6 +1033,44 @@ const getEqpStatus = e => {
     url,
     data: JSON.stringify(payload),
     success: loadStatusList,
+  })
+}
+
+const getEqpMCDetail = (e) => {
+  let td = $(e.target).closest(".q-td");
+  let eqp = td[0].dataset.eqp;
+  let payload = {
+    BU:"",
+    NumberPerAPage: -1,
+    PageName:"DS_MC_DETAIL",
+    QueryArr:[eqp, ""],
+    PageNumber:-1
+  };
+  eqpTarget.value = eqp;
+  $.ajax({
+    type:"POST",
+    url,
+    data:JSON.stringify(payload),
+    success:loadEqpMcData
+  })
+}
+
+const getEqpDetail = (e) => {
+  let dataset = $(e.target)[0].dataset
+  eqpTarget.value = dataset.eqp
+  let payload = {
+    BU:"",
+    NumberPerAPage: -1,
+    PageName:"DS_EQP_DETAIL",
+    PageNumber:-1,
+    QueryArr:[dataset.eqp, dataset.index]
+  }
+
+  $.ajax({
+    type:"POST",
+    url,
+    data:JSON.stringify(payload),
+    success:loadEqpDetailData
   })
 }
 

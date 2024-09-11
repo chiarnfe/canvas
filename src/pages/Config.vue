@@ -1333,9 +1333,6 @@ const pickNode = (evt: Konva.KonvaEventObject<MouseEvent>) => {
   }
 };
 
-const cancelEditNode = (evt:KeyboardEvent) => {
-}
-
 const updateNode = () => {
   let group = iconLayer.find(".selected-cfm-object")[0];
   const [frame, txt, category] = group.getChildren();
@@ -1950,7 +1947,8 @@ const load = async () => {
       res.data.forEach((row:string, i:number) => {
         let grpAttrs = sDepartment.value == "TEST" ? row.split(",")[6]: row.split(",")[5];
         let attrs = JSON.parse(grpAttrs.replaceAll("，", ","));
-
+      
+        
         if (Object.prototype.hasOwnProperty.call(attrs, "className")) {
           let group = new Konva.Group({
             x:attrs.attrs.x,
