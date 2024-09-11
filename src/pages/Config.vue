@@ -1946,95 +1946,108 @@ const load = async () => {
     if (res.data.length > 0 && res.status == 200) {
       res.data.forEach((row:string, i:number) => {
         let grpAttrs = sDepartment.value == "TEST" ? row.split(",")[6]: row.split(",")[5];
-        let attrs = JSON.parse(grpAttrs.replaceAll("，", ","));
-      
-        
-        if (Object.prototype.hasOwnProperty.call(attrs, "className")) {
-          let group = new Konva.Group({
-            x:attrs.attrs.x,
-            y:attrs.attrs.y,
-            width:attrs.attrs.width,
-            height:attrs.attrs.height,
-            name:attrs.attrs.name
-          });
-
-          if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleX")) group.scaleX(attrs.attrs.scaleX);
-          if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleY")) group.scaleY(attrs.attrs.scaleY);
-          if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
-            let indexName = attrs.attrs.x + "." + attrs.attrs.y + "." + attrs.attrs.name;
-            indexMap.set(indexName, attrs.zIndex);
-          }
-
-          attrs.children.forEach(child => {
-            switch (child.className) {
-              case "Text":{
-                const text = new Konva.Text({
-                  fill:child.attrs.fill,
-                  name:child.attrs.name,
-                  text:child.attrs.text
-                });
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "width")) text.setAttr("width", child.attrs.width);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "height")) text.setAttr("height", child.attrs.height);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "x")) text.setAttr("x", child.attrs.x);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "y")) text.setAttr("y", child.attrs.y);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "fontSize")) text.setAttr("fontSize", child.attrs.fontSize);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "opacity")) text.setAttr("opacity", child.attrs.opacity);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) text.setAttr("offsetX", child.attrs.offsetX);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) text.setAttr("offsetY", child.attrs.offsetY);
-                group.add(text);
-                break;
-              }
-              case "Rect":{
-                const rect = new Konva.Rect({
-                  fill:child.attrs.fill,
-                  height:child.attrs.height,
-                  width:child.attrs.width,
-                  name:child.attrs.name,
-                });
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "stroke")) rect.setAttr("stroke", child.attrs.stroke);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "strokeWidth")) rect.setAttr("strokeWidth", child.attrs.strokeWidth);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) rect.setAttr("offsetX", child.attrs.offsetX);
-                if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) rect.setAttr("offsetY", child.attrs.offsetY);
-                group.add(rect);
-                break;
-              }
-              case "Circle":{
-                const circle = new Konva.Circle({
-                  fill:child.attrs.fill,
-                  x:child.attrs.x,
-                  y:child.attrs.y,
-                  radius:child.attrs.radius,
-                  name:child.attrs.name,
-                  stroke:child.attrs.stroke,
-                  strokeWidth:child.attrs.strokeWidth
-                });
-                group.add(circle);
-                break;
-              }
-            }
-            if (attrs.attrs.name == "cfm-object"){
-              group.on("click", pickNode);
-            } else {
-              group.on("click", pickBlock);
-            }
-            group.on("dragmove", dragStart);
-            group.on("dragend", dragEnd);
-            iconLayer.add(group);
-          });
-          iconLayer.batchDraw();
+        let _attrs = grpAttrs.replaceAll("，", ",");
+        let attrs = JSON.parse(_attrs);
+        //let attrs = JSON.parse(grpAttrs.replaceAll("，", ","));
+        if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
+          let index = attrs['zIndex'];
+          indexMap.set(index, attrs);
         } else {
-          width.value = attrs.width;
-          height.value = attrs.height;
+           width.value = attrs.width;
+          height.value = attrs.height; 
         }
+        
+       // if (Object.prototype.hasOwnProperty.call(attrs, "className")) {
+       //   let group = new Konva.Group({
+       //     x:attrs.attrs.x,
+       //     y:attrs.attrs.y,
+       //     width:attrs.attrs.width,
+       //     height:attrs.attrs.height,
+       //     name:attrs.attrs.name
+       //   });
+
+       //   if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleX")) group.scaleX(attrs.attrs.scaleX);
+       //   if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleY")) group.scaleY(attrs.attrs.scaleY);
+       //   if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
+       //     let indexName = attrs.attrs.x + "." + attrs.attrs.y + "." + attrs.attrs.name;
+       //     indexMap.set(indexName, attrs.zIndex);
+       //   }
+
+       //   attrs.children.forEach(child => {
+       //     switch (child.className) {
+       //       case "Text":{
+       //         const text = new Konva.Text({
+       //           fill:child.attrs.fill,
+       //           name:child.attrs.name,
+       //           text:child.attrs.text
+       //         });
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "width")) text.setAttr("width", child.attrs.width);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "height")) text.setAttr("height", child.attrs.height);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "x")) text.setAttr("x", child.attrs.x);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "y")) text.setAttr("y", child.attrs.y);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "fontSize")) text.setAttr("fontSize", child.attrs.fontSize);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "opacity")) text.setAttr("opacity", child.attrs.opacity);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) text.setAttr("offsetX", child.attrs.offsetX);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) text.setAttr("offsetY", child.attrs.offsetY);
+       //         group.add(text);
+       //         break;
+       //       }
+       //       case "Rect":{
+       //         const rect = new Konva.Rect({
+       //           fill:child.attrs.fill,
+       //           height:child.attrs.height,
+       //           width:child.attrs.width,
+       //           name:child.attrs.name,
+       //         });
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "stroke")) rect.setAttr("stroke", child.attrs.stroke);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "strokeWidth")) rect.setAttr("strokeWidth", child.attrs.strokeWidth);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) rect.setAttr("offsetX", child.attrs.offsetX);
+       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) rect.setAttr("offsetY", child.attrs.offsetY);
+       //         group.add(rect);
+       //         break;
+       //       }
+       //       case "Circle":{
+       //         const circle = new Konva.Circle({
+       //           fill:child.attrs.fill,
+       //           x:child.attrs.x,
+       //           y:child.attrs.y,
+       //           radius:child.attrs.radius,
+       //           name:child.attrs.name,
+       //           stroke:child.attrs.stroke,
+       //           strokeWidth:child.attrs.strokeWidth
+       //         });
+       //         group.add(circle);
+       //         break;
+       //       }
+       //     }
+       //     if (attrs.attrs.name == "cfm-object"){
+       //       group.on("click", pickNode);
+       //     } else {
+       //       group.on("click", pickBlock);
+       //     }
+       //     group.on("dragmove", dragStart);
+       //     group.on("dragend", dragEnd);
+       //     iconLayer.add(group);
+       //   });
+       //   iconLayer.batchDraw();
+       // } else {
+       //   width.value = attrs.width;
+       //   height.value = attrs.height;
+       // }
       });
-      iconLayer.getChildren().forEach(child => {
-        let x = child.getAttr("x");
-        let y = child.getAttr("y");
-        let name = child.getAttr("name");
-        let indexName = x + "." + y + "." + name;
-        let index = indexMap.get(indexName);
-        child.zIndex(index);
-      })
+      let values = indexMap.values();
+      for (let i=0;i< indexMap.size; i++) {
+        let value = values.next().value;
+        console.log(value);
+      }
+     // iconLayer.getChildren().forEach(child => {
+     //   let x = child.getAttr("x");
+     //   let y = child.getAttr("y");
+     //   let name = child.getAttr("name");
+     //   let indexName = x + "." + y + "." + name;
+     //   let index = indexMap.get(indexName);
+     //   child.zIndex(index);
+     // })
     }
     isLoading.value = false;
   });
