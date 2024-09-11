@@ -20,7 +20,7 @@
               v-model.number="width"
               debounce="600"
               max="4500"
-              :rules="[(val) => val <= 4500 || '最大寬度為4500']"
+              :rules="[val => val <= 4500 || '最大寬度為4500']"
             />
             <q-input
               outlined
@@ -29,7 +29,7 @@
               v-model.number="height"
               debounce="600"
               max="4500"
-              :rules="[(val) => val <= 4500 || '最大高度為4500']"
+              :rules="[val => val <= 4500 || '最大高度為4500']"
             />
             <!-- <q-select
               outlined
@@ -118,7 +118,7 @@
                 v-model.number="ringProps.outerRadius"
                 label="外圓半徑"
                 :rules="[
-                  (val) =>
+                  val =>
                     val > ringProps.innerRadius || '外圓半徑要大於內圓半徑',
                 ]"
               />
@@ -129,7 +129,7 @@
                 label="內圓半徑"
                 v-model.number="ringProps.innerRadius"
                 :rules="[
-                  (val) =>
+                  val =>
                     val < ringProps.outerRadius || '內圓半徑要小於外圓半徑',
                 ]"
               />
@@ -144,7 +144,7 @@
                 type="number"
                 :min="3"
                 v-model.number="regpolyProps.sides"
-                :rules="[(val) => val >= 3 || '邊數必須大於等於3']"
+                :rules="[val => val >= 3 || '邊數必須大於等於3']"
               />
               <q-input
                 outlined
@@ -159,7 +159,7 @@
                 <template v-slot:before>
                   <span
                     class="w-6 h-4"
-                    :style="{ backgroundColor: eqpProps.fill }"
+                    :style="{backgroundColor: eqpProps.fill}"
                   ></span>
                 </template>
                 <template v-slot:append>
@@ -236,8 +236,8 @@
         <q-separator class="q-ml-sm q-mr-md" />
         <q-expansion-item
           v-model="editBlock"
-          group="group" 
-          icon="space_dashboard" 
+          group="group"
+          icon="space_dashboard"
           label="編輯底圖"
           @before-hide="loseFocusWhenSwitchExpansionItem"
         >
@@ -246,7 +246,7 @@
               <template v-slot:before>
                 <span
                   class="w-6 h-4"
-                  :style="{ backgroundColor: blockProps.fill }"
+                  :style="{backgroundColor: blockProps.fill}"
                 ></span>
               </template>
               <template v-slot:append>
@@ -262,11 +262,7 @@
               </template>
             </q-input>
             <q-input outlined v-model="blockProps.name" label="區塊名稱" />
-            <q-input 
-              outlined 
-              v-model="blockProps.color" 
-              label="字體顏色"
-            >
+            <q-input outlined v-model="blockProps.color" label="字體顏色">
               <template v-slot:append>
                 <q-icon name="colorize" class="cursor-pointer">
                   <q-popup-proxy
@@ -283,8 +279,24 @@
               <q-radio v-model="blockProps.opacity" :val="1" label="顯示名稱" />
               <q-radio v-model="blockProps.opacity" :val="0" label="隱藏名稱" />
             </div>
-            <q-input type="number" v-show="mode=='e'" outlined :model-value="blockProps.width" @update:model-value="handleGroupScaleX" label="底圖寬度" debounce='600' />
-            <q-input type="number" v-show="mode=='e'" outlined :model-value="blockProps.height" @update:model-value="handleGroupScaleY" label="底圖高度" debounce='600' />
+            <q-input
+              type="number"
+              v-show="mode == 'e'"
+              outlined
+              :model-value="blockProps.width"
+              @update:model-value="handleGroupScaleX"
+              label="底圖寬度"
+              debounce="600"
+            />
+            <q-input
+              type="number"
+              v-show="mode == 'e'"
+              outlined
+              :model-value="blockProps.height"
+              @update:model-value="handleGroupScaleY"
+              label="底圖高度"
+              debounce="600"
+            />
             <div class="flex flex-row justify-end gap-x-2">
               <q-btn
                 v-show="mode == 'e'"
@@ -294,7 +306,7 @@
                 label="刪除"
                 @click="destroyBlock"
               />
-              <q-btn 
+              <q-btn
                 v-show="mode == 'e'"
                 unelevated
                 style="width: 60px"
@@ -315,11 +327,17 @@
         </q-expansion-item>
       </div>
       <!-- <q-btn unelevated class="q-ma-sm" color="primary" @click="saveToDb" label="上傳" /> -->
-      <q-btn unelevated class="q-ma-sm" color="primary" label="上傳" @click="saveToDb" />
+      <q-btn
+        unelevated
+        class="q-ma-sm"
+        color="primary"
+        label="上傳"
+        @click="saveToDb"
+      />
     </div>
     <div class="relative w-5/6 px-4 pb-4">
       <div class="items-center justify-between py-3 row">
-        <div class="flex flex-row items-center">   
+        <div class="flex flex-row items-center">
           <div class="flex flex-row gap-x-2 min-w-[360px]">
             <q-select
               class="w-1/3"
@@ -355,10 +373,19 @@
               map-options
             />
           </div>
-          <q-btn unelevated color="primary" class="q-ml-sm" style="height:2.5rem" label="搜尋" @click="load" />
+          <q-btn
+            unelevated
+            color="primary"
+            class="q-ml-sm"
+            style="height: 2.5rem"
+            label="搜尋"
+            @click="load"
+          />
         </div>
         <div class="relative row gap-x-2 q-py-sm">
-          <span class="absolute right-0 -top-3">縮放比例{{currentScale*100 + "%"}}</span>
+          <span class="absolute right-0 -top-3"
+            >縮放比例{{ currentScale * 100 + '%' }}</span
+          >
           <q-checkbox label="顯示格線" v-model="grid" />
           <q-space />
           <q-btn
@@ -388,8 +415,8 @@
             inset 0 -1px 0 #000;
         "
       >
-      <div class="w-full" ref="container" id="canvas_container"></div>
-    </q-scroll-area>
+        <div class="w-full" ref="container" id="canvas_container"></div>
+      </q-scroll-area>
       <div
         v-show="showPreview"
         :class="[position, 'absolute']"
@@ -403,30 +430,32 @@
         Attension
       </q-card-section>
       <q-card-section class="h-24">
-        {{message}}
+        {{ message }}
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="關閉" color="primary" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
-  <q-dialog v-model="isLoading" backdrop-filter="blur(4px)" persistent> 
+  <q-dialog v-model="isLoading" backdrop-filter="blur(4px)" persistent>
     <q-card class="w-96">
       <q-card-section class="items-center justify-center row q-pb-none text-h5">
         資料讀取中...
       </q-card-section>
-      <q-card-section class="flex flex-col items-center justify-center h-48 pt-0">
-      <q-circular-progress
-        font-size="16px"
-        indeterminate
-        size="90px"
-        :thinkness="0.2"
-        color="primary"
-        center-color="grey-5"
-        track-color="transparent"
-        class="q-mb-md q-mx-md"
-      />
-      </q-card-section> 
+      <q-card-section
+        class="flex flex-col items-center justify-center h-48 pt-0"
+      >
+        <q-circular-progress
+          font-size="16px"
+          indeterminate
+          size="90px"
+          :thinkness="0.2"
+          color="primary"
+          center-color="grey-5"
+          track-color="transparent"
+          class="q-mb-md q-mx-md"
+        />
+      </q-card-section>
     </q-card>
   </q-dialog>
 </template>
@@ -464,76 +493,71 @@
 }
 </style> -->
 <script setup lang="ts">
-import {
-  ref,
-  reactive,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-} from "vue";
-import {useTick} from "quasar"
-import Konva from "konva";
-import $ from "jquery";
-import axios from 'axios';
+import {ref, reactive, onMounted, onBeforeUnmount, watch} from 'vue'
+import {useTick} from 'quasar'
+import Konva from 'konva'
+import $ from 'jquery'
+import axios from 'axios'
 interface ScrollInfo {
-  horizontalPosition: number;
-  verticalPosition: number;
+  horizontalPosition: number
+  verticalPosition: number
 }
 
-const isLoading = ref(false);
-const showPreview = ref(true);
-const position = ref("top-16 right-7");
-const width = ref(1800);
-const height = ref(1200);
+const isLoading = ref(false)
+const showPreview = ref(true)
+const position = ref('top-16 right-7')
+const width = ref(1800)
+const height = ref(1200)
 
-const sLocation = ref("科技");
-const sFloor = ref("1F");
-const sDepartment = ref("TEST");
+const sLocation = ref('科技')
+const sFloor = ref('1F')
+const sDepartment = ref('TEST')
 
-const grid = ref(true);
-const mode = ref<"v" | "i" | "e">("v");
-const editNode = ref(false);
-const editBlock = ref(false);
-const container = ref<HTMLDivElement | null>(null);
+const grid = ref(true)
+const mode = ref<'v' | 'i' | 'e'>('v')
+const editNode = ref(false)
+const editBlock = ref(false)
+const container = ref<HTMLDivElement | null>(null)
 
-const dialog = ref(false);
-const message = ref("");
+const dialog = ref(false)
+const message = ref('')
 
-let previewStage = reactive<{} | Konva.Stage>({});
+let previewStage = reactive<{} | Konva.Stage>({})
 
-let stage = reactive<{} | Konva.Stage>({});
+let stage = reactive<{} | Konva.Stage>({})
 
 //const drop = ref(null);
 //const undo = ref(null);
 
-const mesh = 20;
+const mesh = 20
 
-let previewLayer = reactive(new Konva.Layer({ x: 0, y: 0, draggable: true , name: "preview"}));
+let previewLayer = reactive(
+  new Konva.Layer({x: 0, y: 0, draggable: true, name: 'preview'}),
+)
 let iconLayer = reactive<Konva.Layer>(
-  new Konva.Layer({ x: 0, y: 0, draggable: false, name: "icon" }),
-);
+  new Konva.Layer({x: 0, y: 0, draggable: false, name: 'icon'}),
+)
 let gridLayer = reactive<Konva.Layer>(
-  new Konva.Layer({ x: 0, y: 0, draggable: false, name: "grid" }),
-);
+  new Konva.Layer({x: 0, y: 0, draggable: false, name: 'grid'}),
+)
 
-const shape = ref<"Rect" | "Circle" | "Ellipse" | "Ring" | "RegularPolygon">(
-  "Rect",
-);
+const shape = ref<'Rect' | 'Circle' | 'Ellipse' | 'Ring' | 'RegularPolygon'>(
+  'Rect',
+)
 
+const currentScale = ref(1)
 
-const currentScale = ref(1);
-
-const scale = 0.25;
-const GUIDELINE_OFFSET = 5;
+const scale = 0.25
+const GUIDELINE_OFFSET = 5
 
 const rectProps = reactive({
   width: 100,
   height: 50,
-});
+})
 
 const circleProps = reactive({
   radius: 50,
-});
+})
 
 // const wedgeOptions = reactive({
 //   radius:60,
@@ -544,7 +568,7 @@ const circleProps = reactive({
 const ellipseProps = reactive({
   radiusX: 80,
   radiusY: 40,
-});
+})
 
 // const starOptions = reactive({
 //   numPoints:5,
@@ -555,7 +579,7 @@ const ellipseProps = reactive({
 const ringProps = reactive({
   innerRadius: 40,
   outerRadius: 70,
-});
+})
 
 // const arcOptions = reactive({
 //   innerRadius:40,
@@ -566,186 +590,196 @@ const ringProps = reactive({
 const regpolyProps = reactive({
   sides: 5,
   radius: 60,
-});
+})
 
 const eqpProps = reactive({
-  category: "CP",
-  text: "",
-  fill: "red",
+  category: 'CP',
+  text: '',
+  fill: 'red',
   fontSize: 20,
-  color: "black",
-});
+  color: 'black',
+})
 
 const blockProps = reactive({
-  fill: "#0018dd",
-  name: "",
-  color: "black",
+  fill: '#0018dd',
+  name: '',
+  color: 'black',
   opacity: 1,
-  width:0,
-  height:0,
-});
+  width: 0,
+  height: 0,
+})
 
 const positionOptions = [
-  { label: "右上", value: "top-16 right-7" },
-  { label: "左上", value: "top-16 left-7" },
-  { label: "右下", value: "bottom-7 right-7" },
-  { label: "左下", value: "bottom-7 left-7" },
-];
-const locationOptions = ["科技", "創新", "力行"].map((l) => ({
+  {label: '右上', value: 'top-16 right-7'},
+  {label: '左上', value: 'top-16 left-7'},
+  {label: '右下', value: 'bottom-7 right-7'},
+  {label: '左下', value: 'bottom-7 left-7'},
+]
+const locationOptions = ['科技', '創新', '力行'].map(l => ({
   label: l,
   value: l,
-}));
-const floorOptions = ref(["1F", "2F", "3F", "7F"].map(l => ({value:l, label:l})));
-const departmentOptions = ["TEST", "DS"].map((l) => ({ label: l, value: l }));
-const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map((num) => ({
+}))
+const floorOptions = ref(
+  ['1F', '2F', '3F', '7F'].map(l => ({value: l, label: l})),
+)
+const departmentOptions = ['TEST', 'DS'].map(l => ({label: l, value: l}))
+const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map(num => ({
   label: num.toString(),
   value: num,
-}));
+}))
 
-const categoryOptions = ref(["CP", "FT", "氮氣櫃", "溫溼度監控"].map((l) => ({
-  label: l,
-  value: l,
-})));
+const categoryOptions = ref(
+  ['CP', 'FT', '氮氣櫃', '溫溼度監控'].map(l => ({
+    label: l,
+    value: l,
+  })),
+)
 
 const shapeOptions = [
-  { label: "矩形", value: "Rect" },
-  { label: "圓形", value: "Circle" },
+  {label: '矩形', value: 'Rect'},
+  {label: '圓形', value: 'Circle'},
   //{label:"楔形", value:"Wedge"},
-  { label: "橢圓形", value: "Ellipse" },
+  {label: '橢圓形', value: 'Ellipse'},
   //{label:"星形", value:"Star"},
-  { label: "環形", value: "Ring" },
+  {label: '環形', value: 'Ring'},
   //{label:"弧形", value:"Arc"},
-  { label: "正多邊形", value: "RegularPolygon" },
-];
+  {label: '正多邊形', value: 'RegularPolygon'},
+]
 
-const {registerTick} = useTick();
+const {registerTick} = useTick()
 
 watch([sLocation, sFloor, sDepartment], async (nValue, oValue) => {
-  renewKonva();
-  let floor = ["1F", "2F", "3F", "7F"];
+  renewKonva()
+  let floor = ['1F', '2F', '3F', '7F']
   if (nValue[0] !== oValue[0]) {
     switch (nValue[0]) {
-      case "創新":{
-        sFloor.value = "2F";
-        floor = ["2F", "3F", "4F"];
-        break;
+      case '創新': {
+        sFloor.value = '2F'
+        floor = ['2F', '3F', '4F']
+        break
       }
-      case "力行":{
-        sFloor.value = "3F";
-        floor = ["3F"];
-        break;
+      case '力行': {
+        sFloor.value = '3F'
+        floor = ['3F']
+        break
       }
-      case "科技":{
-        sFloor.value = "1F";
-        break;
+      case '科技': {
+        sFloor.value = '1F'
+        break
       }
     }
-    floorOptions.value = floor.map(l => ({value:l,label:l}));
+    floorOptions.value = floor.map(l => ({value: l, label: l}))
   }
 
   if (nValue[2] !== oValue[2]) {
-    if (nValue[2] == "TEST") {
-      eqpProps.category = "CP";
-      categoryOptions.value = ["CP", "FT", "氮氣櫃", "溫溼度監控"].map(l => ({value:l, label:l}))
-    } else if (nValue[2] == "DS") {
-      eqpProps.category = "DS";
-      categoryOptions.value = ["DS", "氮氣櫃", "溫溼度監控"].map(l => ({value:l, label:l}))
+    if (nValue[2] == 'TEST') {
+      eqpProps.category = 'CP'
+      categoryOptions.value = ['CP', 'FT', '氮氣櫃', '溫溼度監控'].map(l => ({
+        value: l,
+        label: l,
+      }))
+    } else if (nValue[2] == 'DS') {
+      eqpProps.category = 'DS'
+      categoryOptions.value = ['DS', '氮氣櫃', '溫溼度監控'].map(l => ({
+        value: l,
+        label: l,
+      }))
     }
   }
 })
 
 watch([width, height], (nValue, _) => {
   if (stage instanceof Konva.Stage) {
-    stage.width(nValue[0]);
-    stage.height(nValue[1]);
-    gridLayer.removeChildren();
-    initGridLayer();
+    stage.width(nValue[0])
+    stage.height(nValue[1])
+    gridLayer.removeChildren()
+    initGridLayer()
   }
-});
+})
 
 watch(grid, (nValue, _) => {
   if (nValue) {
-    initGridLayer();
+    initGridLayer()
   } else {
-    gridLayer.removeChildren();
+    gridLayer.removeChildren()
   }
 })
 
 // utils
 const show = () => {
-  showPreview.value = true;
-};
+  showPreview.value = true
+}
 
 const hide = () => {
-  showPreview.value = false;
-};
+  showPreview.value = false
+}
 
 function getGridlineStops() {
   let vertical = [],
-    horizontal = [];
+    horizontal = []
   if (stage instanceof Konva.Stage) {
-    stage.find(".v-line").forEach((line) => {
-      const { x } = line.getClientRect();
-      vertical.push(x);
-    });
+    stage.find('.v-line').forEach(line => {
+      const {x} = line.getClientRect()
+      vertical.push(x)
+    })
 
-    stage.find(".h-line").forEach((line) => {
-      const { y } = line.getClientRect();
-      horizontal.push(y);
-    });
+    stage.find('.h-line').forEach(line => {
+      const {y} = line.getClientRect()
+      horizontal.push(y)
+    })
 
-    iconLayer.find(".cfm-object").forEach((children) => {
-      const { x, y, width, height } = children.getClientRect();
-      vertical.push([x, (x + width / 2), (x + width)]);
-      horizontal.push([y, (y + height / 2), (y + height)]);
-    });
+    iconLayer.find('.cfm-object').forEach(children => {
+      const {x, y, width, height} = children.getClientRect()
+      vertical.push([x, x + width / 2, x + width])
+      horizontal.push([y, y + height / 2, y + height])
+    })
   }
 
   return {
     vertical: vertical.flat(),
     horizontal: horizontal.flat(),
-  };
+  }
 }
 
 function getGuidelineStops(skipItem) {
   const vertical = [],
-    horizontal = [];
+    horizontal = []
   if (stage instanceof Konva.Stage) {
-    stage.find(".cfm-object").forEach((guideItem) => {
-      if (guideItem === skipItem) return;
+    stage.find('.cfm-object').forEach(guideItem => {
+      if (guideItem === skipItem) return
 
-      const item = guideItem.getClientRect();
-      vertical.push([item.x, item.x + item.width / 2, item.x + item.width]);
-      horizontal.push([item.y, item.y + item.width / 2, item.y + item.width]);
-    });
+      const item = guideItem.getClientRect()
+      vertical.push([item.x, item.x + item.width / 2, item.x + item.width])
+      horizontal.push([item.y, item.y + item.width / 2, item.y + item.width])
+    })
 
-    stage.find(".v-line").forEach((l) => {
-      const { x } = l.getClientRect();
-      if (!vertical.includes(x)) vertical.push(x);
-    });
+    stage.find('.v-line').forEach(l => {
+      const {x} = l.getClientRect()
+      if (!vertical.includes(x)) vertical.push(x)
+    })
 
-    stage.find(".h-line").forEach((l) => {
-      const { y } = l.getClientRect();
-      if (!horizontal.includes(y)) horizontal.push(y);
-    });
+    stage.find('.h-line').forEach(l => {
+      const {y} = l.getClientRect()
+      if (!horizontal.includes(y)) horizontal.push(y)
+    })
   }
 
   return {
     vertical: vertical.flat(),
     horizontal: horizontal.flat(),
-  };
+  }
 }
 
 function getObjectSnappingEdges(node) {
-  const item = node.getClientRect();
-  const absPos = node.absolutePosition();
+  const item = node.getClientRect()
+  const absPos = node.absolutePosition()
 
   return {
     vertical: [
       {
         guide: Math.round(item.x),
         offset: Math.round(absPos.x - item.x),
-        snap: "start",
+        snap: 'start',
       },
       // {
       //   guide: Math.round(item.x + item.width / 2),
@@ -755,14 +789,14 @@ function getObjectSnappingEdges(node) {
       {
         guide: Math.round(item.x + item.width),
         offset: Math.round(absPos.x - item.x - item.width),
-        snap: "end",
+        snap: 'end',
       },
     ],
     horizontal: [
       {
         guide: Math.round(item.y),
         offset: Math.round(absPos.y - item.y),
-        snap: "start",
+        snap: 'start',
       },
       // {
       //   guide: Math.round(item.y + item.height / 2),
@@ -772,19 +806,19 @@ function getObjectSnappingEdges(node) {
       {
         guide: Math.round(item.y + item.height),
         offset: Math.round(absPos.y - item.y - item.height),
-        snap: "end",
+        snap: 'end',
       },
     ],
-  };
+  }
 }
 
 function getGuidelines(guideStops, itemBounds) {
-  const resultV = [];
-  const resultH = [];
+  const resultV = []
+  const resultH = []
 
-  guideStops.vertical.forEach((lineGuide) => {
-    itemBounds.vertical.forEach((bound) => {
-      const diff = Math.abs(lineGuide - bound.guide);
+  guideStops.vertical.forEach(lineGuide => {
+    itemBounds.vertical.forEach(bound => {
+      const diff = Math.abs(lineGuide - bound.guide)
 
       if (diff < GUIDELINE_OFFSET) {
         resultV.push({
@@ -792,14 +826,14 @@ function getGuidelines(guideStops, itemBounds) {
           diff,
           snap: bound.snap,
           offset: bound.offset,
-        });
+        })
       }
-    });
-  });
+    })
+  })
 
-  guideStops.horizontal.forEach((lineGuide) => {
-    itemBounds.horizontal.forEach((bound) => {
-      const diff = Math.abs(lineGuide - bound.guide);
+  guideStops.horizontal.forEach(lineGuide => {
+    itemBounds.horizontal.forEach(bound => {
+      const diff = Math.abs(lineGuide - bound.guide)
 
       if (diff < GUIDELINE_OFFSET) {
         resultH.push({
@@ -807,127 +841,127 @@ function getGuidelines(guideStops, itemBounds) {
           diff,
           snap: bound.snap,
           offset: bound.offset,
-        });
+        })
       }
-    });
-  });
+    })
+  })
 
-  const guides = [];
+  const guides = []
 
-  const minV = resultV.sort((a, b) => a.diff - b.diff)[0];
-  const minH = resultH.sort((a, b) => a.diff - b.diff)[0];
+  const minV = resultV.sort((a, b) => a.diff - b.diff)[0]
+  const minH = resultH.sort((a, b) => a.diff - b.diff)[0]
 
   if (minV) {
     guides.push({
       lineGuide: minV.lineGuide,
       offset: minV.offset,
-      orientation: "V",
+      orientation: 'V',
       snap: minV.snap,
-    });
+    })
   }
 
   if (minH) {
     guides.push({
       lineGuide: minH.lineGuide,
       offset: minH.offset,
-      orientation: "H",
+      orientation: 'H',
       snap: minH.snap,
-    });
+    })
   }
 
-  return guides;
+  return guides
 }
 
-const drawGridGuideLine = (guides) => {
-  guides.forEach((guideline) => {
-    if (guideline.orientation === "H") {
+const drawGridGuideLine = guides => {
+  guides.forEach(guideline => {
+    if (guideline.orientation === 'H') {
       const line = new Konva.Line({
         points: [-6000, 0, 6000, 0],
-        stroke: "rgb(0, 161, 255)",
+        stroke: 'rgb(0, 161, 255)',
         strokeWidth: 1,
-        name: "grid-guide-line",
+        name: 'grid-guide-line',
         dash: [4, 6],
-      });
-      gridLayer.add(line);
+      })
+      gridLayer.add(line)
       line.absolutePosition({
         x: 0,
         y: guideline.lineGuide,
-      });
+      })
     }
 
-    if (guideline.orientation === "V") {
+    if (guideline.orientation === 'V') {
       const line = new Konva.Line({
         points: [0, -6000, 0, 6000],
-        stroke: "rgb(0,161,255)",
+        stroke: 'rgb(0,161,255)',
         strokeWidth: 1,
-        name: "grid-guide-line",
+        name: 'grid-guide-line',
         dash: [4, 6],
-      });
-      gridLayer.add(line);
+      })
+      gridLayer.add(line)
       line.absolutePosition({
         x: guideline.lineGuide,
         y: 0,
-      });
+      })
     }
-  });
-};
+  })
+}
 
 function drawGuideline(guides) {
-  guides.forEach((guideline) => {
-    if (guideline.orientation === "H") {
+  guides.forEach(guideline => {
+    if (guideline.orientation === 'H') {
       const line = new Konva.Line({
         points: [-6000, 0, 6000, 0],
-        stroke: "rgb(0, 161, 255)",
+        stroke: 'rgb(0, 161, 255)',
         strokeWidth: 1,
-        name: "guide-line",
+        name: 'guide-line',
         dash: [4, 6],
-      });
-      iconLayer.add(line);
+      })
+      iconLayer.add(line)
       line.absolutePosition({
         x: 0,
         y: guideline.lineGuide,
-      });
+      })
     }
 
-    if (guideline.orientation === "V") {
+    if (guideline.orientation === 'V') {
       const line = new Konva.Line({
         points: [0, -6000, 0, 6000],
-        stroke: "rgb(0,161,255)",
+        stroke: 'rgb(0,161,255)',
         strokeWidth: 1,
-        name: "guide-line",
+        name: 'guide-line',
         dash: [4, 6],
-      });
-      iconLayer.add(line);
+      })
+      iconLayer.add(line)
       line.absolutePosition({
         x: guideline.lineGuide,
         y: 0,
-      });
+      })
     }
-  });
+  })
 }
 
 function zoomIn() {
-  const lastScale = stage.scaleX();
-  stage.scale({ 
+  const lastScale = stage.scaleX()
+  stage.scale({
     x: scale + lastScale,
     y: scale + lastScale,
-  });
-  stage.width(width.value * (scale + lastScale));
-  stage.height(height.value * (scale + lastScale));
-  currentScale.value = lastScale + scale;
+  })
+  stage.width(width.value * (scale + lastScale))
+  stage.height(height.value * (scale + lastScale))
+  currentScale.value = lastScale + scale
 }
 
 function zoomOut() {
-  const lastScaleX = stage.scaleX();
+  const lastScaleX = stage.scaleX()
   if (lastScaleX > 0.25) {
-    stage.scale({ 
-      x: lastScaleX - scale, 
+    stage.scale({
+      x: lastScaleX - scale,
       y: lastScaleX - scale,
-    });
+    })
 
-    stage.width(width.value * (lastScaleX - scale));
+    stage.width(width.value * (lastScaleX - scale))
     stage.height(height.value * (lastScaleX - scale))
-    currentScale.value = lastScaleX - scale;
+    currentScale.value = lastScaleX - scale
   }
 }
 
@@ -940,39 +974,39 @@ function zoomOut() {
 
 // interaction with canvas
 function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
-  let { top, left } = container.value!.getBoundingClientRect();
-  let { x, y } = evt.evt;
+  let {top, left} = container.value!.getBoundingClientRect()
+  let {x, y} = evt.evt
   let currentScaleX = 0,
-    currentScaleY = 1;
+    currentScaleY = 1
 
   if (stage instanceof Konva.Stage) {
-    currentScaleX = stage.scaleX();
-    currentScaleY = stage.scaleY();
+    currentScaleX = stage.scaleX()
+    currentScaleY = stage.scaleY()
   }
 
-  let previewShape: Konva.Shape;
-  let group: Konva.Group;
-  let fontSize = 12;
+  let previewShape: Konva.Shape
+  let group: Konva.Group
+  let fontSize = 12
 
   const estTextWidth = new Konva.Text({
     fontSize: eqpProps.fontSize,
-  }).measureSize(eqpProps.text);
-  const estCategoryWidth = new Konva.Text({ fontSize }).measureSize(
+  }).measureSize(eqpProps.text)
+  const estCategoryWidth = new Konva.Text({fontSize}).measureSize(
     eqpProps.category,
-  );
-  const {x:_x_, y:_y_} = stage.getPointerPosition();
+  )
+  const {x: _x_, y: _y_} = stage.getPointerPosition()
   let originX = -left + x,
-  originY = -top + y;
+    originY = -top + y
   switch (shape.value) {
-    case "Rect": {
+    case 'Rect': {
       group = new Konva.Group({
         x: originX,
         y: originY,
         width: rectProps.width,
         height: rectProps.height,
         opacity: 0.5,
-        name: "cfm-object",
-      });
+        name: 'cfm-object',
+      })
 
       let txt = new Konva.Text({
         x: (rectProps.width - estTextWidth.width) / 2,
@@ -982,18 +1016,18 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name:"name"
-      });
+        name: 'name',
+      })
 
       let category = new Konva.Text({
         x: 0,
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        opacity:0,
+        opacity: 0,
         text: eqpProps.category,
-        name:"category"
-      });
+        name: 'category',
+      })
 
       previewShape = new Konva.Rect({
         x: 0,
@@ -1001,24 +1035,24 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         width: rectProps.width,
         height: rectProps.height,
         fill: eqpProps.fill,
-        name: "cfm-frame",
-        stroke:"black",
-        strokeWidth:2
-      });
+        name: 'cfm-frame',
+        stroke: 'black',
+        strokeWidth: 2,
+      })
 
-      group.add(previewShape);
-      group.add(txt);
-      group.add(category);
-      break;
+      group.add(previewShape)
+      group.add(txt)
+      group.add(category)
+      break
     }
-    case "Circle": {
+    case 'Circle': {
       group = new Konva.Group({
         x: originX,
         y: originY,
         width: circleProps.radius * 2,
         height: circleProps.radius * 2,
-        name: "cfm-object",
-      });
+        name: 'cfm-object',
+      })
 
       let txt = new Konva.Text({
         x: circleProps.radius - estTextWidth.width / 2,
@@ -1028,43 +1062,43 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name:"name"
-      });
+        name: 'name',
+      })
 
       let category = new Konva.Text({
         x: 0,
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        opacity:0,
+        opacity: 0,
         text: eqpProps.category,
         fontSize,
-        name:"category",
-      });
+        name: 'category',
+      })
 
       previewShape = new Konva.Circle({
         x: circleProps.radius,
         y: circleProps.radius,
         radius: circleProps.radius,
         fill: eqpProps.fill,
-        name: "cfm-frame",
-        stroke:"black",
-        strokeWidth:2
-      });
+        name: 'cfm-frame',
+        stroke: 'black',
+        strokeWidth: 2,
+      })
 
-      group.add(previewShape);
-      group.add(txt);
-      group.add(category);
-      break;
+      group.add(previewShape)
+      group.add(txt)
+      group.add(category)
+      break
     }
-    case "Ellipse": {
+    case 'Ellipse': {
       group = new Konva.Group({
         x: originX,
         y: originY,
         width: ellipseProps.radiusX * 2,
         height: ellipseProps.radiusY * 2,
-        name: "cfm-object",
-      });
+        name: 'cfm-object',
+      })
 
       let txt = new Konva.Text({
         x: ellipseProps.radiusX - estTextWidth.width / 2,
@@ -1074,19 +1108,19 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: "name",
-      });
+        name: 'name',
+      })
 
       let category = new Konva.Text({
         x: 0,
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        opacity:0,
+        opacity: 0,
         text: eqpProps.category,
         fontSize,
-        name: "category",
-      });
+        name: 'category',
+      })
 
       previewShape = new Konva.Ellipse({
         x: ellipseProps.radiusX,
@@ -1094,24 +1128,24 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         radiusX: ellipseProps.radiusX,
         radiusY: ellipseProps.radiusY,
         fill: eqpProps.fill,
-        name: "cfm-frame",
-        stroke:"black",
-        strokeWidth:2
-      });
+        name: 'cfm-frame',
+        stroke: 'black',
+        strokeWidth: 2,
+      })
 
-      group.add(previewShape);
-      group.add(txt);
-      group.add(category);
-      break;
+      group.add(previewShape)
+      group.add(txt)
+      group.add(category)
+      break
     }
-    case "RegularPolygon": {
+    case 'RegularPolygon': {
       group = new Konva.Group({
         x: originX,
         y: originY,
         width: regpolyProps.radius * 2,
         height: regpolyProps.radius * 2,
-        name: "cfm-object",
-      });
+        name: 'cfm-object',
+      })
 
       let txt = new Konva.Text({
         x: regpolyProps.radius - estTextWidth.width / 2,
@@ -1121,19 +1155,19 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: "name",
-      });
+        name: 'name',
+      })
 
       let category = new Konva.Text({
         x: 0,
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        opacity:0,
+        opacity: 0,
         text: eqpProps.category,
         fontSize,
-        name: "category",
-      });
+        name: 'category',
+      })
 
       previewShape = new Konva.RegularPolygon({
         x: regpolyProps.radius,
@@ -1141,24 +1175,24 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         radius: regpolyProps.radius,
         sides: regpolyProps.sides,
         fill: eqpProps.fill,
-        name: "cfm-frame",
-        stroke:"black",
-        strokeWidth:2
-      });
+        name: 'cfm-frame',
+        stroke: 'black',
+        strokeWidth: 2,
+      })
 
-      group.add(previewShape);
-      group.add(txt);
-      group.add(category);
-      break;
+      group.add(previewShape)
+      group.add(txt)
+      group.add(category)
+      break
     }
-    case "Ring": {
+    case 'Ring': {
       group = new Konva.Group({
         x: originX,
         y: originY,
         width: ringProps.outerRadius * 2,
         height: ringProps.outerRadius * 2,
-        name: "cfm-object",
-      });
+        name: 'cfm-object',
+      })
 
       let txt = new Konva.Text({
         x: ringProps.outerRadius - estTextWidth.width / 2,
@@ -1168,19 +1202,19 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         fill: eqpProps.color,
         text: eqpProps.text,
         fontSize: eqpProps.fontSize,
-        name: "name",
-      });
+        name: 'name',
+      })
 
       let category = new Konva.Text({
         x: 0,
         y: 0,
         width: estCategoryWidth.width,
         height: estCategoryWidth.height,
-        opacity:0,
+        opacity: 0,
         text: eqpProps.category,
         fontSize,
-        name:"category"
-      });
+        name: 'category',
+      })
 
       previewShape = new Konva.Ring({
         x: ringProps.outerRadius,
@@ -1188,166 +1222,175 @@ function enter(evt: Konva.KonvaEventObject<MouseEvent>) {
         outerRadius: ringProps.outerRadius,
         innerRadius: ringProps.innerRadius,
         fill: eqpProps.fill,
-        name: "cfm-frame",
-        stroke:"black",
-        strokeWidth:2
-      });
+        name: 'cfm-frame',
+        stroke: 'black',
+        strokeWidth: 2,
+      })
 
-      group.add(previewShape);
-      group.add(txt);
-      group.add(category);
-      break;
+      group.add(previewShape)
+      group.add(txt)
+      group.add(category)
+      break
     }
   }
 
   if (previewLayer.children.length < 1 && group) {
-    previewLayer.add(group);
-    previewLayer.draw();
-    group.startDrag();
-    window.removeEventListener("keydown", cancelInsert);
-    group.off("dragmove", startInsertSnapping);
-    stage.off("mouseup", keepDrag);
-    stage.off("mousedown", insertToIconLayer);
+    previewLayer.add(group)
+    previewLayer.draw()
+    group.startDrag()
+    window.removeEventListener('keydown', cancelInsert)
+    group.off('dragmove', startInsertSnapping)
+    stage.off('mouseup', keepDrag)
+    stage.off('mousedown', insertToIconLayer)
 
-    window.addEventListener("keydown", cancelInsert);
-    group.on("dragmove", startInsertSnapping);
-    stage.on("mouseup", keepDrag);
-    stage.on("mousedown", insertToIconLayer);
+    window.addEventListener('keydown', cancelInsert)
+    group.on('dragmove', startInsertSnapping)
+    stage.on('mouseup', keepDrag)
+    stage.on('mousedown', insertToIconLayer)
   }
 }
 const cancelInsert = (evt: KeyboardEvent | MouseEvent) => {
-  if (evt.key === "Escape" || evt.type === "mouseleave") {
-    stage.off("mouseup", keepDrag);
-    stage.off("mousedown", insertToIconLayer);
-    previewLayer.getChildren().forEach((children) => {
-      children.off();
-      children.destroy();
-    });
-    gridLayer.find(".grid-guide-line").forEach((l) => l.destroy());
+  if (evt.key === 'Escape' || evt.type === 'mouseleave') {
+    stage.off('mouseup', keepDrag)
+    stage.off('mousedown', insertToIconLayer)
+    previewLayer.getChildren().forEach(children => {
+      children.off()
+      children.destroy()
+    })
+    gridLayer.find('.grid-guide-line').forEach(l => l.destroy())
   }
-};
+}
 
 const insertToIconLayer = () => {
-  let nodeCount = iconLayer.getChildren().length;
-  let children = previewLayer.getChildren()[0];
-  let clone = children.clone().opacity(1);
-  clone.on("click", pickNode);
-  clone.on("dragmove", dragStart);
-  clone.on("dragend", dragEnd);
-  iconLayer.add(clone);
-  clone.zIndex(nodeCount);
-  iconLayer.draw();
-};
+  let nodeCount = iconLayer.getChildren().length
+  let children = previewLayer.getChildren()[0]
+  let clone = children.clone().opacity(1)
+  clone.on('click', pickNode)
+  clone.on('dragmove', dragStart)
+  clone.on('dragend', dragEnd)
+  iconLayer.add(clone)
+  clone.zIndex(nodeCount)
+  iconLayer.draw()
+}
 
 const keepDrag = () => {
-  previewLayer.getChildren().forEach((children) => children.startDrag());
-};
+  previewLayer.getChildren().forEach(children => children.startDrag())
+}
 
 const startInsertSnapping = (evt: Konva.KonvaEventObject<MouseEvent>) => {
-  
-  const {left, top} = document.getElementById('canvas_container').getBoundingClientRect();
-  
-  stage.find(".grid-guide-line").forEach((l:Konva.Line) => l.destroy());
-  const { target } = evt;
+  const {left, top} = document
+    .getElementById('canvas_container')
+    .getBoundingClientRect()
+
+  stage.find('.grid-guide-line').forEach((l: Konva.Line) => l.destroy())
+  const {target} = evt
   // target.y(Math.max(target.y(), 0));
   // target.x(Math.max(target.x(), 0));
 
-  const gridlineStops = getGridlineStops();
+  const gridlineStops = getGridlineStops()
   if (stage.scaleX() !== 1 || stage.scaleY() !== 1)
-    target.absolutePosition({x:evt.evt.clientX - left, y:evt.evt.clientY - top}); 
-  const itemBounds = getObjectSnappingEdges(target);
-  const guides = getGuidelines(gridlineStops, itemBounds);
-  if (!guides.length) return;
+    target.absolutePosition({
+      x: evt.evt.clientX - left,
+      y: evt.evt.clientY - top,
+    })
+  const itemBounds = getObjectSnappingEdges(target)
+  const guides = getGuidelines(gridlineStops, itemBounds)
+  if (!guides.length) return
 
-  drawGridGuideLine(guides);
+  drawGridGuideLine(guides)
 
-  const absPos = target.absolutePosition();
-  guides.forEach((line) => {
+  const absPos = target.absolutePosition()
+  guides.forEach(line => {
     switch (line.orientation) {
-      case "V": {
-        absPos.x = line.lineGuide + line.offset;
-        break;
+      case 'V': {
+        absPos.x = line.lineGuide + line.offset
+        break
       }
-      case "H": {
-        absPos.y = line.lineGuide + line.offset;
-        break;
+      case 'H': {
+        absPos.y = line.lineGuide + line.offset
+        break
       }
     }
-  });
-  
-  target.absolutePosition(absPos);
-};
+  })
+
+  target.absolutePosition(absPos)
+}
 
 const hoverHighLight = (evt: Konva.KonvaEventObject<MouseEvent>) => {
-  const { target } = evt;
-  let rect = target.getParent().find(".cfm-frame")[0];
-  rect.stroke("black").strokeWidth(2);
-};
+  const {target} = evt
+  let rect = target.getParent().find('.cfm-frame')[0]
+  rect.stroke('black').strokeWidth(2)
+}
 
 const leaveHighLight = (evt: Konva.KonvaEventObject<MouseEvent>) => {
-  const { target } = evt;
-  let rect = target.getParent().find(".cfm-frame")[0];
-  rect.stroke("transparent").strokeWidth(0);
-};
+  const {target} = evt
+  let rect = target.getParent().find('.cfm-frame')[0]
+  rect.stroke('transparent').strokeWidth(0)
+}
 
 const pickNode = (evt: Konva.KonvaEventObject<MouseEvent>) => {
-  editNode.value = true; 
-  mode.value = "e";
-  let group = evt.target.getParent();
-  group.draggable(true);
-  group.setAttr("name", "selected-cfm-object");
-  const [frame, txt, category] = group.getChildren();
-  eqpProps.category = category.getAttrs().text;
-  eqpProps.color = txt.getAttrs().fill;
-  eqpProps.text = txt.getAttrs().text;
-  eqpProps.fontSize = txt.getAttrs().fontSize;
-  eqpProps.fill = frame.getAttrs().fill;
-  let className = frame.getClassName() as "Rect" | "Circle" | "Ellipse" | "RegularPolygon" | "Ring";
-  shape.value = className;
+  editNode.value = true
+  mode.value = 'e'
+  let group = evt.target.getParent()
+  group.draggable(true)
+  group.setAttr('name', 'selected-cfm-object')
+  const [frame, txt, category] = group.getChildren()
+  eqpProps.category = category.getAttrs().text
+  eqpProps.color = txt.getAttrs().fill
+  eqpProps.text = txt.getAttrs().text
+  eqpProps.fontSize = txt.getAttrs().fontSize
+  eqpProps.fill = frame.getAttrs().fill
+  let className = frame.getClassName() as
+    | 'Rect'
+    | 'Circle'
+    | 'Ellipse'
+    | 'RegularPolygon'
+    | 'Ring'
+  shape.value = className
 
   switch (className) {
-    case "Rect": {
-      rectProps.width = frame.getAttr("width");
-      rectProps.height = frame.getAttr("height");
-      break;
+    case 'Rect': {
+      rectProps.width = frame.getAttr('width')
+      rectProps.height = frame.getAttr('height')
+      break
     }
-    case "Circle": {
-      circleProps.radius = frame.getAttr("radius");
-      break;
+    case 'Circle': {
+      circleProps.radius = frame.getAttr('radius')
+      break
     }
-    case "Ellipse": {
-      ellipseProps.radiusX = frame.getAttr("radiusX");
-      ellipseProps.radiusY = frame.getAttr("radiusY");
-      break;
+    case 'Ellipse': {
+      ellipseProps.radiusX = frame.getAttr('radiusX')
+      ellipseProps.radiusY = frame.getAttr('radiusY')
+      break
     }
-    case "RegularPolygon": {
-      regpolyProps.sides = frame.getAttr("sides");
-      regpolyProps.radius = frame.getAttr("radius");
-      break;
+    case 'RegularPolygon': {
+      regpolyProps.sides = frame.getAttr('sides')
+      regpolyProps.radius = frame.getAttr('radius')
+      break
     }
-    case "Ring": {
-      ringProps.innerRadius = frame.getAttr("innerRadius");
-      ringProps.outerRadius = frame.getAttr("outerRadius");
-      break;
+    case 'Ring': {
+      ringProps.innerRadius = frame.getAttr('innerRadius')
+      ringProps.outerRadius = frame.getAttr('outerRadius')
+      break
     }
   }
-};
+}
 
 const updateNode = () => {
-  let group = iconLayer.find(".selected-cfm-object")[0];
-  const [frame, txt, category] = group.getChildren();
-  const { fill, fontSize, text, color } = eqpProps;
-  const txtWidth = new Konva.Text({ fontSize }).measureSize(text);
-  const categoryWidth = new Konva.Text({ fontSize: 12 }).measureSize(
+  let group = iconLayer.find('.selected-cfm-object')[0]
+  const [frame, txt, category] = group.getChildren()
+  const {fill, fontSize, text, color} = eqpProps
+  const txtWidth = new Konva.Text({fontSize}).measureSize(text)
+  const categoryWidth = new Konva.Text({fontSize: 12}).measureSize(
     eqpProps.category,
-  );
-  let className = frame.getClassName();
+  )
+  let className = frame.getClassName()
 
-  frame.setAttr("fill", fill);
-  category.width(categoryWidth.width);
-  category.setAttr("text", eqpProps.category);
+  frame.setAttr('fill', fill)
+  category.width(categoryWidth.width)
+  category.setAttr('text', eqpProps.category)
   switch (className) {
-    case "Rect": {
+    case 'Rect': {
       txt.setAttrs({
         x: (rectProps.width - txtWidth.width) / 2,
         y: (rectProps.height - txtWidth.height) / 2,
@@ -1356,422 +1399,437 @@ const updateNode = () => {
         text,
         fontSize,
         fill: color,
-      });
-      frame.setAttr("width", rectProps.width);
-      frame.setAttr("height", rectProps.height);
-      break;
+      })
+      frame.setAttr('width', rectProps.width)
+      frame.setAttr('height', rectProps.height)
+      break
     }
-    case "Circle": {
+    case 'Circle': {
       txt.setAttrs({
-        x:circleProps.radius - txtWidth.width / 2,
-        y:circleProps.radius - txtWidth.height / 2,
+        x: circleProps.radius - txtWidth.width / 2,
+        y: circleProps.radius - txtWidth.height / 2,
         width: txtWidth.width,
         height: txtWidth.height,
         text,
         fontSize,
         fill: color,
-      });
-      frame.setAttr("radius", circleProps.radius);
-      break;
+      })
+      frame.setAttr('radius', circleProps.radius)
+      break
     }
-    case "Ellipse": {
+    case 'Ellipse': {
       txt.setAttrs({
-        x:ellipseProps.radiusX - txtWidth.width/2,
-        y:ellipseProps.radiusY - txtWidth.height/2,
-        width:txtWidth.width,
-        height:txtWidth.height,
+        x: ellipseProps.radiusX - txtWidth.width / 2,
+        y: ellipseProps.radiusY - txtWidth.height / 2,
+        width: txtWidth.width,
+        height: txtWidth.height,
         text,
         fontSize,
         fill: color,
-      });
-      frame.setAttr("radiusX", ellipseProps.radiusX);
-      frame.setAttr("radiusY", ellipseProps.radiusY);
-      break;
-    }
-    case "RegularPolygon": {
-      txt.setAttrs({
-        x:regpolyProps.radius - txtWidth.width /2,
-        y:regpolyProps.radius - txtWidth.height /2,
-        width:txtWidth.width,
-        height:txtWidth.height,
-        fill:color,
-        text,
-        fontSize,
-      });
-      frame.setAttr("sides", regpolyProps.sides);
-      frame.setAttr("radius", regpolyProps.radius);
-      break;
-    }
-    case "Ring": {
-      txt.setAttrs({
-        x:ringProps.outerRadius - txtWidth.width/2,
-        y:ringProps.outerRadius - txtWidth.height/2,
-        width:txtWidth.width,
-        height:txtWidth.height,
-        fill:color,
-        text,
-        fontSize,
-      });
-      frame.setAttrs({
-        x:ringProps.outerRadius,
-        y:ringProps.outerRadius,
-        outerRadius:ringProps.outerRadius,
-        innerRadius:ringProps.innerRadius,
       })
-      break;
+      frame.setAttr('radiusX', ellipseProps.radiusX)
+      frame.setAttr('radiusY', ellipseProps.radiusY)
+      break
+    }
+    case 'RegularPolygon': {
+      txt.setAttrs({
+        x: regpolyProps.radius - txtWidth.width / 2,
+        y: regpolyProps.radius - txtWidth.height / 2,
+        width: txtWidth.width,
+        height: txtWidth.height,
+        fill: color,
+        text,
+        fontSize,
+      })
+      frame.setAttr('sides', regpolyProps.sides)
+      frame.setAttr('radius', regpolyProps.radius)
+      break
+    }
+    case 'Ring': {
+      txt.setAttrs({
+        x: ringProps.outerRadius - txtWidth.width / 2,
+        y: ringProps.outerRadius - txtWidth.height / 2,
+        width: txtWidth.width,
+        height: txtWidth.height,
+        fill: color,
+        text,
+        fontSize,
+      })
+      frame.setAttrs({
+        x: ringProps.outerRadius,
+        y: ringProps.outerRadius,
+        outerRadius: ringProps.outerRadius,
+        innerRadius: ringProps.innerRadius,
+      })
+      break
     }
   }
-  group.setAttr("name", "cfm-object");
-  group.draggable(false);
-  mode.value = "v";
-};
+  group.setAttr('name', 'cfm-object')
+  group.draggable(false)
+  mode.value = 'v'
+}
 
 const destroyNode = () => {
-  const group = iconLayer.find(".selected-cfm-object")[0];
-  group.off();
-  group.destroy();
-  mode.value = "v";
-};
-
-const dragStart = (evt) => {
-  iconLayer.find(".guide-line").forEach((l) => l.destroy());
-  const lineGuideStops = getGuidelineStops(evt.target);
-  const itemBounds = getObjectSnappingEdges(evt.target);
-  const guides = getGuidelines(lineGuideStops, itemBounds);
-
-  if (!guides.length) return;
-
-  drawGuideline(guides);
-
-  const absPos = evt.target.absolutePosition();
-
-  guides.forEach((line) => {
-    switch (line.orientation) {
-      case "V": {
-        absPos.x = line.lineGuide + line.offset;
-        break;
-      }
-      case "H": {
-        absPos.y = line.lineGuide + line.offset;
-        break;
-      }
-    }
-  });
-  evt.target.absolutePosition(absPos);
-};
-
-const dragEnd = (evt) => {
-  iconLayer.find(".guide-line").forEach(l => l.destroy());
-};
-
-const createPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
-  stage.find(".grid-guide-line").forEach(l => l.destroy());
-  const { x, y } = stage.getPointerPosition();
-  let group = new Konva.Group({
-    x,
-    y,
-    width:0,
-    height:0,
-    name:"block"
-  });
-  let text = new Konva.Text({fontSize:12, text:blockProps.name, fill:blockProps.color, opacity:0.5, name:"name"});
-  let rect = new Konva.Rect({
-    x:0, y:0, width:0, height:0, opacity:0.5, fill:blockProps.fill, name:"fill"
-  });
-  group.add(rect).add(text);
-  stage.off("mousemove", showGridlineGuide);
-
-  if (!previewLayer.getChildren().length) {
-    previewLayer.add(group);
-    stage.off("mousemove", drawPreviewBlock);
-    stage.on("mousemove", drawPreviewBlock);
-  } 
+  const group = iconLayer.find('.selected-cfm-object')[0]
+  group.off()
+  group.destroy()
+  mode.value = 'v'
 }
 
-const drawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
-  stage.find(".grid-guide-line").forEach(l => l.destroy());
-  let {x:_x ,y:_y} = stage.getPointerPosition();
-  let group = previewLayer.getChildren()[0];
-  let x = group.x();
-  let y = group.y();
-  let width = Math.abs(_x - x), height = Math.abs(_y - y);
-  let offsetX = 0, offsetY = 0;
-  if (_x - x < 0) offsetX = width;
-  if (_y - y < 0) offsetY = height;
-  let rect = group.find("Rect")[0];
-  let text = group.find("Text")[0];
-  rect.width(width);
-  rect.height(height);
-  if (_x - x < 0) {
-    rect.offsetX(offsetX);
-    text.offsetX(offsetX);
-  };
-  if (_y - y < 0){
-    rect.offsetY(offsetY);
-    text.offsetY(offsetY);
-  }
-  const gridlineStops = getGridlineStops();
-  const itemBounds = {
-    vertical:[
-      {
-        guide:Math.round(_x),
-        offset:0,
-        snap:offsetX > 0 ? "end":"start"
-      }
-    ],
-    horizontal:[
-      {
-        guide:Math.round(_y),
-        offset:0,
-        snap:offsetY > 0 ? "end":"start"
-      }
-    ]
-  }
-  const guides = getGuidelines(gridlineStops, itemBounds);
-  if (!guides.length) return;
-  drawGridGuideLine(guides);
-}
+const dragStart = evt => {
+  iconLayer.find('.guide-line').forEach(l => l.destroy())
+  const lineGuideStops = getGuidelineStops(evt.target)
+  const itemBounds = getObjectSnappingEdges(evt.target)
+  const guides = getGuidelines(lineGuideStops, itemBounds)
 
-const drawBlockToLayer = () => {
-  stage.container().style.cursor = "default";
-  stage.off("mousemove", drawPreviewBlock);
-  stage.off("mousedown", createPreviewBlock);
-  stage.off("mouseenter", beforeDrawPreviewBlock);
-  if (previewLayer.getChildren().length) {
-    let group = previewLayer.getChildren()[0].clone();
-    group.find("Text")[0].opacity(blockProps.opacity);
-    group.find("Rect")[0].opacity(1);
-    group.on("click", pickBlock);
-    iconLayer.add(group);
-    iconLayer.draw();
-    let itemCount = iconLayer.getChildren().length;
-    iconLayer.find(".block").forEach((f,i) => f.zIndex(i));
-    iconLayer.find(".cfm-object").forEach((o,i) => o.zIndex(itemCount - 1 -i));
-  }
-  previewLayer.removeChildren();
-  stage.find(".grid-guide-line").forEach(l => l.destroy());
-  stage.off("mouseup", drawBlockToLayer); 
-}
+  if (!guides.length) return
 
-const moveBlock = (evt) => {
-  stage.find('.guide-line').forEach(l => l.destroy());
-  let lineGuideStops = getGuidelineStops(evt.target);
-  let itemBounds = getObjectSnappingEdges(evt.target);
-  const guides = getGuidelines(lineGuideStops, itemBounds);
-  if (!guides.length) return;
-  drawGuideline(guides);
-  const absPos = evt.target.absolutePosition();
+  drawGuideline(guides)
+
+  const absPos = evt.target.absolutePosition()
 
   guides.forEach(line => {
     switch (line.orientation) {
-      case "V":{
-        absPos.x = line.lineGuide + line.offset;
-        break;
+      case 'V': {
+        absPos.x = line.lineGuide + line.offset
+        break
       }
-      case "H":{
-        absPos.y = line.lineGuide + line.offset;
-        break;
+      case 'H': {
+        absPos.y = line.lineGuide + line.offset
+        break
       }
     }
-  });
-  evt.target.absolutePosition(absPos);
+  })
+  evt.target.absolutePosition(absPos)
+}
+
+const dragEnd = evt => {
+  iconLayer.find('.guide-line').forEach(l => l.destroy())
+}
+
+const createPreviewBlock = (evt: Konva.KonvaEventObject<MouseEvent>) => {
+  stage.find('.grid-guide-line').forEach(l => l.destroy())
+  const {x, y} = stage.getPointerPosition()
+  let group = new Konva.Group({
+    x,
+    y,
+    width: 0,
+    height: 0,
+    name: 'block',
+  })
+  let text = new Konva.Text({
+    fontSize: 12,
+    text: blockProps.name,
+    fill: blockProps.color,
+    opacity: 0.5,
+    name: 'name',
+  })
+  let rect = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    opacity: 0.5,
+    fill: blockProps.fill,
+    name: 'fill',
+  })
+  group.add(rect).add(text)
+  stage.off('mousemove', showGridlineGuide)
+
+  if (!previewLayer.getChildren().length) {
+    previewLayer.add(group)
+    stage.off('mousemove', drawPreviewBlock)
+    stage.on('mousemove', drawPreviewBlock)
+  }
+}
+
+const drawPreviewBlock = (evt: Konva.KonvaEventObject<MouseEvent>) => {
+  stage.find('.grid-guide-line').forEach(l => l.destroy())
+  let {x: _x, y: _y} = stage.getPointerPosition()
+  let group = previewLayer.getChildren()[0]
+  let x = group.x()
+  let y = group.y()
+  let width = Math.abs(_x - x),
+    height = Math.abs(_y - y)
+  let offsetX = 0,
+    offsetY = 0
+  if (_x - x < 0) offsetX = width
+  if (_y - y < 0) offsetY = height
+  let rect = group.find('Rect')[0]
+  let text = group.find('Text')[0]
+  rect.width(width)
+  rect.height(height)
+  if (_x - x < 0) {
+    rect.offsetX(offsetX)
+    text.offsetX(offsetX)
+  }
+  if (_y - y < 0) {
+    rect.offsetY(offsetY)
+    text.offsetY(offsetY)
+  }
+  const gridlineStops = getGridlineStops()
+  const itemBounds = {
+    vertical: [
+      {
+        guide: Math.round(_x),
+        offset: 0,
+        snap: offsetX > 0 ? 'end' : 'start',
+      },
+    ],
+    horizontal: [
+      {
+        guide: Math.round(_y),
+        offset: 0,
+        snap: offsetY > 0 ? 'end' : 'start',
+      },
+    ],
+  }
+  const guides = getGuidelines(gridlineStops, itemBounds)
+  if (!guides.length) return
+  drawGridGuideLine(guides)
+}
+
+const drawBlockToLayer = () => {
+  stage.container().style.cursor = 'default'
+  stage.off('mousemove', drawPreviewBlock)
+  stage.off('mousedown', createPreviewBlock)
+  stage.off('mouseenter', beforeDrawPreviewBlock)
+  if (previewLayer.getChildren().length) {
+    let group = previewLayer.getChildren()[0].clone()
+    group.find('Text')[0].opacity(blockProps.opacity)
+    group.find('Rect')[0].opacity(1)
+    group.on('click', pickBlock)
+    iconLayer.add(group)
+    iconLayer.draw()
+    let itemCount = iconLayer.getChildren().length
+    iconLayer.find('.block').forEach((f, i) => f.zIndex(i))
+    iconLayer.find('.cfm-object').forEach((o, i) => o.zIndex(itemCount - 1 - i))
+  }
+  previewLayer.removeChildren()
+  stage.find('.grid-guide-line').forEach(l => l.destroy())
+  stage.off('mouseup', drawBlockToLayer)
+}
+
+const moveBlock = evt => {
+  stage.find('.guide-line').forEach(l => l.destroy())
+  let lineGuideStops = getGuidelineStops(evt.target)
+  let itemBounds = getObjectSnappingEdges(evt.target)
+  const guides = getGuidelines(lineGuideStops, itemBounds)
+  if (!guides.length) return
+  drawGuideline(guides)
+  const absPos = evt.target.absolutePosition()
+
+  guides.forEach(line => {
+    switch (line.orientation) {
+      case 'V': {
+        absPos.x = line.lineGuide + line.offset
+        break
+      }
+      case 'H': {
+        absPos.y = line.lineGuide + line.offset
+        break
+      }
+    }
+  })
+  evt.target.absolutePosition(absPos)
 }
 
 const leaveBlock = () => {
-  stage.find('.guide-line').forEach(l => l.destroy());
+  stage.find('.guide-line').forEach(l => l.destroy())
 }
 
-const pickBlock = (evt) => {
-  iconLayer.find(".block").forEach(grp => {
+const pickBlock = evt => {
+  iconLayer.find('.block').forEach(grp => {
     if (grp.isAncestorOf(evt.target)) {
-      evt.target.name("selected-fill");
+      evt.target.name('selected-fill')
     } else {
-      grp.find("Rect")[0].name("fill")
+      grp.find('Rect')[0].name('fill')
     }
-  }); 
+  })
 
   let tr = new Konva.Transformer({
-    visible:true,
-    rotateEnabled:false,
-    flipEnabled:false,
-  });
-  let group = evt.target.getParent() as Konva.Group;
-  group.on("dragmove", moveBlock);
-  group.on("mouseup", leaveBlock);
-  group.on("transformend", blockTransformend);
+    visible: true,
+    rotateEnabled: false,
+    flipEnabled: false,
+  })
+  let group = evt.target.getParent() as Konva.Group
+  group.on('dragmove', moveBlock)
+  group.on('mouseup', leaveBlock)
+  group.on('transformend', blockTransformend)
 
-  tr.nodes([group]);
-  iconLayer.add(tr);
-  iconLayer.draw();
-  iconLayer.find("Transformer").forEach(child => {
-    if (child._id !== tr._id) child.destroy();
-  });
+  tr.nodes([group])
+  iconLayer.add(tr)
+  iconLayer.draw()
+  iconLayer.find('Transformer').forEach(child => {
+    if (child._id !== tr._id) child.destroy()
+  })
 
-
-  let rect = group.find("Rect")[0];
-  let txt = group.find("Text")[0];
-  group.draggable(true);
-  editBlock.value = true;
-  mode.value = "e";
-  blockProps.fill = rect.getAttr("fill");
-  blockProps.name = txt.getAttr("text");
-  blockProps.opacity = txt.getAttr("opacity");
-  blockProps.color = txt.getAttr("fill");
-  blockProps.width = Math.ceil(rect.width() * group.scaleX());
-  blockProps.height = Math.ceil(rect.height() * group.scaleY());
+  let rect = group.find('Rect')[0]
+  let txt = group.find('Text')[0]
+  group.draggable(true)
+  editBlock.value = true
+  mode.value = 'e'
+  blockProps.fill = rect.getAttr('fill')
+  blockProps.name = txt.getAttr('text')
+  blockProps.opacity = txt.getAttr('opacity')
+  blockProps.color = txt.getAttr('fill')
+  blockProps.width = Math.ceil(rect.width() * group.scaleX())
+  blockProps.height = Math.ceil(rect.height() * group.scaleY())
 }
 
-const blockTransformend = (evt) => {
-  let rect = evt.target.find('Rect')[0];
-  blockProps.width = Math.ceil(rect.width() * evt.target.scaleX());
-  blockProps.height = Math.ceil(rect.height() * evt.target.scaleY());
+const blockTransformend = evt => {
+  let rect = evt.target.find('Rect')[0]
+  blockProps.width = Math.ceil(rect.width() * evt.target.scaleX())
+  blockProps.height = Math.ceil(rect.height() * evt.target.scaleY())
 }
 
-const handleGroupScaleX = (evt:number) => {
-  let selectedFill = iconLayer.find(".selected-fill");
+const handleGroupScaleX = (evt: number) => {
+  let selectedFill = iconLayer.find('.selected-fill')
   if (selectedFill.length) {
-    let rect = selectedFill[0];
-    let group = rect.getParent();
-    let width = rect.width();
-    let scaleX = evt/width;
-    group.scaleX(scaleX);
+    let rect = selectedFill[0]
+    let group = rect.getParent()
+    let width = rect.width()
+    let scaleX = evt / width
+    group.scaleX(scaleX)
   }
   blockProps.width = evt
 }
 
-const handleGroupScaleY = (evt:number) => {
-  let selectedFill = iconLayer.find(".selected-fill");
+const handleGroupScaleY = (evt: number) => {
+  let selectedFill = iconLayer.find('.selected-fill')
   if (selectedFill.length) {
-    let rect = selectedFill[0];
-    let group = rect.getParent();
-    let height = rect.height();
-    let scaleY = evt/height;
-    group.scaleY(scaleY);
+    let rect = selectedFill[0]
+    let group = rect.getParent()
+    let height = rect.height()
+    let scaleY = evt / height
+    group.scaleY(scaleY)
   }
   blockProps.height = evt
 }
 
 const updateBlock = () => {
-  mode.value = "v";
-  let transformer = iconLayer.find("Transformer")[0] as Konva.Transformer;
-  transformer.detach();
-  let rect = iconLayer.find(".selected-fill")[0];
-  let group = rect.getParent();
-  let txt = group.find("Text")[0];
-  group.off("dragmove", moveBlock);
-  group.off("mouseup", leaveBlock);
-  group.draggable(false);
-  rect.setAttr("fill", blockProps.fill);
+  mode.value = 'v'
+  let transformer = iconLayer.find('Transformer')[0] as Konva.Transformer
+  transformer.detach()
+  let rect = iconLayer.find('.selected-fill')[0]
+  let group = rect.getParent()
+  let txt = group.find('Text')[0]
+  group.off('dragmove', moveBlock)
+  group.off('mouseup', leaveBlock)
+  group.draggable(false)
+  rect.setAttr('fill', blockProps.fill)
   txt.setAttrs({
-    text:blockProps.name,
-    fill:blockProps.color,
-    opacity:blockProps.opacity,
-  });
-  rect.name("fill");
+    text: blockProps.name,
+    fill: blockProps.color,
+    opacity: blockProps.opacity,
+  })
+  rect.name('fill')
 }
 
 const destroyBlock = () => {
-  let group = iconLayer.find(".selected-fill")[0].getParent();
-  let transformer = iconLayer.find("Transformer")[0];
-  group.off();
-  group.destroy();
-  transformer.destroy();
-  mode.value = "v";
+  let group = iconLayer.find('.selected-fill')[0].getParent()
+  let transformer = iconLayer.find('Transformer')[0]
+  group.off()
+  group.destroy()
+  transformer.destroy()
+  mode.value = 'v'
 }
 
-const beforeDrawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
-  stage.container().style.cursor = "crosshair";
-  stage.off("mousemove", showGridlineGuide);
-  stage.on("mousemove",showGridlineGuide);
+const beforeDrawPreviewBlock = (evt: Konva.KonvaEventObject<MouseEvent>) => {
+  stage.container().style.cursor = 'crosshair'
+  stage.off('mousemove', showGridlineGuide)
+  stage.on('mousemove', showGridlineGuide)
 }
 
-const showGridlineGuide = (evt:Konva.KonvaEventObject<MouseEvent>) => {
-  stage.find(".grid-guide-line").forEach(l => l.destroy());
-  const gridlineStops = getGridlineStops();
-  const {x, y} = stage.getPointerPosition();
+const showGridlineGuide = (evt: Konva.KonvaEventObject<MouseEvent>) => {
+  stage.find('.grid-guide-line').forEach(l => l.destroy())
+  const gridlineStops = getGridlineStops()
+  const {x, y} = stage.getPointerPosition()
   const itemBounds = {
-    vertical:[
+    vertical: [
       {
-        guide:Math.round(x),
-        offset:0,
-        snap:"start"
+        guide: Math.round(x),
+        offset: 0,
+        snap: 'start',
       },
     ],
-    horizontal:[
+    horizontal: [
       {
-        guide:Math.round(y),
-        offset:0,
-        snap:"start"
-      }
-    ]
-  };
-  const guides = getGuidelines(gridlineStops, itemBounds);
-  if (!guides.length) return;
-  drawGridGuideLine(guides);
+        guide: Math.round(y),
+        offset: 0,
+        snap: 'start',
+      },
+    ],
+  }
+  const guides = getGuidelines(gridlineStops, itemBounds)
+  if (!guides.length) return
+  drawGridGuideLine(guides)
 }
 
-const cancelDrawPreviewBlock = (evt:Konva.KonvaEventObject<MouseEvent>) => {
-  stage.find(".grid-guide-line").forEach(l => l.destroy());
-  stage.container().style.cursor = "default";
-  stage.off("mousemove", showGridlineGuide);
+const cancelDrawPreviewBlock = (evt: Konva.KonvaEventObject<MouseEvent>) => {
+  stage.find('.grid-guide-line').forEach(l => l.destroy())
+  stage.container().style.cursor = 'default'
+  stage.off('mousemove', showGridlineGuide)
 }
 
 function drawBlock() {
   if (stage instanceof Konva.Stage) {
-    stage.off("mouseenter", beforeDrawPreviewBlock);
-    stage.off("mousedown", createPreviewBlock);
-    stage.off("mouseup", drawBlockToLayer);
-    stage.off("mouseleave", cancelDrawPreviewBlock);
-    stage.on("mouseenter", beforeDrawPreviewBlock);
-    stage.on("mousedown", createPreviewBlock);
-    stage.on("mouseup", drawBlockToLayer);
-    stage.on("mouseleave", cancelDrawPreviewBlock);
+    stage.off('mouseenter', beforeDrawPreviewBlock)
+    stage.off('mousedown', createPreviewBlock)
+    stage.off('mouseup', drawBlockToLayer)
+    stage.off('mouseleave', cancelDrawPreviewBlock)
+    stage.on('mouseenter', beforeDrawPreviewBlock)
+    stage.on('mousedown', createPreviewBlock)
+    stage.on('mouseup', drawBlockToLayer)
+    stage.on('mouseleave', cancelDrawPreviewBlock)
   }
 }
 
 const scroll = () => {
   if (previewLayer.getChildren().length) {
-    let absPos = stage.getPointerPosition();
-    let children = previewLayer.getChildren()[0];
-    children.absolutePosition(absPos);
+    let absPos = stage.getPointerPosition()
+    let children = previewLayer.getChildren()[0]
+    children.absolutePosition(absPos)
   }
-};
+}
 
 function cancelDraw(evt: KeyboardEvent) {
-  if (evt.key == "Escape" || evt.type == "mouseleave") {
+  if (evt.key == 'Escape' || evt.type == 'mouseleave') {
     if (stage instanceof Konva.Stage) {
-      stage.off("mouseenter", enter);
-      mode.value = "v";
-      iconLayer.find(".selected-cfm-object").forEach(children => children.name("cfm-object"));
+      stage.off('mouseenter', enter)
+      mode.value = 'v'
+      iconLayer
+        .find('.selected-cfm-object')
+        .forEach(children => children.name('cfm-object'))
     }
   }
 }
 
 function predraw() {
   if (previewLayer.getChildren().length) {
-    previewLayer.removeChildren();
+    previewLayer.removeChildren()
   }
-  
+
   if (stage instanceof Konva.Stage) {
-    stage.find(".grid-guide-line").forEach((l:Konva.Line) => l.destroy());
-    stage.off("mouseenter", enter);
-    stage.on("mouseenter", enter);
+    stage.find('.grid-guide-line').forEach((l: Konva.Line) => l.destroy())
+    stage.off('mouseenter', enter)
+    stage.on('mouseenter', enter)
   }
 }
 
-const drawGridLine = (direction: "V" | "H", mesh: number) => {
-  const qBool = direction == "V";
-  const scrollarea = $(".q-scrollarea");
-  const qSize = qBool ? scrollarea.width() ?? 0 : scrollarea.height() ?? 0;
+const drawGridLine = (direction: 'V' | 'H', mesh: number) => {
+  const qBool = direction == 'V'
+  const scrollarea = $('.q-scrollarea')
+  const qSize = qBool ? (scrollarea.width() ?? 0) : (scrollarea.height() ?? 0)
 
-  const size = qBool ? width.value : height.value;
-  const steps = Math.round(size / mesh);
-  let buffer = [];
+  const size = qBool ? width.value : height.value
+  const steps = Math.round(size / mesh)
+  let buffer = []
   for (let i = 0; i <= steps; i++) {
-    let stroke = i == 0 ? "rgba(0,0,0,0)" : "rgba(0,0,0,0.2)";
-    buffer.push(i * mesh);
+    let stroke = i == 0 ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.2)'
+    buffer.push(i * mesh)
     if (i == steps && size > qSize) {
-      stroke = "rgba(0,0,0,0)";
+      stroke = 'rgba(0,0,0,0)'
     }
 
     gridLayer.add(
@@ -1781,96 +1839,96 @@ const drawGridLine = (direction: "V" | "H", mesh: number) => {
         points: qBool ? [0, 0, 0, height.value] : [0, 0, width.value, 0],
         stroke,
         strokeWidth: 1,
-        name: qBool ? "v-line" : "h-line",
+        name: qBool ? 'v-line' : 'h-line',
       }),
-    );
+    )
   }
-  gridLayer.batchDraw();
-};
+  gridLayer.batchDraw()
+}
 
 const initGridLayer = () => {
-  drawGridLine("V", mesh);
-  drawGridLine("H", mesh);
-};
+  drawGridLine('V', mesh)
+  drawGridLine('H', mesh)
+}
 
 // init canvas
 function initKonva() {
   stage = new Konva.Stage({
-    container: "canvas_container",
+    container: 'canvas_container',
     width: width.value,
     height: height.value,
-    name:"main"
-  });
+    name: 'main',
+  })
 
   if (stage instanceof Konva.Stage) {
-    stage.add(iconLayer);
-    stage.add(previewLayer);
-    stage.add(gridLayer);
+    stage.add(iconLayer)
+    stage.add(previewLayer)
+    stage.add(gridLayer)
   }
-  initGridLayer();
+  initGridLayer()
 }
 
 const renewKonva = () => {
   if (stage instanceof Konva.Stage) {
-    stage.off();
-    stage.width(width.value);
-    stage.height(height.value);
-    iconLayer.removeChildren();
-    previewLayer.removeChildren();
-    gridLayer.removeChildren();
+    stage.off()
+    stage.width(width.value)
+    stage.height(height.value)
+    iconLayer.removeChildren()
+    previewLayer.removeChildren()
+    gridLayer.removeChildren()
   }
-  initGridLayer();
-};
+  initGridLayer()
+}
 
 const initPreview = () => {
-  const divide = 8;
-  const minimap_width = ($(".q-scrollarea")?.width() ?? 0) / divide;
-  const minimap_height = ($(".q-scrollarea")?.height() ?? 0) / divide;
+  const divide = 8
+  const minimap_width = ($('.q-scrollarea')?.width() ?? 0) / divide
+  const minimap_height = ($('.q-scrollarea')?.height() ?? 0) / divide
 
- // previewStage = new Konva.Stage({
- //   container:"preview_container",
- //   width: width.value/divide,
- //   height: height.value/divide,
- //   scaleX: 1/divide,
- //   scaleY: 1/divide,
- // });
+  // previewStage = new Konva.Stage({
+  //   container:"preview_container",
+  //   width: width.value/divide,
+  //   height: height.value/divide,
+  //   scaleX: 1/divide,
+  //   scaleY: 1/divide,
+  // });
 
- // let layer = gridLayer.clone();
- // let minimap = new Konva.Layer({x:0,y:0});
+  // let layer = gridLayer.clone();
+  // let minimap = new Konva.Layer({x:0,y:0});
 
- // minimap.add(new Konva.Rect({
- //   x:1,
- //   y:1,
- //   width: minimap_width - 3,
- //   height: minimap_height - 3,
- //   stroke: "#333",
- //   strokeWidth: 1,
- //   scaleX:divide,
- //   scaleY:divide
- // }));
+  // minimap.add(new Konva.Rect({
+  //   x:1,
+  //   y:1,
+  //   width: minimap_width - 3,
+  //   height: minimap_height - 3,
+  //   stroke: "#333",
+  //   strokeWidth: 1,
+  //   scaleX:divide,
+  //   scaleY:divide
+  // }));
 
- // previewStage.add(layer);
- // previewStage.add(minimap);
- // previewStage = new Konva.Stage({
- //   container: "preview_container",
- //   width: width,
- //   height: height,
- // });
+  // previewStage.add(layer);
+  // previewStage.add(minimap);
+  // previewStage = new Konva.Stage({
+  //   container: "preview_container",
+  //   width: width,
+  //   height: height,
+  // });
 
- // let layer = new Konva.Layer({ x: 0, y: 0, draggable: false });
- // layer.add(
- //   new Konva.Rect({
- //     x: 1,
- //     y: 1,
- //     width: width - 3,
- //     height: height - 3,
- //     fill: "white",
- //     stroke: "#333",
- //     strokeWidth: 1,
- //   }),
- // );
- // if (previewStage instanceof Konva.Stage) previewStage.add(layer);
-};
+  // let layer = new Konva.Layer({ x: 0, y: 0, draggable: false });
+  // layer.add(
+  //   new Konva.Rect({
+  //     x: 1,
+  //     y: 1,
+  //     width: width - 3,
+  //     height: height - 3,
+  //     fill: "white",
+  //     stroke: "#333",
+  //     strokeWidth: 1,
+  //   }),
+  // );
+  // if (previewStage instanceof Konva.Stage) previewStage.add(layer);
+}
 
 // const payload = {
 //   BU:"",
@@ -1880,193 +1938,147 @@ const initPreview = () => {
 //   QueryArr:[sLocation.value, sFloor.value, "", "", "", ""]
 // };
 const saveToDb = async () => {
-  iconLayer.find("Transformer").forEach(transformer => transformer.destroy());
-  
+  iconLayer.find('Transformer').forEach(transformer => transformer.destroy())
+
   let payload = {
-    PageName:sDepartment.value + "_CFM_MAP",
-    BU:"",
-    DeleteArr:[],
-    InsertArr:[],
-    UpdateArr:[],
-  };
-  
-  let dept = sDepartment.value == "TEST" ? "測試" : "切挑";
-  stage.find("Group").forEach(group => {
-   let str = [sLocation.value, sFloor.value];
-   let name = group.find(".name")[0].getAttr("text");
-   str.push(name);
-   let obj = group.toObject();
-   let zIndex = group.zIndex();
-   obj["zIndex"] = zIndex;
-  
-    if (group.name() == "cfm-object") {
-      let bu = group.find(".category")[0].getAttr("text");
-      if (!["CP", "DS", "FT"].includes(bu)) {
-        str.push(bu + `(${dept})`);
+    PageName: sDepartment.value + '_CFM_MAP',
+    BU: '',
+    DeleteArr: [],
+    InsertArr: [],
+    UpdateArr: [],
+  }
+
+  let dept = sDepartment.value == 'TEST' ? '測試' : '切挑'
+  stage.find('Group').forEach(group => {
+    let str = [sLocation.value, sFloor.value]
+    let name = group.find('.name')[0].getAttr('text')
+    str.push(name)
+    let obj = group.toObject()
+    let zIndex = group.zIndex()
+    obj['zIndex'] = zIndex
+
+    if (group.name() == 'cfm-object') {
+      let bu = group.find('.category')[0].getAttr('text')
+      if (!['CP', 'DS', 'FT'].includes(bu)) {
+        str.push(bu + `(${dept})`)
       } else {
-        str.push(bu);
+        str.push(bu)
       }
-    } else if (group.name() == "block") {
-      str.push("底圖"+`(${dept})`);
+    } else if (group.name() == 'block') {
+      str.push('底圖' + `(${dept})`)
     }
-    let groupAttrs:string = JSON.stringify(obj).replaceAll(",", "，");
-    str.push(groupAttrs);
-    payload.InsertArr.push(str.join(","));
-  });
-  let stageStr = [sLocation.value, sFloor.value, "圖層", `圖層(${dept})`];
-  let stageAttr = JSON.stringify({width:width.value, height:height.value}).replaceAll(",", "，");
-  stageStr.push(stageAttr);
-  payload.InsertArr.push(stageStr.join(','));
-    
-  let res = await axios.post(window.location.origin + window.location.pathname + "/../Update", payload);
+    let groupAttrs: string = JSON.stringify(obj).replaceAll(',', '，')
+    str.push(groupAttrs)
+    payload.InsertArr.push(str.join(','))
+  })
+  let stageStr = [sLocation.value, sFloor.value, '圖層', `圖層(${dept})`]
+  let stageAttr = JSON.stringify({
+    width: width.value,
+    height: height.value,
+  }).replaceAll(',', '，')
+  stageStr.push(stageAttr)
+  payload.InsertArr.push(stageStr.join(','))
+
+  let res = await axios.post(
+    window.location.origin + window.location.pathname + '/../Update',
+    payload,
+  )
   if (res.status == 200 && res.data[1]) {
-    dialog.value = true;
-    message.value = "儲存成功!";
-    iconLayer.removeChildren();
-    load();
+    dialog.value = true
+    message.value = '儲存成功!'
+    iconLayer.removeChildren()
+    load()
   }
 }
 
 const load = async () => {
-  isLoading.value = true;
-  iconLayer.removeChildren();
+  isLoading.value = true
+  iconLayer.removeChildren()
   let payload = {
-    BU:"",
-    NumberPerAPage:-1,
-    PageName: sDepartment.value + "_CFM_MAP",
-    QueryArr:[]
+    BU: '',
+    NumberPerAPage: -1,
+    PageName: sDepartment.value + '_CFM_MAP',
+    QueryArr: [],
   }
 
-  if (sDepartment.value == "DS") payload.QueryArr = [sLocation.value, sFloor.value, "", "", "", ""];
-  else if (sDepartment.value == "TEST") payload.QueryArr = [sLocation.value, sFloor.value, "機台", "", "", "", "", "", "", "", ""];
+  if (sDepartment.value == 'DS')
+    payload.QueryArr = [sLocation.value, sFloor.value, '', '', '', '']
+  else if (sDepartment.value == 'TEST')
+    payload.QueryArr = [
+      sLocation.value,
+      sFloor.value,
+      '機台',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+    ]
 
   registerTick(async () => {
-    let indexMap = new Map();
-    let res = await axios.post(window.location.origin + window.location.pathname + "/../HomePageSearch", payload);
+    let res = await axios.post(
+      window.location.origin + window.location.pathname + '/../HomePageSearch',
+      payload,
+    )
     if (res.data.length > 0 && res.status == 200) {
-      res.data.forEach((row:string, i:number) => {
-        let grpAttrs = sDepartment.value == "TEST" ? row.split(",")[6]: row.split(",")[5];
-        let _attrs = grpAttrs.replaceAll("，", ",");
-        let attrs = JSON.parse(_attrs);
-        //let attrs = JSON.parse(grpAttrs.replaceAll("，", ","));
-        if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
-          let index = attrs['zIndex'];
-          indexMap.set(index, attrs);
+      let indexMap = new Map()
+      res.data.forEach((row: string, i: number) => {
+        let grpAttrs =
+          sDepartment.value == 'TEST' ? row.split(',')[6] : row.split(',')[5]
+        let attrs = JSON.parse(grpAttrs.replaceAll('，', ','))
+        if (Object.prototype.hasOwnProperty.call(attrs, 'zIndex')) {
+          let index = attrs['zIndex']
+          indexMap.set(index, attrs)
         } else {
-           width.value = attrs.width;
-          height.value = attrs.height; 
+          width.value = attrs.width
+          height.value = attrs.height
         }
-        
-       // if (Object.prototype.hasOwnProperty.call(attrs, "className")) {
-       //   let group = new Konva.Group({
-       //     x:attrs.attrs.x,
-       //     y:attrs.attrs.y,
-       //     width:attrs.attrs.width,
-       //     height:attrs.attrs.height,
-       //     name:attrs.attrs.name
-       //   });
+      })
 
-       //   if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleX")) group.scaleX(attrs.attrs.scaleX);
-       //   if (Object.prototype.hasOwnProperty.call(attrs.attrs, "scaleY")) group.scaleY(attrs.attrs.scaleY);
-       //   if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
-       //     let indexName = attrs.attrs.x + "." + attrs.attrs.y + "." + attrs.attrs.name;
-       //     indexMap.set(indexName, attrs.zIndex);
-       //   }
-
-       //   attrs.children.forEach(child => {
-       //     switch (child.className) {
-       //       case "Text":{
-       //         const text = new Konva.Text({
-       //           fill:child.attrs.fill,
-       //           name:child.attrs.name,
-       //           text:child.attrs.text
-       //         });
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "width")) text.setAttr("width", child.attrs.width);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "height")) text.setAttr("height", child.attrs.height);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "x")) text.setAttr("x", child.attrs.x);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "y")) text.setAttr("y", child.attrs.y);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "fontSize")) text.setAttr("fontSize", child.attrs.fontSize);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "opacity")) text.setAttr("opacity", child.attrs.opacity);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) text.setAttr("offsetX", child.attrs.offsetX);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) text.setAttr("offsetY", child.attrs.offsetY);
-       //         group.add(text);
-       //         break;
-       //       }
-       //       case "Rect":{
-       //         const rect = new Konva.Rect({
-       //           fill:child.attrs.fill,
-       //           height:child.attrs.height,
-       //           width:child.attrs.width,
-       //           name:child.attrs.name,
-       //         });
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "stroke")) rect.setAttr("stroke", child.attrs.stroke);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "strokeWidth")) rect.setAttr("strokeWidth", child.attrs.strokeWidth);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetX")) rect.setAttr("offsetX", child.attrs.offsetX);
-       //         if (Object.prototype.hasOwnProperty.call(child.attrs, "offsetY")) rect.setAttr("offsetY", child.attrs.offsetY);
-       //         group.add(rect);
-       //         break;
-       //       }
-       //       case "Circle":{
-       //         const circle = new Konva.Circle({
-       //           fill:child.attrs.fill,
-       //           x:child.attrs.x,
-       //           y:child.attrs.y,
-       //           radius:child.attrs.radius,
-       //           name:child.attrs.name,
-       //           stroke:child.attrs.stroke,
-       //           strokeWidth:child.attrs.strokeWidth
-       //         });
-       //         group.add(circle);
-       //         break;
-       //       }
-       //     }
-       //     if (attrs.attrs.name == "cfm-object"){
-       //       group.on("click", pickNode);
-       //     } else {
-       //       group.on("click", pickBlock);
-       //     }
-       //     group.on("dragmove", dragStart);
-       //     group.on("dragend", dragEnd);
-       //     iconLayer.add(group);
-       //   });
-       //   iconLayer.batchDraw();
-       // } else {
-       //   width.value = attrs.width;
-       //   height.value = attrs.height;
-       // }
-      });
-      let values = indexMap.values();
-      for (let i=0;i< indexMap.size; i++) {
-        let value = values.next().value;
-        console.log(value);
+      let length = indexMap.size
+      for (let index = 0; index < length; index++) {
+        let attrs = indexMap.get(index)
+        let grpConfig = attrs['attrs'] as Konva.GroupConfig
+        let group = new Konva.Group(grpConfig)
+        if (attrs['attrs'].name == 'cfm-object') {
+          group.on('click', pickNode)
+        } else {
+          group.on('click', pickBlock)
+        }
+        group.on('dragmove', dragStart)
+        group.on('dragend', dragEnd)
+        // children
+        attrs.children.forEach(child => {
+          const {attrs, className} = child
+          let node = new Konva[className](attrs) as Konva.Shape
+          group.add(node)
+        })
+        iconLayer.add(group)
       }
-     // iconLayer.getChildren().forEach(child => {
-     //   let x = child.getAttr("x");
-     //   let y = child.getAttr("y");
-     //   let name = child.getAttr("name");
-     //   let indexName = x + "." + y + "." + name;
-     //   let index = indexMap.get(indexName);
-     //   child.zIndex(index);
-     // })
+      iconLayer.batchDraw()
     }
-    isLoading.value = false;
-  });
+
+    isLoading.value = false
+  })
 }
 
 const loseFocusWhenSwitchExpansionItem = () => {
-  mode.value = "v";
-  let rect = iconLayer.find(".selected-fill");
-  let group = iconLayer.find(".selected-cfm-object");
-  if (rect.length) rect[0].name("fill");
-  if (group.length) group[0].name("cfm-object");
+  mode.value = 'v'
+  let rect = iconLayer.find('.selected-fill')
+  let group = iconLayer.find('.selected-cfm-object')
+  if (rect.length) rect[0].name('fill')
+  if (group.length) group[0].name('cfm-object')
 }
 
 onMounted(() => {
-  initKonva();
-  load();
-  window.addEventListener("keydown", cancelDraw);
-});
+  initKonva()
+  load()
+  window.addEventListener('keydown', cancelDraw)
+})
 onBeforeUnmount(() => {
-  window.removeEventListener("keydown", cancelDraw);
-});
+  window.removeEventListener('keydown', cancelDraw)
+})
 </script>
