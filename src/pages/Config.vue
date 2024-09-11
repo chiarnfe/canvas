@@ -1,7 +1,7 @@
 <template>
   <div class="w-full border" style="height: 50px"></div>
   <div class="flex flex-row w-full" style="height: calc(100vh - 50px)">
-    <div class="column justify-between w-1/6 h-full shadow-md">
+    <div class="justify-between w-1/6 h-full shadow-md column">
       <div class="h-fit">
         <q-expansion-item
           group="group"
@@ -12,7 +12,7 @@
           :default-opened="true"
           @before-hide="loseFocusWhenSwitchExpansionItem"
         >
-          <div class="flex flex-col gap-y-2 p-2">
+          <div class="flex flex-col p-2 gap-y-2">
             <q-input
               outlined
               label="版面寬度"
@@ -207,7 +207,7 @@
                 />
               </div>
             </div>
-            <div class="flex flex-row gap-x-2 justify-end">
+            <div class="flex flex-row justify-end gap-x-2">
               <q-btn
                 v-show="mode == 'e'"
                 unelevated
@@ -241,7 +241,7 @@
           label="編輯底圖"
           @before-hide="loseFocusWhenSwitchExpansionItem"
         >
-          <div class="p-2 flex flex-col gap-y-2">
+          <div class="flex flex-col p-2 gap-y-2">
             <q-input outlined v-model="blockProps.fill" label="底圖背景色">
               <template v-slot:before>
                 <span
@@ -285,7 +285,7 @@
             </div>
             <q-input type="number" v-show="mode=='e'" outlined :model-value="blockProps.width" @update:model-value="handleGroupScaleX" label="底圖寬度" debounce='600' />
             <q-input type="number" v-show="mode=='e'" outlined :model-value="blockProps.height" @update:model-value="handleGroupScaleY" label="底圖高度" debounce='600' />
-            <div class="flex flex-row gap-x-2 justify-end">
+            <div class="flex flex-row justify-end gap-x-2">
               <q-btn
                 v-show="mode == 'e'"
                 unelevated
@@ -317,8 +317,8 @@
       <!-- <q-btn unelevated class="q-ma-sm" color="primary" @click="saveToDb" label="上傳" /> -->
       <q-btn unelevated class="q-ma-sm" color="primary" label="上傳" @click="saveToDb" />
     </div>
-    <div class="px-4 pb-4 w-5/6 relative">
-      <div class="row items-center py-3 justify-between">
+    <div class="relative w-5/6 px-4 pb-4">
+      <div class="items-center justify-between py-3 row">
         <div class="flex flex-row items-center">   
           <div class="flex flex-row gap-x-2 min-w-[360px]">
             <q-select
@@ -357,8 +357,8 @@
           </div>
           <q-btn unelevated color="primary" class="q-ml-sm" style="height:2.5rem" label="搜尋" @click="load" />
         </div>
-        <div class="row gap-x-2 q-py-sm relative">
-          <span class="absolute -top-3 right-0">縮放比例{{currentScale*100 + "%"}}</span>
+        <div class="relative row gap-x-2 q-py-sm">
+          <span class="absolute right-0 -top-3">縮放比例{{currentScale*100 + "%"}}</span>
           <q-checkbox label="顯示格線" v-model="grid" />
           <q-space />
           <q-btn
@@ -399,7 +399,7 @@
   </div>
   <q-dialog v-model="dialog" backdrop-filter="blur(4px) grayscale(100%)">
     <q-card class="w-96">
-      <q-card-section class="row items-center q-pb-none text-h5">
+      <q-card-section class="items-center row q-pb-none text-h5">
         Attension
       </q-card-section>
       <q-card-section class="h-24">
@@ -412,7 +412,7 @@
   </q-dialog>
   <q-dialog v-model="isLoading" backdrop-filter="blur(4px)" persistent> 
     <q-card class="w-96">
-      <q-card-section class="row items-center q-pb-none text-h5 justify-center">
+      <q-card-section class="items-center justify-center row q-pb-none text-h5">
         資料讀取中...
       </q-card-section>
       <q-card-section class="flex flex-col items-center justify-center h-48 pt-0">
