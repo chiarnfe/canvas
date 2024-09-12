@@ -934,9 +934,8 @@ const downloadExcel = async () => {
     url: window.location.origin + window.location.pathname + '/../ExportExcel',
     data: JSON.stringify(payload),
     success: res => {
-      let a = $("#HiddenClickBtn")
+      let a = $("#HiddenClickBtn");
       a.attr("href", window.location.origin + res);
-      a.click();
     },
     async: true,
     dataType: 'json',
