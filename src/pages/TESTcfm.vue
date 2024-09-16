@@ -1,18 +1,22 @@
 ﻿<template>
   <div class="h-[50px] w-full bg-gray-500/20"></div>
   <div class="w-full px-4">
-    <h4 class="text-h4 mt-5 mb-2.5 dfkai">Equipment CFM</h4>
-    <div class="flex flex-row gap-x-2">
+    <div class="relative">
+      <h4 class="text-h4 mt-5 mb-2.5 arial">Equipment CFM</h4>
+      <q-btn size="md" class="absolute right-0 top-0 q-px-sm" icon="zoom_in" @click="zoomIn" outline />
+      <q-btn size="md" class="absolute right-12 top-0 q-px-sm" icon="zoom_out" @click="zoomOut" outline />
+    </div>
+    <div class="flex flex-row gap-x-2 items-center">
       <q-btn
         unelevated
+        dense
         color="primary"
         label="匯出"
-        class="rounded-[0.25rem] px-3 py-1"
+        class="rounded-md px-3 py-1 dfkai"
         @click="downloadExcel"
       />
       <div class="flex flex-row gap-x-2">
         <q-select
-          for="fact"
           v-model="sFactory"
           :options="factoryOptions"
           option-value="value"
@@ -23,7 +27,7 @@
           dense
         >
           <template v-slot:before>
-            <label for="fact" class="text-sm dfkai !font-bold"> 廠區 </label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus"> 廠區 </label>
           </template>
         </q-select>
         <q-select
@@ -37,7 +41,7 @@
           dense
         >
           <template v-slot:before>
-            <label class="text-sm"> 樓層 </label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus"> 樓層 </label>
           </template>
         </q-select>
         <q-select
@@ -49,10 +53,9 @@
           map-options
           outlined
           dense
-          multiple
         >
           <template v-slot:before>
-            <label class="text-sm">顯示類別</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">顯示類別</label>
           </template>
         </q-select>
         <q-select
@@ -64,24 +67,25 @@
           map-options
           outlined
           dense
+          multiple
         >
           <template v-slot:before>
-            <label class="text-sm">客戶</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">客戶</label>
           </template>
         </q-select>
         <q-input v-model="sEqp" class="w-32" outlined dense>
           <template v-slot:before>
-            <label class="text-sm">機台</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">機台</label>
           </template>
         </q-input>
         <q-input v-model="sEqpType" class="w-32" outlined dense>
           <template v-slot:before>
-            <label class="text-sm">機種</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">機種</label>
           </template>
         </q-input>
         <q-input v-model="sModel" class="w-32" outlined dense>
           <template v-slot:before>
-            <label class="text-sm">型號</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">型號</label>
           </template>
         </q-input>
         <q-select
@@ -95,7 +99,7 @@
           dense
         >
           <template v-slot:before>
-            <label class="text-sm">OCR</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">OCR</label>
           </template>
         </q-select>
         <q-select
@@ -109,7 +113,7 @@
           dense
         >
           <template v-slot:before>
-            <label class="text-sm">重點產品</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">重點產品</label>
           </template>
         </q-select>
         <q-select
@@ -123,7 +127,7 @@
           dense
         >
           <template v-slot:before>
-            <label class="text-sm">客戶包機</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">客戶包機</label>
           </template>
         </q-select>
         <q-select
@@ -137,57 +141,61 @@
           dense
         >
           <template v-slot:before>
-            <label class="text-sm">重點機台</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">重點機台</label>
           </template>
         </q-select>
       </div>
       <q-btn
         unelevated
+        dense
         label="搜尋"
-        class="px-3 py-1 rounded-md"
+        class="px-3 py-1 rounded-md dfkai"
         style="border: 1px solid #aaa"
         @click="loadData"
       />
-      <span>{{ new Date().toLocaleTimeString("zh-TW", {year:'numeric', month:'2-digit', day:'2-digit'}) }}</span>
+      <span>{{ new Date().toLocaleTimeString("zh-TW", {year:'numeric', month:'2-digit', day:'2-digit', hour12:false, hour:'2-digit', minute:'2-digit'}) }}</span>
     </div>
     <q-separator class="q-my-md" />
     <div class="flex flex-row pb-4 gap-x-2">
-      <div
+      <q-scroll-area
         v-show="showTab"
-        class="w-[calc(16.66%_-_50px)] flex flex-col gap-y-1 overflow-auto px-2 min-w-[180px]"
+        class="w-[calc(16.66%_-_50px)] min-w-[180px] max-h-[calc(100vh_-_220px)]"
       >
-        <q-btn
-          v-for="(tab, index) in tabList"
-          :key="index"
-          :class="['w-full py-0 pr-0 pl-2', index < 5 ? '!cursor-default' : '']"
-          size="sm"
-          :ripple="false"
-          no-caps
-          v-on="index > 4 ? {click: getEqpStatus} : {}"
-          :data-status="tab.tabTitle"
-        >
-          <template v-slot:default>
-            <div class="flex flex-row items-center w-full">
-              <span class="w-2/3 text-left">{{ tab.tabTitle }}</span>
-              <span
-                class="block w-4 h-6 mr-1"
-                :style="{backgroundColor: tab.tabColor.replaceAll('，', ',')}"
-              ></span>
-              <span class="flex justify-center flex-1">{{ tab.tabCount }}</span>
-            </div>
-          </template>
-        </q-btn>
-        <div
-          class="flex flex-row items-center justify-center h-6 rounded-sm ring-2 ring-inset ring-red-500"
-        >
-          高溫紅框
+        <div class="flex flex-col gap-y-1 px-2">
+          <q-btn
+            v-for="(tab, index) in tabList"
+            :key="index"
+            :class="['w-full py-0 pr-0 pl-2', index < 5 ? '!cursor-default' : '']"
+            size="sm"
+            :ripple="false"
+            no-caps
+            v-on="index > 4 ? {click: getEqpStatus} : {}"
+            :data-status="tab.tabTitle"
+          >
+            <template v-slot:default>
+              <div class="flex flex-row items-center w-full">
+                <span class="w-2/3 text-left">{{ tab.tabTitle }}</span>
+                <span
+                  class="block w-4 h-6 mr-1"
+                  :style="{backgroundColor: tab.tabColor.replaceAll('，', ',')}"
+                ></span>
+                <span class="flex justify-center flex-1">{{ tab.tabCount }}</span>
+              </div>
+            </template>
+          </q-btn>
+          <div
+            class="flex flex-row items-center justify-center h-6 rounded-sm ring-2 ring-inset ring-red-500 dfkai"
+          >
+            高溫紅框
+          </div>
+          <div
+            class="flex flex-row items-center justify-center h-6 rounded-sm ring-2 ring-inset ring-[blue] dfkai mb-4"
+          >
+            低溫藍框
+          </div>
+          <div v-for="block in blockColor" :style="{backgroundColor:block.fillColor}" class="h-6 text-center" style="line-height:24px" :key="block.blockName">{{block.blockName}}</div>
         </div>
-        <div
-          class="flex flex-row items-center justify-center h-6 rounded-sm ring-2 ring-inset ring-[blue]"
-        >
-          低溫藍框
-        </div>
-      </div>
+      </q-scroll-area>
       <q-btn
         icon="chevron_right"
         unelevated
@@ -223,7 +231,7 @@
     </q-card-actions>
     <q-card-section class="items-center row q-pb-none text-h5">
       {{ detail[0] }}
-      <q-btn color="primary" dense unelevated class="text-white ml-3 px-2" v-if="detail[33]">關site data</q-btn>
+      <q-btn color="primary" dense unelevated class="text-white ml-3 px-2" v-if="detail.length > 33" @click="searchCloseSite">關site data</q-btn>
     </q-card-section>
     <q-separator />
     <q-card-section class="overflow-auto max-h-[calc(100vh_-_148px)]">
@@ -333,8 +341,8 @@
           <tr>
             <td class="!bg-gray-400 text-center">Change_Time</td>
             <td class="text-center">{{ detail[16] }}</td>
-            <td v-if="detail[33]" class="!bg-gray-400 text-center">關Site開始時間</td>
-            <td v-if="detail[33]" class="text-center">{{ detail[33]}}</td>
+            <td v-if="detail.length >= 33" class="!bg-gray-400 text-center">關Site開始時間</td>
+            <td v-if="detail.length >= 33" class="text-center">{{ detail[33]}}</td>
           </tr>
         </tbody>
       </q-markup-table>
@@ -404,7 +412,7 @@
             </q-td>
             <q-td colspan="24">
               <div
-                class="inline-block rounded-sm hover:ring-2 hover:ring-red-500"
+                class="inline-block hover:ring-2 hover:ring-red-500 hover:mr-0.5"
                 v-for="child in props.row.row"
                 :key="child[2]"
                 :style="{
@@ -460,8 +468,14 @@
           <template #body-cell-END_TIME="props">
             <q-td class="text-center">{{props.row.END_TIME}}</q-td>
           </template>
-          <template #body-cell-EQP_AREA="props">
-            <q-td class="text-center">{{props.row.EQP_AREA}}</q-td>
+          <template #body-cell-SUB_STATUS="props">
+            <q-td class="text-center">{{props.row.SUB_STATUS}}</q-td>
+          </template>
+          <template #body-cell-STEP="props">
+            <q-td class="text-center">{{props.row.STEP}}</q-td>
+          </template>
+          <template #body-cell-TESTER="props">
+            <q-td class="text-center">{{props.row.TESTER}}</q-td>
           </template>
           <template #body-cell-CST_NO="props">
             <q-td class="text-center">{{props.row.CST_NO}}</q-td>
@@ -472,8 +486,17 @@
           <template #body-cell-RUNCARD="props">
             <q-td class="text-center">{{props.row.RUNCARD}}</q-td>
           </template>
-          <template #body-cell-REMARK="props">
-            <q-td class="text-center">{{props.row.REMARK}}</q-td>
+          <template #body-cell-ACCESSORY4="props">
+            <q-td class="text-center">{{props.row.ACCESSORY4}}</q-td>
+          </template>
+          <template #body-cell-ACCESSORY1="props">
+            <q-td class="text-center">{{props.row.ACCESSORY1}}</q-td>
+          </template>
+          <template #body-cell-DUT_USE="props">
+            <q-td class="text-center">{{props.row.DUT_USE}}</q-td>
+          </template>
+          <template #body-cell-DUT="props">
+            <q-td class="text-center">{{props.row.DUT}}</q-td>
           </template>
         </q-table>
       </q-card-section>
@@ -517,8 +540,68 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+<q-dialog full-width v-model="showSite" backdrop-filter="blur(4px)">
+  <q-card class="relative">
+    <q-btn unelevated icon="close" class="absolute z-10 px-2 py-0 top-2 right-2" />
+    <q-card-section class="items-center row q-pb-none text-h5">
+      {{eqpTarget}}
+    </q-card-section>
+    <q-separator />
+    <q-card-section>
+      <q-table
+        :columns="siteColumns"
+        :rows="eqpCloseSiteData"
+        :pagination="{rowPerPage:10}"
+      >
+          <template #body-cell-EQP_NO="props">
+            <q-td class="text-center">{{props.row.EQP_NO}}</q-td>
+          </template>
+          <template #body-cell-START_TIME="props">
+            <q-td class="text-center">{{props.row.START_TIME}}</q-td>
+          </template>
+          <template #body-cell-END_TIME="props">
+            <q-td class="text-center">{{props.row.END_TIME}}</q-td>
+          </template>
+          <template #body-cell-STATUS="props">
+            <q-td class="text-center">{{props.row.STATUS}}</q-td>
+          </template>
+          <template #body-cell-SUB_STATUS="props">
+            <q-td class="text-center">{{props.row.SUB_STATUS}}</q-td>
+          </template>
+          <template #body-cell-RUNCARD="props">
+            <q-td class="text-center">{{props.row.RUNCARD}}</q-td>
+          </template>
+          <template #body-cell-DEVICE_NO="props">
+            <q-td class="text-center">{{props.row.DEVICE_NO}}</q-td>
+          </template>
+          <template #body-cell-STEP="props">
+            <q-td class="text-center">{{props.row.STEP}}</q-td>
+          </template>
+          <template #body-cell-DUT="props">
+            <q-td class="text-center">{{props.row.DUT}}</q-td>
+          </template>
+          <template #body-cell-DUT_USE="props">
+            <q-td class="text-center">{{props.row.DUT_USE}}</q-td>
+          </template>
+          <template #body-cell-ACCESSORY1="props">
+            <q-td class="text-center">{{props.row.ACCESSORY1}}</q-td>
+          </template>
+          <template #body-cell-ABNOR_DESC="props">
+            <q-td class="text-center">{{props.row.ABNOR_DESC}}</q-td>
+          </template>
+      </q-table>
+    </q-card-section>
+    <q-separator />
+    <q-card-actions align='right'>
+      <q-btn unelevated v-close-popup label="關閉" />
+    </q-card-actions>
+  </q-card>
+</q-dialog>
 </template>
 <style scoped lang="scss">
+th, td{
+  font-family: 'DFKai-sb';
+}
 .tr-10 {
     td{
         height:2.5rem;
@@ -560,11 +643,19 @@ const showTab = ref(false)
 const showEQPStatusList = ref(false)
 const showEQPDetail = ref(false)
 const showEQPMC = ref(false)
+const showSite = ref(false)
 
 const width = ref(1800)
 const height = ref(1200)
 const container = ref<HTMLDivElement | null>(null)
-const factoryOptions = ['科技', '創新', '力行'].map(f => ({value: f, label: f}))
+const _factoryOptions = $("#FACTORY").text().length ? $("#FACTORY").text().split(";").reverse() : ['科技,科技', '創新,創新', '力行,力行']
+const factoryOptions = _factoryOptions.map(row => {
+  let [value, label] = row.split(",")
+  return {value, label}
+})
+
+const _floorOptions = $("#FLOOR").text().split(";")
+
 const floorOptions = ref(
   ['1F', '2F', '3F', '7F'].map(f => ({value: f, label: f})),
 )
@@ -594,24 +685,51 @@ let detail = reactive<string[]>([])
 let tabList = ref<any[]>([])
 let eqpStatusList = reactive<{label: string[]; row: string[][]}[]>([])
 let eqpStatus = ref("");
-let colorSetting = reactive({})
+let colorSetting = reactive({
+  WORK: 'rgb(0,128,0)',
+  LOSS: 'rgb(255,255,204)',
+  LEND: 'rgb(0,255,255)',
+  CORR: 'rgb(255,153,0)',
+  SETUP: 'rgb(255,102,204)',
+  SETUP_W: 'rgb(255,0,255)',
+  ETUP: 'rgb(255,0,255)',
+  ABNOR_W: 'rgb(255,255,102)',
+  ABNOR: 'rgb(255,255,0)',
+  PM: 'rgb(0,0,255)',
+  DOWN: 'rgb(255,0,0)',
+  NS: 'rgb(166,166,166)',
+  PROCESS: 'rgb(0,128,0)',
+  'LOSS-WIP': 'rgb(255,255,204)',
+  'LOSS-MEN': 'rgb(255,255,204)',
+  ENG: 'rgb(0,255,255)',
+  'SD-SETUP': 'rgb(255,0,255)',
+  'SD-PM': 'rgb(0,0,255)',
+  nothing: 'rgb(199,199,199)'
+})
 let eqpTarget = ref("")
 let eqpMCDataCount = ref(0);
 let eqpMCDetailHeader = ref<{name:string,label:string}[]>([]);
 let eqpMCDetailRow = reactive<string[][]>([]);
 let eqpDetailData = reactive<Record<string,string>[]>([]);
+let blockColor = reactive<Record<string,string>[]>([])
+let eqpCloseSiteData = reactive<string[][]>([])
 
 let columns = [{name: 'Time', label: 'Time', field: row => row.label}]
 let detailColumns = [
   {name:"STATUS2", label:"STATUS2"},
   {name:"PERIOD_TIME", label:"PERIOD_TIME"},
-  {name:"START_TIME", label:"START_TIME"},
+  {name:"START_TIME",  label:"START_TIME"},
   {name:"END_TIME", label:"END_TIME"},
-  {name:"EQP_AREA", label:"EQP_AREA"},
+  {name:"SUB_STATUS", label:"SUB_STATUS"},
+  {name:"STEP", label:"STEP"},
+  {name:"TESTER", label:"TESTER"},
   {name:"CST_NO", label:"CST_NO"},
   {name:"DEVICE_NO", label:"DEVICE_NO"},
   {name:"RUNCARD", label:"RUNCARD"},
-  {name:"REMARK", label:"REMARK"},
+  {name:"ACCESSORY4", label:"ACCESSORY4"},
+  {name:"ACCESSORY1", label:"ACCESSORY1"},
+  {name:"DUT_USE", label:"DUT_USE"},
+  {name:"DUT", label:"DUT"}
 ]
 let time = [
   {name: '8:00', label: '8:00', field: '8:00'},
@@ -640,32 +758,50 @@ let time = [
   {name: '7:00', label: '7:00', field: '7:00'},
 ]
 
-watch(sFactory, (nValue, _) => {
-  let floor = ['1F', '2F', '3F', '7F']
-  switch (nValue) {
-    case '科技':
-      break
-    case '創新':
-      floor = ['2F', '3F', '4F']
-      break
-    case '力行':
-      floor = ['3F']
-      break
+let siteColumns = [
+  {name:"EQP_NO", label:"EQP_NO", align:'center'},
+  {name:"START_TIME", label:"START_TIME", align:'center'},
+  {name:"END_TIME", label:"END_TIME", align:'center'},
+  {name:"STATUS", label:"STATUS", align:'center'},
+  {name:"SUB_STATUS", label:"SUB_STATUS", align:'center'},
+  {name:"RUNCARD", label:"RUNCARD", align:'center'},
+  {name:"DEVICE_NO", label:"DEVICE_NO", align:'center'},
+  {name:"STEP", label:"STEP", align:'center'},
+  {name:"DUT", label:"DUT", align:'center'},
+  {name:"DUT_USE", label:"DUT_USE", align:'center'},
+  {name:"ACCESSORY1", label:"ACCESSORY1", align:'center'},
+  {name:"ABNOR_DESC", label:"ABNOR_DESC", align:'center'},
+]
+watch(sFactory, (nValue, oValue) => {
+  if (nValue !== oValue) {
+    let floor = _floorOptions.filter(f => f.includes(nValue)).map(row => ({value:row.split(",")[0], label:row.split(",")[0]}))
+    floorOptions.value = floor
+    sFloor.value = floor[0].value
   }
-  floorOptions.value = floor.map(f => ({value: f, label: f}))
 })
 
 const toggleTab = () => {
   showTab.value = !showTab.value
 }
 
+const focus = (e) => {
+  let si = $(e.target).parent().siblings(".q-field__inner");
+  $(si)[0].click();
+}
+
 const loadLayer = (data: string[]) => {
   layer.removeChildren()
   let indexMap = new Map();
+  blockColor = [];
   data.forEach(row => {
-    const [eqp_no,probeCard,eqpCluster,clientCode,statusTime,bu,jsonAttrs,temp,eqpStatus,bgColor,subStatus] = row.split(",")
+    let rowData:string[] = row.split(",")
+    const [eqp_no,probeCard,eqpCluster,clientCode,statusTime,bu,jsonAttrs,temp,eqpStatus,bgColor,subStatus] = rowData
     const attrs = JSON.parse(jsonAttrs.replaceAll("，", ","));
     if (Object.prototype.hasOwnProperty.call(attrs, 'zIndex')) {
+      if (rowData.length == 13) {
+        attrs["humid"] = rowData.at(-2)
+        attrs["bool"] = rowData.at(-1)
+      }
       attrs["eqp_no"] = eqp_no
       attrs["probeCard"] = probeCard
       attrs["eqpCluster"] = eqpCluster
@@ -681,6 +817,12 @@ const loadLayer = (data: string[]) => {
     } else {
       width.value = attrs["width"]
       height.value = attrs["height"]
+      stage.value.width(attrs["width"])
+      stage.value.height(attrs["height"])
+      stage.value.scale({
+        x:1,
+        y:1
+      })
     }
   })
   let length = indexMap.size
@@ -696,7 +838,9 @@ const loadLayer = (data: string[]) => {
     let clientCode = attrs["clientCode"]
     let statusTime = attrs["statusTime"]
     let eqpStatus = attrs["eqpStatus"] 
-    let subStatus = attrs["subStatus"] 
+    let subStatus = attrs["subStatus"]
+    let _bgColor = attrs["bgColor"]
+    if (bu.includes("溫溼度監控") || bu.includes("氮氣櫃")) group.setAttr("humid", attrs["humid"])
     group.setAttr("eqp_no", eqp_no)
     group.setAttr("probeCard",  probeCard)
     group.setAttr("eqpCluster", eqpCluster)
@@ -711,69 +855,75 @@ const loadLayer = (data: string[]) => {
     if (eqp_no == "B") {
       node.fill("black")
     } else {
-      node.fill(attrs["bgColor"])
-      if (!bu.includes("底圖")) {
-        if (temp.length && temp > 25) {
-          node.stroke('red')
-        } else if (temp.length && temp < 25) {
-          node.stroke('blue')
-        } else {
-          node.stroke('black')          
+      if (bu.includes("底圖")) {
+        blockColor.push({
+          blockName:eqp_no,
+          fillColor:attrs.children[0].attrs.fill
+        }) 
+      } else {
+        if (_bgColor.length > 0) {
+          node.fill(_bgColor)
+        }
+        let bool = attrs["bool"]
+        if (!bool) 
+          if (temp.length && temp > 25) {
+            node.stroke('red')
+          } else if (temp.length && temp < 25) {
+            node.stroke('blue')
+          } else {
+            node.stroke('black')          
+          }
+        else {
+          if (bool == 'N') {
+            node.stroke('black')
+          } else {
+            node.stroke("red")
+          }
         }
       }
     }
     node.strokeWidth(2)
     group.add(node)
     let clickable = true;
-    if (eqpCluster.length==0 && statusTime.length == 0 && clientCode.length == 0) clickable = false
-    if(eqp_no !== 'B' && !bu.includes("底圖") && !bu.includes("溫溼度監控") && !bu.includes("氮氣櫃") && clickable) {    
-      let eqpEstText = new Konva.Text({fontSize:12}).measureSize(eqp_no)
-      let codeEstText = new Konva.Text({fontSize:12}).measureSize(clientCode)
-      let clusterEstText = new Konva.Text({fontSize:12}).measureSize(eqpCluster)
-      let timeEstText = new Konva.Text({fontSize:12}).measureSize(statusTime)
-      // console.log({eqpEstText}, {codeEstText},{clusterEstText},{timeEstText})
+    let fontSize = 12
+    let fill = "black"
+    if (Object.prototype.hasOwnProperty.call(attrs.children[1].attrs, "fill")) fill = attrs.children[1].attrs["fill"]
+    if (Object.prototype.hasOwnProperty.call(attrs.children[1].attrs, "fontSize")) fontSize = attrs.children[1].attrs["fontSize"]
+    if (probeCard.length == 0 && eqpCluster.length == 0 && clientCode.length == 0 && statusTime.length == 0) clickable = false
+    if(clickable && !bu.includes("底圖") && !bu.includes("溫溼度監控") && !bu.includes("氮氣櫃")) {
+      let combText = eqpCluster + " " + clientCode
+      let eqpEstText = new Konva.Text({fontSize}).measureSize(eqp_no)
+      let combineEstText = new Konva.Text({fontSize}).measureSize(combText)
+      let timeEstText = new Konva.Text({fontSize}).measureSize(statusTime)
       switch (className) {
         case "Rect":{
           let shapeHeight = node.height();
           let shapeWidth = node.width();
-          let yGap = (shapeHeight - 12*3)/4
-          if (statusTime.length == 0) {
-            yGap = (shapeHeight - 12*2)/3
-          } else if (clientCode.length == 0 && eqpCluster.length == 0) {
-            yGap = (shapeHeight - 12)/2
-          }
+          let yGap = (shapeHeight - fontSize*3)/4
 
           let eqpText = new Konva.Text({
-            fontSize:12,
+            fontSize,
             text:eqp_no,
-            fill:"#333",
+            fill,
             y:yGap,
             x:(shapeWidth - eqpEstText.width)/2
           })
-          let clusterText = new Konva.Text({
-            fontSize:12,
-            text:eqpCluster,
-            fill:"#333",
-            y:2*yGap+12,
-            x:(shapeWidth/2 - clusterEstText.width)/2
-          })
-          let codeText = new Konva.Text({
-            fontSize:12,
-            text:clientCode,
-            fill:"#333",
-            y:2*yGap+12,
-            x:shapeWidth/2 + (shapeWidth/2 - codeEstText.width)/2
+          let combineText = new Konva.Text({
+            fontSize,
+            text:combText,
+            fill,
+            y:2*yGap + fontSize,
+            x:(shapeWidth - combineEstText.width)/2
           })
           let timeText = new Konva.Text({
-            fontSize:12,
+            fontSize,
             text:statusTime,
-            fill:"#333",
-            y:3*yGap + 12*2,
+            fill,
+            y:3*yGap + fontSize*2,
             x:(shapeWidth - timeEstText.width)/2
           })
           group.add(eqpText)
-          group.add(clusterText)
-          group.add(codeText)
+          group.add(combineText)
           group.add(timeText)
         }
         break;
@@ -784,24 +934,34 @@ const loadLayer = (data: string[]) => {
       group.on("mousemove", moveTooltip)
       group.on("mouseleave", removeTooltip)
       group.on("click", loadDetail)
-    } else if (bu.includes("溫溼度監控")) {
+    } else if (bu.includes("溫溼度監控") || bu.includes("氮氣櫃")) {
       group.on("mouseenter", showTooltip)
       group.on("mousemove", moveTooltip)
       group.on("mouseleave", removeTooltip)
-      group.on("click", () => {
-        let destination = window.location.origin + window.location.pathname + "/../../Default/TEMP"
-        window.open(destination, "_blank").focus()
-      })
-    } else if ((bu.includes("氮氣櫃") || !clickable ) && !bu.includes("底圖")) {
+      group.on("click", HeadToTemp)
+      if (bu.includes("氮氣櫃")) {
+        let width = node.width();
+        let height = node.height();
+        let estText = new Konva.Text({fontSize}).measureSize(eqp_no);
+        let text = new Konva.Text({
+          text:eqp_no,
+          x:(width - estText.width)/2,
+          y:(height - fontSize)/2,
+          fill,
+          fontSize,
+        })
+        group.add(text)
+      }
+    } else if (!clickable && !bu.includes("底圖") && eqp_no !== "B") {
       let width = node.width();
       let height = node.height();
-      let estText = new Konva.Text({fontSize:12}).measureSize(eqp_no);
+      let estText = new Konva.Text({fontSize}).measureSize(eqp_no);
       let text = new Konva.Text({
         text:eqp_no,
         x:(width - estText.width)/2,
-        y:(height - 12)/2,
-        fill:"#333",
-        fontSize:12,
+        y:(height - fontSize)/2,
+        fill,
+        fontSize,
       })
       group.add(text)
     }
@@ -812,7 +972,19 @@ const loadLayer = (data: string[]) => {
   isLoading.value = false
 }
 
+const HeadToTemp = (e) => {
+  const {eqp_no, bu} = e.target.getParent().getAttrs();
+  let destination = window.location.origin + window.location.pathname + "/../../Default/TEMP?設備種類="
+  if (bu.includes("溫溼度監控")) destination+="溫溼度監控設備&廠區="
+  if (bu.includes("氮氣櫃")) destination+="氮氣櫃&廠區="
+  if (sFactory.value == "科技") destination+='園區&設備編號='
+  else destination+=sFactory.value+"&設備編號="
+  destination+=eqp_no
+  window.open(destination, "_blank").focus()
+}
+
 const showTooltip = (e) => {
+  stage.value.container().style.cursor = "pointer"
   let group = e.target.getParent();
   let height = 20;
   const gapY = 4;
@@ -824,7 +996,7 @@ const showTooltip = (e) => {
   });
   let width = 120;
   let bu = group.getAttr("bu");
-  if (!bu.includes("溫溼度監控")) {
+  if (!bu.includes("溫溼度監控") && !bu.includes("氮氣櫃")) {
     let eqp_no = group.getAttr("eqp_no");
     let eqp_text = new Konva.Text({
       x:5,
@@ -836,38 +1008,6 @@ const showTooltip = (e) => {
     if (eqp_text.width() > width) width = eqp_text.width() + 10
     tooltipGroup.add(eqp_text);
     let {eqpCluster, clientCode, statusTime, subStatus} = group.getAttrs();
-    if (eqpCluster && eqpCluster.length > 0) {
-      let text = new Konva.Text({
-        x:5,
-        y:2*gapY + 12,
-        text:eqpCluster,
-        fontSize:12,
-        fill:"#333"
-      });
-      height+=16;
-      tooltipGroup.add(text)
-      let text_width = text.width();
-      if (text_width > width) width = text_width + 10
-      if (height < text.y() + 16) height = text.y() + 16;
-    }
-    if (clientCode && clientCode.length) {
-        let shift = 5;
-        if (eqpCluster && eqpCluster.length) {
-            let shiftText = new Konva.Text({fontSize:12}).measureSize(eqpCluster)
-            shift+=shiftText.width + 10
-        }
-        let text = new Konva.Text({
-            x:shift,
-            y:2*gapY + 12,
-            text:clientCode,
-            fontSize:12,
-            fill:"#333"
-        })
-        height+=16;
-      tooltipGroup.add(text)
-      let text_width = text.width();
-      if (text_width > width) width = text_width + 10
-    }
     if (statusTime && statusTime.length > 0) {
       let text = new Konva.Text({
         x:5,
@@ -895,6 +1035,19 @@ const showTooltip = (e) => {
       let text_width = text.width();
       if (text_width > width) width = text_width + 10
       if (height < text.y() + 16) height = text.y() + 16;
+    }
+    let combText = eqpCluster + " " + clientCode
+    if (combText.length > 1) {
+      let text = new Konva.Text({
+        x:5,
+        y:2*gapY + 12,
+        text:combText,
+        fontSize:12,
+        fill:"#333"
+      })
+      tooltipGroup.add(text)
+      let text_width = text.width();
+      if (text_width > width) width = text_width + 10
     }
   } else {
     let {eqp_no, temp, humid} = group.getAttrs();
@@ -949,12 +1102,14 @@ const showTooltip = (e) => {
 }
 
 const moveTooltip = (e) => {
+  console.log(stage.value.getPointerPosition(), width.value, height.value, stage.value.scaleX())
   let tooltip = layer.find(".tooltip")[0];
   let {x, y} = stage.value.getPointerPosition();
   tooltip.absolutePosition({x:x+10, y:y+10});
 }
 
 const removeTooltip = (e) => {
+  stage.value.container().style.cursor = "default"
   let tooltip = layer.find(".tooltip")[0];
   tooltip.destroy();
 }
@@ -994,20 +1149,28 @@ const downloadExcel = async () => {
     QueryArr: [
       sFactory.value,
       sFloor.value,
+      sCategory.value,
       sClient.value.join('@'),
       sEqp.value,
       sEqpType.value,
       sModel.value,
+      sOCR.value,
+      sKeyProd.value,
+      sCharter.value,
+      sBottleNeck.value
     ],
   }
   $.ajax({
     type: 'POST',
     url: window.location.origin + window.location.pathname + '/../ExportExcel',
     data: JSON.stringify(payload),
+    xhrFields:{
+      withCredentials:true
+    },
     success: res => {
       let a = $("#HiddenClickBtn")
-      a.attr("href", window.location.origin + res);
-      a.click();
+      a.attr("href", window.location.origin + "/Default/" + res)
+      $(a)[0].click() 
     },
     async: true,
     dataType: 'json',
@@ -1022,7 +1185,6 @@ const loadTab = (data: string[]) => {
   let count = row_count.split(',')
   let color = row_color.split(',')
   let list = []
-  let setting = {}
   title.forEach((t, i) => {
     let tColor = color[i].includes('，')
       ? color[i].replaceAll('，', ',')
@@ -1033,10 +1195,8 @@ const loadTab = (data: string[]) => {
       tabCount: count[i],
       tabColor: tColor,
     }
-    setting[t] = tColor
     list.push(obj)
   })
-  colorSetting = setting
   tabList.value = list
 }
 
@@ -1227,6 +1387,69 @@ const loadData = () => {
     contentType: 'application/json; charset=utf-8',
   })
 }
+const scale = 0.25
+const zoomIn = () => {
+  const lastScale = stage.value.scaleX()
+  stage.value.scale({
+    x:scale + lastScale,
+    y:scale + lastScale,
+  })
+  stage.value.width(width.value * (scale+lastScale))
+  stage.value.height(height.value * (scale+lastScale))
+}
+
+const zoomOut = () => {
+  const lastScale = stage.value.scaleX()
+  if (lastScale > 0.25) {
+    stage.value.scale({
+      x:lastScale - scale,
+      y:lastScale - scale
+    })
+    stage.value.width(width.value * (lastScale - scale))
+    stage.value.height(height.value * (lastScale - scale))
+  }
+}
+
+const searchCloseSite = () => {
+  showSite.value = false
+  const payload = {
+    BU:'FT',
+    NumberPerAPage: -1,
+    PageName: "CLOST_SITE_LIST",
+    PageNumber: -1,
+    QueryArr:[detail[0], detail[8], detail[27]]
+  }
+  let buffer = []
+  $.ajax({
+    type:"POST",
+    url,
+    data:JSON.stringify(payload),
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    success:(res) => {
+      res.forEach(row => {
+        const [EQP_NO, START_TIME, END_TIME, STATUS, SUB_STATUS, RUNCARD, DEVICE_NO, STEP, DUT, DUT_USE, ACCESSORY1, ABNOR_DESC] = row.split(",") 
+        buffer.push({
+          EQP_NO, 
+          START_TIME,
+          END_TIME,
+          STATUS,
+          SUB_STATUS,
+          RUNCARD,
+          DEVICE_NO,
+          STEP,
+          DUT,
+          DUT_USE,
+          ACCESSORY1,
+          ABNOR_DESC
+        })
+      })
+      eqpCloseSiteData = buffer
+      showSite.value = true
+    }
+  })
+}
+
 onMounted(() => {
   // init stage
   stage.value = new Konva.Stage({
@@ -1236,6 +1459,6 @@ onMounted(() => {
     background:"rgb(236,236,236)"
   })
   stage.value.add(layer)
-//   loadData()
+  loadData()
 })
 </script>

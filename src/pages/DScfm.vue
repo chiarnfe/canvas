@@ -1,13 +1,18 @@
 ﻿<template>
   <div class="h-[50px] w-full bg-gray-500/20"></div>
   <div class="w-full px-4">
-    <h4 class="text-h4 mt-5 mb-2.5">Equipment CFM</h4>
-    <div class="flex flex-row gap-x-2">
+    <div class="relative">
+      <h4 class="text-h4 mt-5 mb-2.5 arial">Equipment CFM</h4>
+      <q-btn size="md" class="absolute right-0 top-0 q-px-sm" icon="zoom_in" @click="zoomIn" outline />
+      <q-btn size="md" class="absolute right-12 top-0 q-px-sm" icon="zoom_out" @click="zoomOut" outline />
+    </div>
+    <div class="flex flex-row gap-x-2 items-center">
       <q-btn
         unelevated
+        dense
         color="primary"
         label="匯出"
-        class="rounded-[0.25rem] px-3 py-1"
+        class="rounded-md px-3 py-1 dfkai"
         @click="downloadExcel"
       />
       <div class="flex flex-row gap-x-2">
@@ -23,7 +28,7 @@
           dense
         >
           <template v-slot:before>
-            <label for="fact" class="text-sm"> 廠區 </label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer dfkai" @click="focus"> 廠區 </label>
           </template>
         </q-select>
         <q-select
@@ -37,7 +42,7 @@
           dense
         >
           <template v-slot:before>
-            <label class="text-sm"> 樓層 </label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer dfkai" @click="focus"> 樓層 </label>
           </template>
         </q-select>
         <q-select
@@ -52,66 +57,71 @@
           multiple
         >
           <template v-slot:before>
-            <label class="text-sm">客戶</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer dfkai" @click="focus">客戶</label>
           </template>
         </q-select>
         <q-input v-model="sEqp" outlined dense>
           <template v-slot:before>
-            <label class="text-sm">機台</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer dfkai" @click="focus">機台</label>
           </template>
         </q-input>
         <q-input v-model="sEqpType" outlined dense>
           <template v-slot:before>
-            <label class="text-sm">機種</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer dfkai" @click="focus">機種</label>
           </template>
         </q-input>
         <q-input v-model="sModel" outlined dense>
           <template v-slot:before>
-            <label class="text-sm">型號</label>
+            <label class="text-sm dfkai !font-bold hover:cursor-pointer dfkai" @click="focus">型號</label>
           </template>
         </q-input>
       </div>
       <q-btn
         unelevated
+        dense
         label="搜尋"
-        class="px-3 py-1 rounded-md"
+        class="px-3 py-1 rounded-md dfkai"
         style="border: 1px solid #aaa"
         @click="loadData"
       />
+      <span>{{ new Date().toLocaleTimeString("zh-TW", {year:'numeric', month:'2-digit', day:'2-digit', hour12:false, hour:'2-digit', minute:'2-digit'}) }}</span>
     </div>
     <q-separator class="q-my-md" />
     <div class="flex flex-row pb-4 gap-x-2">
-      <div
-        v-show="!showTab"
-        class="w-[calc(16.66%_-_50px)] flex flex-col gap-y-1 overflow-auto px-2 min-w-[180px]"
+      <q-scroll-area
+        v-show="showTab"
+        class="w-[calc(16.66%_-_50px)] min-w-[180px] max-h-[calc(100vh_-_220px)]"
       >
-        <q-btn
-          v-for="(tab, index) in tabList"
-          :key="index"
-          :class="['w-full py-0 pr-0 pl-2', index < 6 ? '!cursor-default' : '']"
-          size="sm"
-          :ripple="false"
-          no-caps
-          v-on="index > 5 ? {click: getEqpStatus} : {}"
-          :data-status="tab.tabText"
-        >
-          <template v-slot:default>
-            <div class="flex flex-row items-center w-full">
-              <span class="w-2/3 text-left">{{ tab.tabText }}</span>
-              <span
-                class="block w-4 h-6 mr-1"
-                :style="{backgroundColor: tab.tabColor.replaceAll('，', ',')}"
-              ></span>
-              <span class="flex justify-center flex-1">{{ tab.tabCount }}</span>
-            </div>
-          </template>
-        </q-btn>
-        <div
-          class="flex flex-row items-center justify-center h-6 rounded-sm ring-2 ring-inset ring-red-500"
-        >
-          12吋機台紅框
+        <div class="flex flex-col gap-y-1 px-2">
+          <q-btn
+            v-for="(tab, index) in tabList"
+            :key="index"
+            :class="['w-full py-0 pr-0 pl-2', index < 6 ? '!cursor-default' : '']"
+            size="sm"
+            :ripple="false"
+            no-caps
+            v-on="index > 5 ? {click: getEqpStatus} : {}"
+            :data-status="tab.tabText"
+          >
+            <template v-slot:default>
+              <div class="flex flex-row items-center w-full">
+                <span class="w-2/3 text-left arial">{{ tab.tabText }}</span>
+                <span
+                  class="block w-4 h-6 mr-1"
+                  :style="{backgroundColor: tab.tabColor.replaceAll('，', ',')}"
+                ></span>
+                <span class="flex justify-center flex-1">{{ tab.tabCount }}</span>
+              </div>
+            </template>
+          </q-btn>
+          <div
+            class="flex flex-row items-center justify-center h-6 rounded-sm ring-2 ring-inset ring-red-500  mb-4"
+          >
+            12吋機台紅框
+          </div>
+          <div v-for="block in blockColor" :style="{backgroundColor:block.fillColor}" class="h-6 text-center" style="line-height:24px" :key="block.blockName">{{block.blockName}}</div>
         </div>
-      </div>
+      </q-scroll-area>
       <q-btn
         icon="chevron_right"
         unelevated
@@ -120,7 +130,7 @@
         @click="toggleTab"
       />
       <q-scroll-area
-        :class="[!showTab ? 'w-5/6' : 'w-[calc(100%_-_50px)]']"
+        :class="[showTab ? 'w-5/6' : 'w-[calc(100%_-_50px)]']"
         style="
           box-shadow:
             inset 1px 0 0 #000,
@@ -128,19 +138,21 @@
             inset -1px 0 0 #000,
             inset 0 -1px 0 #000;
           height: calc(100vh - 210px);
+          backgroundColor:rgb(236,236,236)
         "
       >
         <div class="w-full" ref="container" id="canvas_container"></div>
       </q-scroll-area>
     </div>
-    <q-dialog v-model="isLoading" backdrop-filter="blur(4px)" persistent>
+  </div>
+  <q-dialog v-model="isLoading" backdrop-filter="blur(4px)" persistent>
       <q-card class="w-96">
         <q-card-section> 資料讀取中... </q-card-section>
       </q-card>
     </q-dialog>
     <q-dialog full-width v-model="showDetail" backdrop-filter="blur(4px)">
       <q-card class="relative">
-        <q-btn unelevated icon="close" class="absolute top-2 right-2" />
+        <q-btn unelevated v-close-popup icon="close" class="absolute top-2 right-2" />
         <q-card-section class="items-center row q-pb-none text-h5">
           {{ detail[0] }}
         </q-card-section>
@@ -275,7 +287,7 @@
                 </q-td>
                 <q-td colspan="24">
                   <div
-                    class="inline-block rounded-sm hover:ring-2 hover:ring-red-500"
+                    class="inline-block hover:ring-2 hover:ring-red-500"
                     v-for="child in props.row.row"
                     :key="child[2]"
                     :style="{
@@ -298,10 +310,9 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-  </div>
   <q-dialog full-width v-model="showEQPDetail" backdrop-filter="blur(4px)">
     <q-card class="relative">
-      <q-btn unelevated icon="close" class="absolute z-10 px-2 py-0 top-2 right-2"/>
+      <q-btn unelevated v-close-popup icon="close" class="absolute z-10 px-2 py-0 top-2 right-2"/>
       <q-card-section class="items-center row q-pb-none text-h5">
         機台/{{eqpTarget}}
       </q-card-section>
@@ -357,7 +368,7 @@
   </q-dialog>
   <q-dialog full-width v-model="showEQPMC" backdrop-filter="blur(4px)">
     <q-card class="relative">
-      <q-btn unelevated icon="close" class="absolute z-10 px-2 py-0 top-2 right-2"/>
+      <q-btn unelevated v-close-popup icon="close" class="absolute z-10 px-2 py-0 top-2 right-2"/>
       <q-card-section class="items-center row q-pb-none text-h5">
         {{eqpTarget}}
       </q-card-section>
@@ -376,7 +387,7 @@
           </template>
           <template #body="props">
             <q-tr>
-              <q-td v-for="(text,idex) in props.row" class="text-center">
+              <q-td v-for="(text,idex) in props.row" class="text-center" :key="idex">
                 {{text}}
               </q-td>
             </q-tr>
@@ -459,6 +470,7 @@ let eqpMCDataCount = ref(0);
 let eqpMCDetailHeader = ref<{name:string,label:string}[]>([]);
 let eqpMCDetailRow = reactive<string[][]>([]);
 let eqpDetailData = reactive<Record<string,string>[]>([]);
+let blockColor = reactive<Record<string,string>[]>([])
 
 let columns = [{name: 'Time', label: 'Time', field: row => row.label}]
 let detailColumns = [
@@ -518,10 +530,17 @@ const toggleTab = () => {
   showTab.value = !showTab.value
 }
 
+const focus = (e) => {
+  let si = $(e.target).parent().siblings(".q-field__inner");
+  $(si)[0].click();
+}
+
 const loadLayer = (data: string[]) => {
   layer.removeChildren()
   let indexMap = new Map()
+  blockColor = [];
   data.forEach(row => {
+    let rowData:string[] = row.split(",")
     const [
       eqpType,
       eqp_no,
@@ -536,200 +555,189 @@ const loadLayer = (data: string[]) => {
       z1,
       z2,
       bool,
-    ] = row.split(',')
+    ] = rowData
+    // console.log(rowData.length, bu)
+    // console.log({eqpType}, {eqp_no}, {clientName}, {statusTime}, {bu}, {eqpStatus}, {temp}, {bgColor}, {modelName}, {z1}, {z2}, {bool})
     let attrs = JSON.parse(jsonAttrs.replaceAll('，', ','))
-    if (bu.includes('圖層')) {
-      stage.value.setAttrs({
-        width: attrs['width'],
-        height: attrs['height'],
-      })
+    if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
+      attrs["eqpType"] = eqpType
+      attrs["eqp_no"] = eqp_no 
+      attrs["clientName"] = clientName 
+      attrs["statusTime"] = statusTime 
+      attrs["bu"] = bu 
+      attrs["eqpStatus"] = eqpStatus 
+      attrs["temp"] = temp 
+      attrs["bgColor"] = bgColor.replaceAll("，",",")
+      attrs["modelName"] = modelName 
+      if(rowData.length == 12) {
+        attrs["humid"] = z1
+        attrs["bool"] = z2
+      } else {
+        attrs["z1"] = z1 
+        attrs["z2"] = z2 
+        attrs["bool"] = bool 
+      }
+      let index = attrs["zIndex"]
+      indexMap.set(index, attrs)
     } else {
-      let group = new Konva.Group({
-        x: attrs.attrs.x,
-        y: attrs.attrs.y,
-        name: attrs.attrs.name,
+      width.value = attrs["width"]
+      height.value = attrs["height"]
+      stage.value.width(attrs["width"])
+      stage.value.height(attrs["height"])
+      stage.value.scale({
+        x:1,
+        y:1
       })
-      if (Object.prototype.hasOwnProperty.call(attrs.attrs, 'width'))
-        group.width(attrs.attrs.width)
-      if (Object.prototype.hasOwnProperty.call(attrs.attrs, 'height'))
-        group.height(attrs.attrs.height)
-      if (Object.prototype.hasOwnProperty.call(attrs.attrs, 'scaleX'))
-        group.scaleX(attrs.attrs.scaleX)
-      if (Object.prototype.hasOwnProperty.call(attrs.attrs, 'scaleY'))
-        group.scaleY(attrs.attrs.scaleY)
-      if (Object.prototype.hasOwnProperty.call(attrs, 'zIndex')) {
-        let indexName =
-          attrs.attrs.x + '.' + attrs.attrs.y + '.' + attrs.attrs.name
-        indexMap.set(indexName, attrs.zIndex)
-      }
-      //console.log({eqpType}, {eqp_no}, {clientName}, {statusTime}, {bu}, {jsonAttrs}, {eqpStatus}, {temp}, {bgColor}, {modelName}, {z1}, {z2}, {bool});
-
-      if (eqpType.length) group.setAttr('eqpType', eqpType)
-      if (clientName.length) group.setAttr('clientName', clientName)
-      if (statusTime.length) group.setAttr('statusTime', statusTime)
-      if (modelName.length) group.setAttr('modelName', modelName)
-      if (eqpStatus.length) group.setAttr('status', eqpStatus)
-      if (z1 && !bu.includes('底圖')) group.setAttr('z1', z1)
-      if (z2 && !bu.includes('底圖')) group.setAttr('z2', z2)
-      if (!bu.includes('底圖') || !bu.includes('圖層')) group.setAttr('bu', bu)
-      if (!bu.includes('底圖') || !bu.includes('圖層'))
-        group.setAttr('eqp_no', eqp_no)
-      if (bu.includes('溫溼度監控')) {
-        group.setAttr('temp', temp)
-        group.setAttr('humid', z1)
-      }
-      attrs.children.forEach(child => {
-        switch (child.className) {
-          case 'Rect': {
-            const rect = new Konva.Rect({
-              fill: bgColor.length
-                ? bgColor.replaceAll('，', ',')
-                : child.attrs.fill,
-              height: child.attrs.height,
-              width: child.attrs.width,
-              name: child.attrs.name,
-            })
-            if (!bu.includes('底圖')) {
-              if (bool == 'N') rect.stroke('black')
-              if (bool == 'Y') rect.stroke('red')
-              rect.strokeWidth(2)
-            }
-            if (Object.prototype.hasOwnProperty.call(child.attrs, 'offsetX'))
-              rect.setAttr('offsetX', child.attrs.offsetX)
-            if (Object.prototype.hasOwnProperty.call(child.attrs, 'offsetY'))
-              rect.setAttr('offsetY', child.attrs.offsetY)
-
-            group.add(rect)
-
-            const fontSize = 12
-            const eqpNoText = new Konva.Text({fontSize}).measureSize(eqp_no)
-
-            if (eqp_no !== 'B' && eqpType.length) {
-              const clientNameText = new Konva.Text({fontSize}).measureSize(
-                clientName,
-              )
-              const statusTimeText = new Konva.Text({fontSize}).measureSize(
-                statusTime,
-              )
-
-              const yGap = (child.attrs.height - 36) / 4
-
-              const tEqpNoText = new Konva.Text({
-                x: (child.attrs.width - eqpNoText.width) / 2,
-                y: yGap,
-                text: eqp_no,
-                fontSize: 12,
-                fill: 'black',
-              })
-
-              const tClientNameText = new Konva.Text({
-                x: (child.attrs.width - clientNameText.width) / 2,
-                y: 2 * yGap + 12,
-                text: clientName,
-                fontSize: 12,
-                fill: 'black',
-              })
-
-              const tStatusTimeText = new Konva.Text({
-                x: (child.attrs.width - statusTimeText.width) / 2,
-                y: 3 * yGap + 12 * 2,
-                text: statusTime,
-                fill: 'black',
-              })
-              group.add(tEqpNoText)
-              group.add(tClientNameText)
-              group.add(tStatusTimeText)
-            } else if (
-              eqp_no !== 'B' &&
-              !bu.includes('底圖') &&
-              eqpType.length == 0
-            ) {
-              let tEqpNoText = new Konva.Text({
-                x: (child.attrs.width - eqpNoText.width) / 2,
-                y: (child.attrs.height - 12) / 2,
-                text: eqp_no,
-                fontSize: 12,
-                fill: 'black',
-              })
-              group.add(tEqpNoText)
-            } else if (bu.includes('底圖')) {
-              let offsetX = group.find('Rect')[0].getAttr('offsetX')
-              let offsetY = group.find('Rect')[0].getAttr('offsetY')
-              let scaleX = group.getAttr('scaleX')
-              let scaleY = group.getAttr('scaleY')
-              let width = child.attrs.width
-              let height = child.attrs.height
-              let tEqpNoText = new Konva.Text({
-                x: (width - eqpNoText.width) / 2,
-                y: (height - 12) / 2,
-                scaleX: 1 / scaleX,
-                scaleY: 1 / scaleY,
-                text: eqp_no,
-                fontSize: 12,
-                fill: 'black',
-                offsetX,
-                offsetY,
-              })
-              group.add(tEqpNoText)
-            }
-            break
-          }
-          case 'Circle': {
-            const circle = new Konva.Circle({
-              fill: bgColor.length
-                ? bgColor.replaceAll('，', ',')
-                : child.attrs.fill,
-              x: child.attrs.x,
-              y: child.attrs.y,
-              radius: child.attrs.radius,
-              name: child.attrs.name,
-              stroke: bool == 'N' ? 'black' : 'red',
-              strokeWidth: 2,
-            })
-            group.add(circle)
-            break
-          }
-        }
-      })
-
-      if (
-        !bu.includes('底圖') &&
-        !bu.includes('圖層') &&
-        eqp_no !== 'B' &&
-        !bu.includes('溫溼度監控')
-      ) {
-        group.on("mouseenter", showTooltip);
-        group.on("mousemove", moveTooltip);
-        group.on("mouseleave", removeTooltip);
-        group.on('click', loadDetail)
-      } else if (bu.includes('溫溼度監控')) {
-        group.on("mouseenter", showTooltip);
-        group.on("mousemove", moveTooltip);
-        group.on("mouseleave", removeTooltip);
-        group.on('click', () => {
-          let destination =
-            window.location.origin +
-            window.location.pathname +
-            '/../../Default/TEMP'
-          window.open(destination, '_blank').focus()
-        })
-      }
-      layer.add(group)
     }
   })
-  layer.getChildren().forEach(child => {
-    let x = child.getAttr('x')
-    let y = child.getAttr('y')
-    let name = child.getAttr('name')
-    let indexName = x + '.' + y + '.' + name
-    let index = indexMap.get(indexName)
-    child.zIndex(index)
-  })
+
+  let length = indexMap.size;
+  for (let index=0;index < length;index++) {
+    let attrs = indexMap.get(index)
+    console.log(attrs)
+    let grpConfig = attrs["attrs"] as Konva.GroupConfig
+    let group = new Konva.Group(grpConfig)
+    let temp = attrs["temp"]
+    let eqpType = attrs["eqpType"] 
+    let eqp_no = attrs["eqp_no"]  
+    let clientName = attrs["clientName"]  
+    let statusTime = attrs["statusTime"]  
+    let bu = attrs["bu"]  
+    let eqpStatus = attrs["eqpStatus"]  
+    let _bgColor = attrs["bgColor"]  
+    let modelName = attrs["modelName"]  
+    let z1 = attrs["z1"]  
+    let z2 = attrs["z2"]  
+    let bool = attrs["bool"]
+    group.setAttr("eqp_no", eqp_no)
+    group.setAttr("eqpType", eqpType)
+    group.setAttr("temp", temp)
+    group.setAttr("clientName", clientName)
+    group.setAttr("statusTime", statusTime)
+    group.setAttr("bu", bu)
+    group.setAttr("eqpStatus", eqpStatus)
+    group.setAttr("modelName", modelName)
+    if (bu.includes("溫溼度監控")){
+      group.setAttr("humid", attrs["humid"])
+    } 
+    else {
+      group.setAttr("z1",z1)
+      group.setAttr("z2",z2)
+    }
+    const {attrs:cAttrs, className} = attrs.children[0]
+    let node = new Konva[className](cAttrs)
+    if (eqp_no == "B") {
+      node.fill("black")
+    } else {
+      if (bu.includes("底圖")) {
+        blockColor.push({
+          blockName:eqp_no,
+          fillColor:cAttrs.fill
+        })
+      } else {
+        if (_bgColor.length) {
+          node.fill(_bgColor)
+        }
+        if (bool == "N") {
+          node.stroke("black")
+        } else {
+          node.stroke("red")
+        }
+      }
+    }
+    node.strokeWidth(2)
+    group.add(node)
+    let clickable = true
+    let fontSize = 12
+    let fill = "black"
+    if (Object.prototype.hasOwnProperty.call(attrs.children[1].attrs, "fill")) fill = attrs.children[1].attrs["fill"]
+    if (Object.prototype.hasOwnProperty.call(attrs.children[1].attrs, "fontSize")) fontSize = attrs.children[1].attrs["fontSize"]
+    if (clientName.length == 0 && statusTime.length == 0) clickable = false
+    if (eqp_no != 'B' && !bu.includes("底圖") && !bu.includes("溫溼度監控") && !bu.includes("氮氣櫃") && !bu.includes("加藥機") && !bu.includes("CO2機") && clickable) {
+      let eqpEstText = new Konva.Text({fontSize}).measureSize(eqp_no)
+      let clientEstText = new Konva.Text({fontSize}).measureSize(clientName)
+      let timeEstText = new Konva.Text({fontSize}).measureSize(statusTime)
+      switch (className) {
+        case "Rect":{
+          let shapeHeight = node.height();
+          let shapeWidth = node.width();
+          let yGap = (shapeHeight - fontSize*3)/4
+
+          let eqpText = new Konva.Text({
+            fontSize,
+            text:eqp_no,
+            fill,
+            y: yGap,
+            x:(shapeWidth - eqpEstText.width)/2
+          })
+
+          let clientText = new Konva.Text({
+            fontSize,
+            text:clientName,
+            fill,
+            y: 2*yGap + fontSize,
+            x:(shapeWidth - clientEstText.width)/2
+          })
+
+          let timeText = new Konva.Text({
+            fontSize,
+            text:statusTime,
+            fill,
+            y: 3*yGap + fontSize*2,
+            x:(shapeWidth - timeEstText.width)/2
+          })
+          group.add(eqpText)
+          group.add(clientText)
+          group.add(timeText)
+        }
+        break;
+        default:
+          break;
+      }
+      group.on("mouseenter", showTooltip)
+      group.on("mousemove", moveTooltip)
+      group.on("mouseleave", removeTooltip)
+      group.on("click", loadDetail)
+    } else if (bu.includes("溫溼度監控") || bu.includes("氮氣櫃")) {
+      group.on("mouseenter", showTooltip)
+      group.on("mousemove", moveTooltip)
+      group.on("mouseleave", removeTooltip)
+      group.on("click", HeadToTemp)
+    } else if (!clickable  && !bu.includes("底圖") && eqp_no !== "B") {
+      let width = node.width();
+      let height = node.height();
+      let fill = "#333"
+      let fontSize = 12;
+      if (Object.prototype.hasOwnProperty.call(attrs.children[1].attrs, "fill")) fill = attrs.children[1].attrs["fill"]
+      if (Object.prototype.hasOwnProperty.call(attrs.children[1].attrs, "fontSize")) fontSize = attrs.children[1].attrs["fontSize"]
+      let estText = new Konva.Text({fontSize}).measureSize(eqp_no);
+      let text = new Konva.Text({
+        text:eqp_no,
+        x:(width - estText.width)/2,
+        y:(height - 12)/2,
+        fill,
+        fontSize,
+      })
+      group.add(text)
+    }
+    layer.add(group)
+  }
+
   layer.batchDraw()
   isLoading.value = false
 }
 
+const HeadToTemp = (e) => {
+  const {eqp_no} = e.target.getParent().getAttrs();
+  let destination = window.location.origin + window.location.pathname + "/../../Default/TEMP?設備種類=溫溼度監控設備&廠區="
+  if (sFactory.value == "科技") destination+='園區&設備編號='
+  else destination+=sFactory.value+"&設備編號="
+  destination+=eqp_no
+  window.open(destination, "_blank").focus()
+}
+
 const showTooltip = (e) => {
+  stage.value.container().style.cursor = "pointer"
   let index = layer.getChildren().length;
   let group = e.target.getParent();
   let height = 20;
@@ -884,6 +892,7 @@ const moveTooltip = (e) => {
 }
 
 const removeTooltip = (e) => {
+  stage.value.container().style.cursor = "default"
   let tooltip = layer.find(".tooltip")[0];
   tooltip.destroy();
 }
@@ -933,9 +942,13 @@ const downloadExcel = async () => {
     type: 'POST',
     url: window.location.origin + window.location.pathname + '/../ExportExcel',
     data: JSON.stringify(payload),
+    xhrFields:{
+      withCredentials:true
+    },
     success: res => {
-      let a = $("#HiddenClickBtn");
-      a.attr("href", window.location.origin + res);
+      let a = $("#HiddenClickBtn")
+      a.attr("href", window.location.origin + "/Default/" + res)
+      $(a)[0].click()
     },
     async: true,
     dataType: 'json',
@@ -1015,7 +1028,7 @@ const getEqpStatus = e => {
   let eqpName = []
   layer.find('.cfm-object').forEach(group => {
     let attrs = group.getAttrs()
-    if (attrs.status == status) {
+    if (attrs.eqpStatus == status && attrs.eqp_no !== 'B') {
       eqpName.push(attrs.eqp_no)
     }
   })
@@ -1140,6 +1153,30 @@ const loadData = () => {
     contentType: 'application/json; charset=utf-8',
   })
 }
+
+const scale = 0.25
+const zoomIn = () => {
+  const lastScale = stage.value.scaleX()
+  stage.value.scale({
+    x:scale + lastScale,
+    y:scale + lastScale,
+  })
+  stage.value.width(width.value * (scale+lastScale))
+  stage.value.height(height.value * (scale+lastScale))
+}
+
+const zoomOut = () => {
+  const lastScale = stage.value.scaleX()
+  if (lastScale > 0.25) {
+    stage.value.scale({
+      x:lastScale - scale,
+      y:lastScale - scale
+    })
+    stage.value.width(width.value * (lastScale - scale))
+    stage.value.height(height.value * (lastScale - scale))
+  }
+}
+
 onMounted(() => {
   // init stage
   stage.value = new Konva.Stage({

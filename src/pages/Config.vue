@@ -639,11 +639,11 @@ const shapeOptions = [
   {label: '矩形', value: 'Rect'},
   {label: '圓形', value: 'Circle'},
   //{label:"楔形", value:"Wedge"},
-  {label: '橢圓形', value: 'Ellipse'},
+  //{label: '橢圓形', value: 'Ellipse'},
   //{label:"星形", value:"Star"},
-  {label: '環形', value: 'Ring'},
+  //{label: '環形', value: 'Ring'},
   //{label:"弧形", value:"Arc"},
-  {label: '正多邊形', value: 'RegularPolygon'},
+  //{label: '正多邊形', value: 'RegularPolygon'},
 ]
 
 const {registerTick} = useTick()
@@ -680,7 +680,7 @@ watch([sLocation, sFloor, sDepartment], async (nValue, oValue) => {
       }))
     } else if (nValue[2] == 'DS') {
       eqpProps.category = 'DS'
-      categoryOptions.value = ['DS', '氮氣櫃', '溫溼度監控'].map(l => ({
+      categoryOptions.value = ['DS', '氮氣櫃', '溫溼度監控', '加藥機', 'CO2機'].map(l => ({
         value: l,
         label: l,
       }))
