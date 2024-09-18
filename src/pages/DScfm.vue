@@ -1,12 +1,12 @@
 ﻿<template>
-  <div class="h-[50px] w-full bg-gray-500/20"></div>
+  <CfmMenu />
   <div class="w-full px-4">
     <div class="relative">
       <h4 class="text-h4 mt-5 mb-2.5 arial">Equipment CFM</h4>
-      <q-btn size="md" class="absolute right-0 top-0 q-px-sm" icon="zoom_in" @click="zoomIn" outline />
-      <q-btn size="md" class="absolute right-12 top-0 q-px-sm" icon="zoom_out" @click="zoomOut" outline />
     </div>
-    <div class="flex flex-row gap-x-2 items-center">
+    <div class="flex flex-row gap-2 items-center flex-wrap relative">
+      <q-btn size="md" class="absolute right-0 bottom-0 q-px-sm" icon="zoom_in" @click="zoomIn" outline />
+      <q-btn size="md" class="absolute right-12 bottom-0 q-px-sm" icon="zoom_out" @click="zoomOut" outline />
       <q-btn
         unelevated
         dense
@@ -15,9 +15,8 @@
         class="rounded-md px-3 py-1 dfkai"
         @click="downloadExcel"
       />
-      <div class="flex flex-row gap-x-2">
+      <div class="flex flex-row gap-2 flex-wrap">
         <q-select
-          for="fact"
           v-model="sFactory"
           :options="factoryOptions"
           option-value="value"
@@ -131,6 +130,7 @@
       />
       <q-scroll-area
         :class="[showTab ? 'w-5/6' : 'w-[calc(100%_-_50px)]']"
+        @scroll="scroll"
         style="
           box-shadow:
             inset 1px 0 0 #000,
@@ -415,7 +415,7 @@
 </style>
 <script setup lang="ts">
 import {ref, reactive, watch, onMounted} from 'vue'
-
+import CfmMenu from '../components/CfmMenu.vue'
 import Konva from 'konva'
 import $ from 'jquery'
 
@@ -440,7 +440,13 @@ const showEQPMC = ref(false)
 const width = ref(1800)
 const height = ref(1200)
 const container = ref<HTMLDivElement | null>(null)
-const factoryOptions = ['科技', '創新', '力行'].map(f => ({value: f, label: f}))
+
+const _factoryOptions = $("#FACTORY").text().length ? $("#FACTORY").text().split(";").reverse() : ['科技,科技', '創新,創新', '力行,力行']
+const factoryOptions = _factoryOptions.map(row => {
+  let [value, label] = row.split(",")
+  return {value, label}
+})
+
 const floorOptions = ref(
   ['1F', '2F', '3F', '7F'].map(f => ({value: f, label: f})),
 )
@@ -511,19 +517,12 @@ let time = [
   {name: '7:00', label: '7:00', field: '7:00'},
 ]
 
-watch(sFactory, (nValue, _) => {
-  let floor = ['1F', '2F', '3F', '7F']
-  switch (nValue) {
-    case '科技':
-      break
-    case '創新':
-      floor = ['2F', '3F', '4F']
-      break
-    case '力行':
-      floor = ['3F']
-      break
-  }
-  floorOptions.value = floor.map(f => ({value: f, label: f}))
+watch(sFactory, (nvalue, oValue) => {
+  if (nValue !== oValue) {
+    let floor = _floorOptions.filter(f => f.includes(nValue)).map(row => ({value:row.split(",")[0], label:row.split(",")[0]}))
+    floorOptions.value = floor
+    sFloor.value = floor[0].value
+  } 
 })
 
 const toggleTab = () => {
@@ -556,8 +555,6 @@ const loadLayer = (data: string[]) => {
       z2,
       bool,
     ] = rowData
-    // console.log(rowData.length, bu)
-    // console.log({eqpType}, {eqp_no}, {clientName}, {statusTime}, {bu}, {eqpStatus}, {temp}, {bgColor}, {modelName}, {z1}, {z2}, {bool})
     let attrs = JSON.parse(jsonAttrs.replaceAll('，', ','))
     if (Object.prototype.hasOwnProperty.call(attrs, "zIndex")) {
       attrs["eqpType"] = eqpType
@@ -594,7 +591,6 @@ const loadLayer = (data: string[]) => {
   let length = indexMap.size;
   for (let index=0;index < length;index++) {
     let attrs = indexMap.get(index)
-    console.log(attrs)
     let grpConfig = attrs["attrs"] as Konva.GroupConfig
     let group = new Konva.Group(grpConfig)
     let temp = attrs["temp"]
@@ -638,7 +634,7 @@ const loadLayer = (data: string[]) => {
         if (_bgColor.length) {
           node.fill(_bgColor)
         }
-        if (bool == "N") {
+        if (bool == "N" || bool == "") {
           node.stroke("black")
         } else {
           node.stroke("red")
@@ -698,12 +694,16 @@ const loadLayer = (data: string[]) => {
       group.on("mousemove", moveTooltip)
       group.on("mouseleave", removeTooltip)
       group.on("click", loadDetail)
-    } else if (bu.includes("溫溼度監控") || bu.includes("氮氣櫃")) {
+    } else if (bu.includes("溫溼度監控")) {
       group.on("mouseenter", showTooltip)
       group.on("mousemove", moveTooltip)
       group.on("mouseleave", removeTooltip)
       group.on("click", HeadToTemp)
-    } else if (!clickable  && !bu.includes("底圖") && eqp_no !== "B") {
+    } else if (bu.includes("CO2機") || bu.includes("加藥機")) {
+      group.on("mouseenter", showTooltip)
+      group.on("mousemove", moveTooltip)
+      group.on("mouseleave", removeTooltip)
+    } else if (!clickable  && !bu.includes("底圖") && eqp_no !== "B" && !bu.includes("CO2機") && !bu.includes("加藥機")) {
       let width = node.width();
       let height = node.height();
       let fill = "#333"
@@ -885,16 +885,19 @@ const showTooltip = (e) => {
 }
 
 const moveTooltip = (e) => {
-  let tooltip = layer.find(".tooltip")[0];
-  let {x, y} = stage.value.getPointerPosition();
-  tooltip.absolutePosition({x:x+10, y:y+10});
-
+  let tooltip = layer.find(".tooltip");
+  if (tooltip.length) {
+    let {x, y} = stage.value.getPointerPosition();
+    tooltip[0].absolutePosition({x:x+10, y:y+10});
+  }
 }
 
-const removeTooltip = (e) => {
+const removeTooltip = () => {
   stage.value.container().style.cursor = "default"
-  let tooltip = layer.find(".tooltip")[0];
-  tooltip.destroy();
+  let tooltip = layer.find(".tooltip");
+  if (tooltip.length) {
+    tooltip[0].destroy();
+  }
 }
 
 const loadDetail = e => {
@@ -947,7 +950,7 @@ const downloadExcel = async () => {
     },
     success: res => {
       let a = $("#HiddenClickBtn")
-      a.attr("href", window.location.origin + "/Default/" + res)
+      a.attr("href", url + "/../../Default/" + res)
       $(a)[0].click()
     },
     async: true,
@@ -1174,6 +1177,14 @@ const zoomOut = () => {
     })
     stage.value.width(width.value * (lastScale - scale))
     stage.value.height(height.value * (lastScale - scale))
+  }
+}
+
+const scroll = () => {
+  stage.value.container().style.cursor = "default"
+  let tooltip = layer.find(".tooltip");
+  if (tooltip.length > 0) {
+    tooltip[0].destroy();
   }
 }
 

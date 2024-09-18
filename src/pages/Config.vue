@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full border" style="height: 50px"></div>
+  <CfmMenu />
   <div class="flex flex-row w-full" style="height: calc(100vh - 50px)">
     <div class="justify-between w-1/6 h-full shadow-md column">
       <div class="h-fit">
@@ -498,6 +498,7 @@ import {useTick} from 'quasar'
 import Konva from 'konva'
 import $ from 'jquery'
 import axios from 'axios'
+import CfmMenu from '../components/CfmMenu.vue'
 interface ScrollInfo {
   horizontalPosition: number
   verticalPosition: number

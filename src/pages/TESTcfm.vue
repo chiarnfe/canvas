@@ -1,12 +1,12 @@
 ﻿<template>
-  <div class="h-[50px] w-full bg-gray-500/20"></div>
+  <CfmMenu />
   <div class="w-full px-4">
     <div class="relative">
       <h4 class="text-h4 mt-5 mb-2.5 arial">Equipment CFM</h4>
-      <q-btn size="md" class="absolute right-0 top-0 q-px-sm" icon="zoom_in" @click="zoomIn" outline />
-      <q-btn size="md" class="absolute right-12 top-0 q-px-sm" icon="zoom_out" @click="zoomOut" outline />
     </div>
-    <div class="flex flex-row gap-x-2 items-center">
+    <div class="flex flex-row gap-2 items-center flex-wrap relative">
+      <q-btn size="md" class="absolute right-0 bottom-0 q-px-sm" icon="zoom_in" @click="zoomIn" outline />
+      <q-btn size="md" class="absolute right-12 bottom-0 q-px-sm" icon="zoom_out" @click="zoomOut" outline />
       <q-btn
         unelevated
         dense
@@ -15,7 +15,7 @@
         class="rounded-md px-3 py-1 dfkai"
         @click="downloadExcel"
       />
-      <div class="flex flex-row gap-x-2">
+      <div class="flex flex-row gap-2 flex-wrap">
         <q-select
           v-model="sFactory"
           :options="factoryOptions"
@@ -205,6 +205,7 @@
       />
       <q-scroll-area
         :class="[showTab ? 'w-5/6' : 'w-[calc(100%_-_50px)]']"
+        @scroll="scroll" 
         style="
           box-shadow:
             inset 1px 0 0 #000,
@@ -231,7 +232,7 @@
     </q-card-actions>
     <q-card-section class="items-center row q-pb-none text-h5">
       {{ detail[0] }}
-      <q-btn color="primary" dense unelevated class="text-white ml-3 px-2" v-if="detail.length > 33" @click="searchCloseSite">關site data</q-btn>
+      <q-btn color="primary" dense unelevated class="text-white ml-3 px-2" v-if="detail[33].length" @click="searchCloseSite">關site data</q-btn>
     </q-card-section>
     <q-separator />
     <q-card-section class="overflow-auto max-h-[calc(100vh_-_148px)]">
@@ -341,8 +342,8 @@
           <tr>
             <td class="!bg-gray-400 text-center">Change_Time</td>
             <td class="text-center">{{ detail[16] }}</td>
-            <td v-if="detail.length >= 33" class="!bg-gray-400 text-center">關Site開始時間</td>
-            <td v-if="detail.length >= 33" class="text-center">{{ detail[33]}}</td>
+            <td v-if="detail[33].length" class="!bg-gray-400 text-center">關Site開始時間</td>
+            <td v-if="detail[33].length" class="text-center">{{ detail[33]}}</td>
           </tr>
         </tbody>
       </q-markup-table>
@@ -621,6 +622,7 @@ th, td{
 </style>
 <script setup lang="ts">
 import {ref, reactive, watch, onMounted} from 'vue'
+import CfmMenu from '../components/CfmMenu.vue'
 import Konva from 'konva'
 import $ from 'jquery'
 
@@ -772,6 +774,7 @@ let siteColumns = [
   {name:"ACCESSORY1", label:"ACCESSORY1", align:'center'},
   {name:"ABNOR_DESC", label:"ABNOR_DESC", align:'center'},
 ]
+
 watch(sFactory, (nValue, oValue) => {
   if (nValue !== oValue) {
     let floor = _floorOptions.filter(f => f.includes(nValue)).map(row => ({value:row.split(",")[0], label:row.split(",")[0]}))
@@ -1102,16 +1105,19 @@ const showTooltip = (e) => {
 }
 
 const moveTooltip = (e) => {
-  console.log(stage.value.getPointerPosition(), width.value, height.value, stage.value.scaleX())
-  let tooltip = layer.find(".tooltip")[0];
+  let tooltip = layer.find(".tooltip");
   let {x, y} = stage.value.getPointerPosition();
-  tooltip.absolutePosition({x:x+10, y:y+10});
+  if (tooltip.length) {
+    tooltip[0].absolutePosition({x:x+10, y:y+10});
+  }
 }
 
 const removeTooltip = (e) => {
   stage.value.container().style.cursor = "default"
-  let tooltip = layer.find(".tooltip")[0];
-  tooltip.destroy();
+  let tooltip = layer.find(".tooltip");
+  if (tooltip.length) {
+    tooltip[0].destroy();
+  }
 }
 
 const loadDetail = e => {
@@ -1169,7 +1175,7 @@ const downloadExcel = async () => {
     },
     success: res => {
       let a = $("#HiddenClickBtn")
-      a.attr("href", window.location.origin + "/Default/" + res)
+      a.attr("href", url + "/../../Default/" + res)
       $(a)[0].click() 
     },
     async: true,
@@ -1421,12 +1427,12 @@ const searchCloseSite = () => {
   }
   let buffer = []
   $.ajax({
-    type:"POST",
+    type: "POST",
     url,
-    data:JSON.stringify(payload),
+    data: JSON.stringify(payload),
     dataType: 'json',
     contentType: 'application/json; charset=utf-8',
-    success:(res) => {
+    success: (res) => {
       res.forEach(row => {
         const [EQP_NO, START_TIME, END_TIME, STATUS, SUB_STATUS, RUNCARD, DEVICE_NO, STEP, DUT, DUT_USE, ACCESSORY1, ABNOR_DESC] = row.split(",") 
         buffer.push({
@@ -1450,13 +1456,21 @@ const searchCloseSite = () => {
   })
 }
 
+const scroll = () => {
+  stage.value.container().style.cursor = "default"
+  let tooltip = layer.find(".tooltip");
+  if (tooltip.length > 0) {
+    tooltip[0].destroy();
+  }
+}
+
 onMounted(() => {
   // init stage
   stage.value = new Konva.Stage({
     container: 'canvas_container',
     width: width.value,
     height: height.value,
-    background:"rgb(236,236,236)"
+    background: "rgb(236,236,236)"
   })
   stage.value.add(layer)
   loadData()
