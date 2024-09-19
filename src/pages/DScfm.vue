@@ -430,6 +430,9 @@ cust.split(';').forEach(row => {
   clientOptions.push({value, label})
 })
 
+const sFactory = ref('科技')
+const _floorOptions = $("#FLOOR_DS").text().split(";").filter(f => f.includes(sFactory.value))
+
 const isLoading = ref(false)
 const showDetail = ref(false)
 const showTab = ref(false)
@@ -441,17 +444,16 @@ const width = ref(1800)
 const height = ref(1200)
 const container = ref<HTMLDivElement | null>(null)
 
-const _factoryOptions = $("#FACTORY").text().length ? $("#FACTORY").text().split(";").reverse() : ['科技,科技', '創新,創新', '力行,力行']
+const _factoryOptions = $("#FACTORY_DS").text().length ? $("#FACTORY_DS").text().split(";").reverse() : ['科技,科技', '創新,創新', '力行,力行']
 const factoryOptions = _factoryOptions.map(row => {
   let [value, label] = row.split(",")
   return {value, label}
 })
 
 const floorOptions = ref(
-  ['1F', '2F', '3F', '7F'].map(f => ({value: f, label: f})),
+  _floorOptions.map(f => ({value:f.split(",")[0], label:f.split(",")[0]}))
 )
 
-const sFactory = ref('科技')
 const sFloor = ref('1F')
 const sClient = ref([''])
 const sEqp = ref('')
@@ -517,11 +519,11 @@ let time = [
   {name: '7:00', label: '7:00', field: '7:00'},
 ]
 
-watch(sFactory, (nvalue, oValue) => {
+watch(sFactory, (nValue, oValue) => {
   if (nValue !== oValue) {
-    let floor = _floorOptions.filter(f => f.includes(nValue)).map(row => ({value:row.split(",")[0], label:row.split(",")[0]}))
-    floorOptions.value = floor
-    sFloor.value = floor[0].value
+    let FLOOR_DS = $("#FLOOR_DS").text().split(";").filter(f => f.includes(nValue))
+    floorOptions.value = FLOOR_DS.map(f => ({value:f.split(",")[0], label:f.split(",")[0]}))
+    sFloor.value = floorOptions.value[0].value
   } 
 })
 

@@ -59,6 +59,8 @@
           </template>
         </q-select>
         <q-select
+          input-debounce="600"
+          class='w-56'
           v-model="sClient"
           :options="clientOptions"
           options-value="value"
@@ -71,6 +73,28 @@
         >
           <template v-slot:before>
             <label class="text-sm dfkai !font-bold hover:cursor-pointer" @click="focus">客戶</label>
+          </template>
+          <template v-slot:before-options> 
+            <div class="p-2 sticky top-0 bg-white z-10" style="boxShadow:inset 0 -1px 0 rgba(0,0,0,0.12)">
+              <div class="flex flex-row justify-center w-full mt-1">
+                <q-btn unelevated outline class="w-1/2 capitalize rounded-r-none" label="Select All" @click="selectAllClient" />
+                <q-btn unelevated outline class="w-1/2 capitalize rounded-l-none" label="Deselect All" @click="deselectAllClient" />
+              </div>
+            </div>
+          </template>
+          <template v-slot:selected>
+            <span v-if="sClient.length==0">Nothing selected</span>
+            <span v-else-if="sClient.length==1">{{sClient[0] == '' ? "All": sClient[0]}}</span>
+            <span v-else>{{sClient.length}} items selected</span>
+          </template>
+          <template v-slot:option="scope">
+            {{console.log(scope)}}
+            <q-item v-bind="scope.itemProps" dense>
+              <q-item-section>{{scope.opt.label}}</q-item-section>
+              <q-item-section v-show="scope.selected" side>
+                <q-icon name="check" />
+              </q-item-section>
+            </q-item>
           </template>
         </q-select>
         <q-input v-model="sEqp" class="w-32" outlined dense>
@@ -630,13 +654,16 @@ const today = new Date()
 const tomorrow = new Date(new Date().setDate(today.getDate()+1))
 const url =
   window.location.origin + window.location.pathname + '/../HomePageSearch'
-const cust = $('#TEST_CFM_CUST').text() as string
-const clientOptions = [{value: '', label: 'All'}]
+let cust = 'AB,AB/凌陽科技;AC,AC/義隆電子;AD,AD/松翰科技;AE,AE/富鼎先進電子;AF,AF/台亞半導體;AG,AG/立錡科技;AI,AI/偉詮電子;AJ,AJ/矽創電子;AN,AN/承芯微電子;BB,BB/新德科技;BCA,BCA/點序;BCM,BCM/昇瀚科技;BCR,BCR/威鋒電子;BDC,BDC/翊傑科技;BDG,BDG/原盛科技;BE,BE/盛群半導體;BED,BED/Focaltech;BEE,BEE/奕力科技;BEL,BEL/沛成科技;BEX,BEX/奇景光電;BEY,BEY/鼎暘科技;BFK,BFK/LiteonSG;BGG,BGG/瑞鼎科技;BGI,BGI/宏觀微;BHD,BHD/恆發科技;BIC,BIC/義明科技;BIK,BIK/義晶;BIY,BIY/穩耀半導體;BJ,BJ/聯笙電子;BJR,BJR/芯凱電子;BKF,BKF/應廣;BKQ,BKQ/安沛;BKV,BKV/安恩科技;BLE,BLE/SMTCHK;BLY,BLY/力領科技;BM,BM/笙泉科技;BMU,BMU/香港商芯原;BNB,BNB/博通;BNI,BNI/昇佳電子;BNN,BNN/漢芝電子;BO,BO/點晶科技;BPB,BPB/九齊科技;BPE,BPE/芯海;BPH,BPH/晶門科技;BPJ,BPJ/久元電子股份有限公司新竹園區分公司;BPN,BPN/笙科電子股份有限公司;BPR,BPR/美商明銳光電;BPW,BPW/美商睿思;BQH,BQH/FocalTech(KY3);BR,BR/巨華積體;BRH,BRH/立積電子;BRU,BRU/iComm HK Limited;BRY,BRY/Toppan;BS,BS/驊訊電子;BSA,BSA/NextInput;BSH,BSH/達宙科技股份有限公司;BUH,BUH/慧榮科技(澳門);BUU,BUU/長芯盛(武漢)科技有限公司;BVJ,BVJ/超炫科技股份有限公司;BVL,BVL/微源半導體有限公司;BWV,BWV/MaxLinear Inc.;BWX,BWX/北京集創北方科技股份有限公司;BWY,BWY/廈門凌陽華芯;BXE,BXE/力林科技股份有限公司;BXN,BXN/合肥創發微電子;BXS,BXS/物聯記憶體科技股份有限公司;BXT,BXT/濎通科技股份有限公司;BYH,BYH/絡明芯微;BYN,BYN/Silicon Line;BYR,BYR/泰佶科技;BZR,BZR/聯芯通;BZS,BZS/SiTime;BZX,BZX/力特康可;CA,CA/致新科技;CAC,CAC/Renesas;CAE,CAE/宏芯宇;CAG,CAG/富欣亞洲;CAI,CAI/Inphi;CAL,CAL/GenScript;CAM,CAM/聚睿電子;CAY,CAY/FocalTech(SZ2);CC,CC/凱鈺科技;CCA,CCA/中穎電子股份有限公司;CCN,CCN/禹創半導深圳有限公司;CCQ,CCQ/譜瑞;CDF,CDF/合肥大唐存儲科技有限公司;CEB,CEB/飛虹高科股份有限公司;CEG,CEG/芯立泰電子;CEL,CEL/西安恩狄集成電路有限公司;CFY,CFY/原景科技;CGJ,CGJ/合肥捷達微;CHN,CHN/Marvell;CHY,CHY/Qorvo;CIT,CIT/艾科微;CJ,CJ/騰富科技;CKG,CKG/雅特力;CKH,CKH/威達高科股份有限公司;CKQ,CKQ/雅特力重慶;CL,CL/巨盛電子;CLD,CLD/香港宏芯宇;CMY,CMY/Lumotive;CNI,CNI/意志力;CNX,CNX/芯旺(股);COM,COM/奧簡;CPH,CPH/衡宇;CPS,CPS/全芯電子;CQS,CQS/力晶微元;CRJ,CRJ/景相;CRM,CRM/昱盛;CSI,CSI/艾科;CSV,CSV/耐能智慧;CTJ,CTJ/銳發;DL,DL/天鈺;DR,DR/世紀創新;ET,ET/普誠科技;EV,EV/傑霖科技;EX,EX/勇領科技;FF,FF/凌通科技;FL,FL/智原科技;FU,FU/世紀民生科技;FY,FY/安國國際科技;GK,GK/聯陽半導體;GM,GM/慧榮科技;GR,GR/九暘電子;HG,HG/群聯竹南;HH,HH/芯原電子;HM,HM/晶豪科技;HN,HN/智榮科技;HP,HP/聯傑國際;HQ,HQ/碩呈科技;IC,IC/敦泰電子;IP,IP/安葳科技;JI,JI/原相科技;JQ,JQ/晶錡科技;JW,JW/威盛電子;LJ,LJ/瑞新電子;LO,LO/益芯科技;LQ,LQ/成越科技;LR,LR/慧榮貿易;LS,LS/聯華電子;MN,MN/紘康科技;NC,NC/久元;VK,VK/廣閎科技;VL,VL/高爾科技;WP,WP/聯詠科技;WR,WR/神盾;WX,WX/晶宏半導體;ZH,ZH/數能科技;ZV,ZV/晶相光電;ZX,ZX/智安電子' 
+
+//const cust = $('#TEST_CFM_CUST').text() as string
+const _clientOptions = [{value: '', label: 'All'}]
 cust.split(';').forEach(row => {
   const [value, label] = row.split(',')
-  clientOptions.push({value, label})
+  _clientOptions.push({value, label})
 })
 
+const clientOptions = ref(_clientOptions)
 const ynOptions = [{value:"", label:"All"}, {value:"Y", label:"Y"}, {value:"N", label:"N"}]
 
 const isLoading = ref(false)
@@ -650,20 +677,20 @@ const showSite = ref(false)
 const width = ref(1800)
 const height = ref(1200)
 const container = ref<HTMLDivElement | null>(null)
-const _factoryOptions = $("#FACTORY").text().length ? $("#FACTORY").text().split(";").reverse() : ['科技,科技', '創新,創新', '力行,力行']
+const _factoryOptions = $("#FACTORY_TEST").text().length ? $("#FACTORY_TEST").text().split(";").reverse() : ['科技,科技', '創新,創新', '力行,力行']
 const factoryOptions = _factoryOptions.map(row => {
   let [value, label] = row.split(",")
   return {value, label}
 })
 
-const _floorOptions = $("#FLOOR").text().split(";")
+const sFactory = ref('科技')
+const _floorOptions = $("#FLOOR_TEST").text().split(";").filter(f => f.includes(sFactory.value))
 
 const floorOptions = ref(
-  ['1F', '2F', '3F', '7F'].map(f => ({value: f, label: f})),
+  _floorOptions.map(f => ({value:f.split(";")[0], label:f.split(",")[0]}))
 )
 const categoryOptions = ['機台', '配件'].map(c => ({value:c, label:c}))
 
-const sFactory = ref('科技')
 const sFloor = ref('1F')
 const sCategory = ref('機台')
 const sClient = ref([''])
@@ -674,7 +701,27 @@ const sOCR = ref('')
 const sKeyProd = ref('')
 const sCharter = ref('')
 const sBottleNeck = ref('')
+const filterInput = ref('')
 
+const selectAllClient = () => {
+  sClient.value = _clientOptions.map(option => option.value)  
+}
+
+const deselectAllClient = () => {
+  sClient.value = [];
+}
+
+const filterFn = (val, updateFn) => {
+  if (val == '') {
+    updateFn(() => {
+      clientOptions.value = _clientOptions  
+    })
+  } else {
+    updateFn(() => {
+      clientOptions.value = _clientOptions.filter(option => (option.value.includes(val) || option.label.includes(val)))
+    })
+  }
+}
 const stage = ref<Konva.Stage | null>(null)
 const layer = reactive<Konva.Layer>(
   new Konva.Layer({
@@ -777,9 +824,9 @@ let siteColumns = [
 
 watch(sFactory, (nValue, oValue) => {
   if (nValue !== oValue) {
-    let floor = _floorOptions.filter(f => f.includes(nValue)).map(row => ({value:row.split(",")[0], label:row.split(",")[0]}))
-    floorOptions.value = floor
-    sFloor.value = floor[0].value
+    let FLOOR_TEST = $("#FLOOR_TEST").text().split(";").filter(f => f.includes(nValue))
+    floorOptions.value = FLOOR_TEST.map(f => ({value:f.split(",")[0], label:f.split(",")[0]}))
+    sFloor.value = floorOptions.value[0].value
   }
 })
 
@@ -895,7 +942,15 @@ const loadLayer = (data: string[]) => {
     if (probeCard.length == 0 && eqpCluster.length == 0 && clientCode.length == 0 && statusTime.length == 0) clickable = false
     if(clickable && !bu.includes("底圖") && !bu.includes("溫溼度監控") && !bu.includes("氮氣櫃")) {
       let combText = eqpCluster + " " + clientCode
-      let eqpEstText = new Konva.Text({fontSize}).measureSize(eqp_no)
+      let eqpTitle = ""
+      if (sCategory.value == "機台") eqpTitle = eqp_no
+      else if (sCategory.value == "配件" && probeCard.includes("-")) {
+        eqpTitle = probeCard.split("-")[0]
+      } else {
+        eqpTitle = probeCard
+      }
+
+      let eqpEstText = new Konva.Text({fontSize}).measureSize(eqpTitle)
       let combineEstText = new Konva.Text({fontSize}).measureSize(combText)
       let timeEstText = new Konva.Text({fontSize}).measureSize(statusTime)
       switch (className) {
@@ -906,7 +961,7 @@ const loadLayer = (data: string[]) => {
 
           let eqpText = new Konva.Text({
             fontSize,
-            text:eqp_no,
+            text:eqpTitle,
             fill,
             y:yGap,
             x:(shapeWidth - eqpEstText.width)/2
@@ -1473,6 +1528,7 @@ onMounted(() => {
     background: "rgb(236,236,236)"
   })
   stage.value.add(layer)
-  loadData()
+  //loadData()
+  
 })
 </script>

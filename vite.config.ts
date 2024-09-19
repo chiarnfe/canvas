@@ -23,9 +23,9 @@ export default defineConfig({
     rollupOptions:{
       input:"./src/main.ts",
       output:{
-        entryFileNames:`CFM/scripts/dist/assets/[name].js`,
-        chunkFileNames:`CFM/scripts/dist/assets/[name].js`,
-        assetFileNames:`CFM/scripts/dist/assets/[name].[ext]`
+        entryFileNames:`scripts/dist/assets/[name].js`,
+        chunkFileNames:`scripts/dist/assets/[name].js`,
+        assetFileNames:`scripts/dist/assets/[name].[ext]`
       }
     },
     outDir:"./dist"
@@ -33,7 +33,7 @@ export default defineConfig({
   server:{
     proxy:{
       "*":{
-        target:"http://localhost:59024/Home/CFMEditor",
+        target:"http://localhost:55103/Home/ViewPage1",
         changeOrigin:true
       }
     },

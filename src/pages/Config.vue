@@ -174,7 +174,9 @@
                   </q-icon>
                 </template>
               </q-input>
-              <q-input outlined label="機台名稱" v-model="eqpProps.text" />
+              <q-input v-show="eqpProps.category!='區域'&&eqpProps.category!='柱位'" outlined label="機台名稱" v-model="eqpProps.text" />
+              <q-input v-show="eqpProps.category=='柱位'" outlined label="柱位名稱" v-model="eqpProps.pillar" />
+              <q-input v-show="eqpProps.category=='區域'" outlined label="區域名稱" v-model="eqpProps.area" />
               <div class="flex flex-row gap-x-2">
                 <q-input
                   outlined
@@ -599,6 +601,8 @@ const eqpProps = reactive({
   fill: 'red',
   fontSize: 20,
   color: 'black',
+  pillar:'',
+  area:'',
 })
 
 const blockProps = reactive({
@@ -630,7 +634,7 @@ const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 22, 24].map(num => ({
 }))
 
 const categoryOptions = ref(
-  ['CP', 'FT', '氮氣櫃', '溫溼度監控'].map(l => ({
+  ['CP', 'FT', '氮氣櫃', '溫溼度監控', '柱位', '區域'].map(l => ({
     label: l,
     value: l,
   })),
@@ -675,13 +679,13 @@ watch([sLocation, sFloor, sDepartment], async (nValue, oValue) => {
   if (nValue[2] !== oValue[2]) {
     if (nValue[2] == 'TEST') {
       eqpProps.category = 'CP'
-      categoryOptions.value = ['CP', 'FT', '氮氣櫃', '溫溼度監控'].map(l => ({
+      categoryOptions.value = ['CP', 'FT', '氮氣櫃', '溫溼度監控', '柱位', '區域'].map(l => ({
         value: l,
         label: l,
       }))
     } else if (nValue[2] == 'DS') {
       eqpProps.category = 'DS'
-      categoryOptions.value = ['DS', '氮氣櫃', '溫溼度監控', '加藥機', 'CO2機'].map(l => ({
+      categoryOptions.value = ['DS', '氮氣櫃', '溫溼度監控', '加藥機', 'CO2機', '柱位', '區域'].map(l => ({
         value: l,
         label: l,
       }))
@@ -703,6 +707,21 @@ watch(grid, (nValue, _) => {
     initGridLayer()
   } else {
     gridLayer.removeChildren()
+  }
+})
+
+watch(eqpProps.category, (nValue,_) => {
+  if (nValue != '區域' && nValue != '柱位') {
+    eqpProps.pillar = "";
+    eqpProps.area = ""
+  }
+  if (nValue == '區域') {
+    eqpProps.text = ''
+    eqpProps.pillar = ''
+  }
+  if (nValue == '柱位') {
+    eqpProps.text = ''
+    eqpProps.area = ''
   }
 })
 

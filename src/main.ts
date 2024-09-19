@@ -11,10 +11,10 @@ import FloatingVue from 'floating-vue';
 const router = createRouter({
   history:createWebHistory(),
   routes:[
-    { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor`, component: () => import('./pages/Config.vue') },
-    { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/TESTCFM`, component: () => import('./pages/TESTcfm.vue') },
-    { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/DSCFM`, component:() => import('./pages/DScfm.vue') },
-    //{ path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/ViewPage1`, component:() => import('./pages/TESTcfm.vue') },
+    { path:`${import.meta.env.MODE == "development" ? "": ""}/Home/CFMEditor`, component: () => import('./pages/Config.vue') },
+    { path:`${import.meta.env.MODE == "development" ? "": ""}/Home/TESTCFM`, component: () => import('./pages/TESTcfm.vue') },
+    { path:`${import.meta.env.MODE == "development" ? "": ""}/Home/DSCFM`, component:() => import('./pages/DScfm.vue') },
+    { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/ViewPage1`, component:() => import('./pages/Config.vue') },
     // { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor1`, component:() => import('./pages/TESTcfm.vue') }
     // { path:`${import.meta.env.MODE == "development" ? "": "/CFM"}/Home/CFMEditor1`, component: () => import('./pages/Config.vue') },
   ]

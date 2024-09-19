@@ -19,7 +19,7 @@
           </q-item-section>
           <q-menu square anchor="top end" self="top start" :offset="[2,0]" v-if="child.Child.length">
             <q-list dense v-for="gChild in child.Child">
-              <q-item clickable :href="gChild.CanUse ? gChild.URL : home">
+              <q-item clickable :href="gChild.CanUse ? gChild.URL : home" target="_blank">
                 <q-item-section>
                   {{gChild.MenuName}}
                 </q-item-section>
@@ -27,7 +27,7 @@
             </q-list>
           </q-menu>
         </q-item>
-        <q-item clickable v-else :href="child.CanUse ? child.URL : home">
+        <q-item clickable v-else :href="child.CanUse ? child.URL : home" target="_blank"> 
           <q-item-section>{{child.MenuName}}</q-item-section>
         </q-item>
       </q-list>
