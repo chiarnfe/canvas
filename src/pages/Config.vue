@@ -1287,8 +1287,8 @@ const updateNode = () => {
   let target = iconLayer.find('.selected-cfm-object')
   if (target.length) {
     let group = target[0] as Konva.Group
-    const [frame, txt, category] = group.getChildren()
-    const {fill, fontSize, text, color} = eqpProps
+    const [frame, nameText, categoryText] = group.getChildren()
+    const {fill, fontSize, text, color, pillar, area, category} = eqpProps
   
     const txtWidth = new Konva.Text({fontSize}).measureSize(text)
     const categoryWidth = new Konva.Text({fontSize: 12}).measureSize(
